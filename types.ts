@@ -1,0 +1,138 @@
+
+export interface KeywordRow {
+  keyword: string;
+  frequency: number;
+}
+
+export enum AIModel {
+  // Google
+  GEMINI_2_0_FLASH = 'google/gemini-2.0-flash-001',
+  GEMINI_2_0_PRO_EXP = 'google/gemini-2.0-pro-exp-02-05',
+  GEMINI_1_5_PRO = 'google/gemini-pro-1.5',
+  GEMINI_3_PRO_PREVIEW = 'google/gemini-3-pro-preview',
+  
+  // Anthropic
+  CLAUDE_3_5_SONNET = 'anthropic/claude-3.5-sonnet',
+  CLAUDE_3_OPUS = 'anthropic/claude-3-opus',
+  CLAUDE_3_5_HAIKU = 'anthropic/claude-3.5-haiku',
+  CLAUDE_OPUS_4_1 = 'anthropic/claude-opus-4.1',
+  CLAUDE_SONNET_4_5 = 'anthropic/claude-sonnet-4.5',
+
+  // OpenAI
+  GPT_4O = 'openai/gpt-4o',
+  GPT_4O_MINI = 'openai/gpt-4o-mini',
+  GPT_O1_MINI = 'openai/o1-mini',
+
+  // xAI (Grok)
+  GROK_2_1212 = 'x-ai/grok-2-1212',
+  GROK_2_VISION_1212 = 'x-ai/grok-2-vision-1212',
+  GROK_BETA = 'x-ai/grok-beta',
+  GROK_4_FAST = 'x-ai/grok-4-fast',
+  GROK_4_1_FAST = 'x-ai/grok-4.1-fast',
+  GROK_4_1_FAST_FREE = 'x-ai/grok-4.1-fast:free',
+  GROK_CODE_FAST = 'x-ai/grok-2-1212', 
+
+  // Qwen (Alibaba)
+  QWEN_MAX = 'qwen/qwen-max',
+  QWEN_PLUS = 'qwen/qwen-plus',
+  QWEN_TURBO = 'qwen/qwen-turbo',
+  QWEN_2_5_72B = 'qwen/qwen-2.5-72b-instruct',
+  QWEN_2_5_CODER_32B = 'qwen/qwen-2.5-coder-32b-instruct',
+  QWEN_QWQ_32B = 'qwen/qwq-32b-preview',
+
+  // DeepSeek
+  DEEPSEEK_R1 = 'deepseek/deepseek-r1',
+  DEEPSEEK_V3 = 'deepseek/deepseek-chat',
+
+  // Meta
+  LLAMA_3_3_70B = 'meta-llama/llama-3.3-70b-instruct',
+  
+  // Mistral
+  MISTRAL_LARGE = 'mistralai/mistral-large-2411',
+}
+
+export interface ModelConfig {
+  id: string; // The API string (e.g. 'google/gemini-2.0-flash-001')
+  name: string; // Display name
+  provider: string; // Grouping (Google, OpenAI, etc.)
+}
+
+export enum TextTone {
+  PROFESSIONAL = 'Professional & Trustworthy',
+  CASUAL = 'Casual & Friendly',
+  ENTHUSIASTIC = 'Enthusiastic & Energetic',
+  AUTHORITATIVE = 'Authoritative & Expert',
+  EMPATHETIC = 'Empathetic & Supportive',
+  LUXURY = 'Luxury & Exclusive'
+}
+
+export enum TextStyle {
+  INFORMATIVE = 'Informative & Educational',
+  PERSUASIVE = 'Persuasive (Sales-focused)',
+  NARRATIVE = 'Narrative (Storytelling)',
+  ANALYTICAL = 'Analytical & Data-driven',
+  INSTRUCTIONAL = 'Instructional (How-to guides)'
+}
+
+export interface GenerationConfig {
+  // Brand Context
+  websiteName: string;
+  targetCountry: string;
+  
+  // SEO Details
+  targetUrl: string;
+  topic: string;
+  lsiKeywords: string;
+  competitorUrls: string; // Keeps the string format for backward compatibility, but UI handles as list
+  competitorFiles?: { name: string; content: string }[]; // New field for uploaded competitor files
+  
+  // Style
+  tone: TextTone;
+  style: TextStyle;
+  exampleContent?: string;
+  
+  // Technical
+  minChars: number;
+  maxChars: number;
+  minParas: number;
+  maxParas: number;
+  model: string; 
+}
+
+export interface SeoMetrics {
+  wordCount: number;
+  relevanceScore: number;
+  keywordAnalysis: {
+    keyword: string;
+    targetFrequency: number;
+    actualCount: number;
+  }[];
+}
+
+export interface SeoResult {
+  content: string;
+  metaTitle: string;
+  metaDescription: string;
+  usedKeywords: string[];
+  metrics?: SeoMetrics;
+  spamScore?: number; // 0-100%
+  spamAnalysis?: string;
+}
+
+export interface Project {
+  id: string;
+  userId: number;
+  name: string;
+  description?: string;
+  createdAt: string;
+}
+
+export interface HistoryItem {
+  id: string;
+  projectId: string;
+  timestamp: string;
+  topic: string;
+  targetUrl: string;
+  config: GenerationConfig;
+  result: SeoResult;
+}
