@@ -9,11 +9,16 @@ export function setupWebAppCommands(bot) {
     }
 
     // /start command - показываем кнопку WebApp
-    bot.onText(/\/start/, (msg) => {
+    bot.onText(/\/start/, async (msg) => {
         const chatId = msg.chat.id;
         const userName = msg.from.first_name || 'Пользователь';
 
-        bot.sendMessage(chatId, `Привет, ${userName}! 👋\n\nДобро пожаловать в SEO Generator.\nОткройте приложение для генерации SEO-контента.`, {
+        console.log('⚡ /start from:', {
+            user: msg.from?.username,
+            chatId
+        });
+
+        await bot.sendMessage(chatId, `Привет, ${userName}! 👋\n\nДобро пожаловать в SEO Generator.\nОткройте приложение для генерации SEO-контента.`, {
             reply_markup: {
                 inline_keyboard: [[
                     {

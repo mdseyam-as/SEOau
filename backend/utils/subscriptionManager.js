@@ -4,7 +4,26 @@ import User from '../models/User.js';
 let bot;
 
 export function initializeBot(token) {
-    bot = new TelegramBot(token, { polling: false });
+    bot = new TelegramBot(token, { polling: true });
+
+    // Log bot info
+    bot.getMe().then(me => {
+        console.log('✅ Telegram Bot initialized as:', {
+            id: me.id,
+            username: me.username,
+            name: `${me.first_name} ${me.last_name || ''}`.trim()
+        });
+    });
+
+    // Log all incoming messages for debugging
+    bot.on('message', (msg) => {
+        console.log('📩 Incoming message:', {
+            from: msg.from?.username,
+            chatId: msg.chat.id,
+            text: msg.text
+        });
+    });
+
     return bot;
 }
 
