@@ -1,13 +1,12 @@
 meta:
-  environment: node
+  environment: docker
   toolchain:
-    name: node
-    version: 20
+    name: docker
+    version: latest
 
 build:
-  workdir: backend
+  dockerfile: backend/Dockerfile
+  context: backend
 
 run:
-  command: npm start
-  persistenceMount: /data
   containerPort: 3000
