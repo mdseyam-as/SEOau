@@ -1,17 +1,16 @@
 meta:
-  environment: node
+  environment: docker
   toolchain:
-    name: node
-    version: 20
+    name: docker
+    version: latest
 
 build:
-  builder: vite
-  commands:
-    - npm install
-    - npm run build
-
-publish:
-  directory: dist
+  dockerfile: backend/Dockerfile
+  context: backend
 
 run:
-  isStatic: true
+  containerPort: 3000
+
+env:
+  PORT: 3000
+  NODE_ENV: production
