@@ -75,9 +75,20 @@ app.use('/api/users', validateTelegramAuth, userRoutes);
 app.use('/api/projects', validateTelegramAuth, projectRoutes);
 app.use('/api/history', validateTelegramAuth, historyRoutes);
 
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({ error: 'Not found' });
+// Serve Vite-built frontend
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const distPath = path.join(__dirname, '..', 'dist');
+
+// Serve static files from dist folder
+app.use(express.static(distPath));
+
+// SPA fallback - все неизвестные маршруты отправляем на index.html
+app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
 });
 
 // Error handler
