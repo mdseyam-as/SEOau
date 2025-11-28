@@ -1,0 +1,17 @@
+meta:
+  environment: node
+  toolchain:
+    name: node
+    version: 20
+
+build:
+  builder: vite
+  commands:
+    - npm install
+    - npm run build
+
+publish:
+  directory: dist
+
+run:
+  isStatic: true

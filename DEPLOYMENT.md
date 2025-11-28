@@ -2,144 +2,214 @@
 
 Инструкции по развёртыванию SEO Generator в продакшн.
 
-## Структура проекта
+## 🇷🇺 Деплой на Amvera Cloud (Рекомендуется для РФ)
 
-- **Frontend** - React приложение (Vite)
-- **Backend** - Node.js + Express API
-- **Database** - MongoDB
+Amvera — российский облачный сервис, поддерживающий оплату картами РФ.
 
-## Деплой Frontend
+> **Конфигурационные файлы:**
+> - Backend: [`backend/amvera.yml`](backend/amvera.yml)
+> - Frontend: [`amvera.yml`](amvera.yml) (в корне проекта)
 
-### Вариант 1: Vercel (Рекомендуется)
+### Шаг 1: MongoDB
 
-1. **Подготовка**
-   ```bash
-   # Создайте файл .env
-   echo "VITE_API_URL=https://your-backend-url.com/api" > .env
-   ```
+1.  **Создайте проект на [amvera.io](https://amvera.io)**
+    *   Нажмите **"Создать проект"**
+    *   Выберите **"Pre-configured application"** → **"Databases"** → **"MongoDB"**
 
-2. **Деплой**
-   - Установите [Vercel CLI](https://vercel.com/download)
-   ```bash
-   npm i -g vercel
-   vercel login
-   vercel
-   ```
-   
-   - Или через GitHub:
-     1. Push код в GitHub
-     2. Импортируйте проект на [vercel.com](https://vercel.com)
-     3. Vercel автоматически определит настройки
+2.  **Настройте переменные окружения**
+    ```
+    MONGO_INITDB_ROOT_USERNAME = ваш_логин
+    MONGO_INITDB_ROOT_PASSWORD = ваш_пароль (как секрет)
+    ```
 
-3. **Переменные окружения**
-   - В Vercel Dashboard → Settings → Environment Variables
-   - Добавьте: `VITE_API_URL` = URL вашего backend
+3.  **Запустите деплой**
+    *   Нажмите "Развернуть"
+    *   После деплоя откройте вкладку **"Info"**
+    *   Скопируйте **Internal domain name** (например: `mongodb-xyz.internal`)
 
-### Вариант 2: Netlify
+4.  **Сформируйте Connection String**
+    ```
+    mongodb://ваш_логин:ваш_пароль@mongodb-xyz.internal:27017/seo-generator
+    ```
 
-```bash
-npm run build
-netlify deploy --prod --dir=dist
-```
+### Шаг 2: Backend
 
-### Вариант 3: GitHub Pages
+1.  **Создайте проект Backend**
+    *   Нажмите **"Создать проект"** → **"Приложение"**
+    *   Имя: `seo-backend`
+    *   Подключите GitHub репозиторий
 
-```bash
-# В vite.config.ts установите base
-base: '/repository-name/'
+2.  **Настройка проекта**
+    *   Amvera автоматически найдет `backend/amvera.yml`
+    *   Или вручную укажите:
+        - Среда: **Docker**
+        - Dockerfile: `backend/Dockerfile`
+        - Контекст: `backend`
 
-npm run build
-npx gh-pages -d dist
-```
-
-## Деплой Backend
-
-### Вариант 1: Railway (Простой и быстрый)
-
-1. **Создайте аккаунт на [Railway.app](https://railway.app)**
-
-2. **Новый проект**
-   - New Project → Deploy from GitHub repo
-   - Выберите ваш репозиторий
-   - Root Directory: `/backend`
-
-3. **Переменные окружения**
-   ```env
-   MONGODB_URI=mongodb+srv://...
-   BOT_TOKEN=your_telegram_bot_token
-   ADMIN_TELEGRAM_IDS=11,22,33
-   YUKASSA_SHOP_ID=your_shop_id
-   YUKASSA_SECRET_KEY=your_secret_key
-   YUKASSA_WEBHOOK_SECRET=your_webhook_secret
-   PORT=3000
-   NODE_ENV=production
-   FRONTEND_URL=https://your-frontend.vercel.app
-   ```
-
-4. **Настройте старт**
-   - Railway автоматически определит `npm start` из package.json
-
-5. **Получите URL**
-   - Railway предоставит URL типа: `https://your-app.up.railway.app`
-
-### Вариант 2: Render
-
-1. **Создайте [Web Service](https://render.com)**
-2. **Настройки**
-   - Build Command: `npm install`
-   - Start Command: `npm start`
-   - Root Directory: `backend`
-
-3. **Environment Variables** - добавьте все переменные из `.env.example`
-
-### Вариант 3: VPS (DigitalOcean, AWS, etc.)
-
-```bash
-# На сервере
-git clone your-repo.git
-cd your-repo/backend
-npm install
-
-# PM2 для автозапуска
-npm install -g pm2
-pm2 start server.js --name seo-backend
-pm2 save
-pm2 startup
-
-# Nginx reverse proxy
-sudo nano /etc/nginx/sites-available/api
-```
-
-Nginx config:
-```nginx
-server {
-    listen 80;
-    server_name api.yourdomain.com;
+3.  **Переменные окружения (Variables)**
     
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
+    Добавьте следующие переменные:
+    
+    | Переменная | Значение | Тип |
+    |------------|----------|-----|
+    | `MONGODB_URI` | Connection string из Шага 1 | Secret |
+    | `BOT_TOKEN` | Токен вашего Telegram бота | Secret |
+    | `ADMIN_TELEGRAM_IDS` | ID админов через запятую | Secret |
+    | `JWT_SECRET` | Случайная строка (32+ символов) | Secret |
+    | `PORT` | `3000` | Variable |
+    | `NODE_ENV` | `production` | Variable |
+    | `FRONTEND_URL` | Оставить пустым (заполним позже) | Variable |
+
+4.  **Деплой**
+    *   Нажмите **"Развернуть"**
+    *   Дождитесь окончания сборки
+    *   Скопируйте URL (например: `https://seo-backend-abc.amvera.io`)
+
+5.  **Проверка работоспособности**
+    
+    Откройте в браузере:
+    ```
+    https://seo-backend-abc.amvera.io/health
+    ```
+    
+    Должен вернуть:
+    ```json
+    {
+      "status": "ok",
+      "database": "connected"
     }
-}
-```
+    ```
+
+### Шаг 3: Frontend
+
+1.  **Создайте проект Frontend**
+    *   **"Создать проект"** → **"Статический сайт"**
+    *   Имя: `seo-frontend`
+    *   Подключите тот же GitHub репозиторий
+
+2.  **Настройка сборки**
+    
+    Amvera автоматически найдет `amvera.yml` в корне, который содержит:
+    ```yaml
+    build:
+      commands:
+        - npm install
+        - npm run build
+    publish:
+      directory: dist
+    ```
+
+3.  **Переменные окружения**
+    
+    | Переменная | Значение |
+    |------------|----------|
+    | `VITE_API_URL` | `https://seo-backend-abc.amvera.io/api` |
+    | `GEMINI_API_KEY` | Ваш API ключ Google Gemini |
+
+    > ⚠️ **Важно:** В `VITE_API_URL` обязательно добавьте `/api` в конце!
+
+4.  **Деплой**
+    *   Разверните проект
+    *   Скопируйте URL frontend (например: `https://seo-frontend-xyz.amvera.io`)
+
+### Шаг 4: Финальная настройка
+
+1.  **Обновите Backend**
+    *   Вернитесь в проект **Backend**
+    *   Переменные → `FRONTEND_URL` = `https://seo-frontend-xyz.amvera.io`
+    *   Перезапустите Backend
+
+2.  **Инициализация БД**
+    
+    Подключитесь к контейнеру Backend через Amvera Console и выполните:
+    ```bash
+    node initDb.js
+    ```
+    Это создаст тарифные планы в MongoDB.
+
+3.  **Настройте Telegram Bot**
+    *   Откройте Telegram → @BotFather
+    *   Выберите вашего бота
+    *   `/setmenubutton` → Укажите URL: `https://seo-frontend-xyz.amvera.io`
+    *   Или настройте через `/newapp` для создания WebApp
+
+4.  **Тестирование**
+    *   Откройте вашего бота в Telegram
+    *   Нажмите кнопку запуска WebApp
+    *   Убедитесь, что приложение открывается и работает
+
+---
+
+## 🌍 Деплой на Vercel + Railway (Международный вариант)
+
+### Frontend (Vercel)
+
+1.  **Подготовка**
+    ```bash
+    # Создайте файл .env
+    echo "VITE_API_URL=https://your-backend-url.com/api" > .env
+    ```
+
+2.  **Деплой**
+    - Установите [Vercel CLI](https://vercel.com/download)
+    ```bash
+    npm i -g vercel
+    vercel login
+    vercel
+    ```
+    
+    - Или через GitHub:
+      1. Push код в GitHub
+      2. Импортируйте проект на [vercel.com](https://vercel.com)
+      3. Vercel автоматически определит настройки
+
+3.  **Переменные окружения**
+    - В Vercel Dashboard → Settings → Environment Variables
+    - Добавьте: `VITE_API_URL` = URL вашего backend
+
+### Backend (Railway)
+
+1.  **Создайте аккаунт на [Railway.app](https://railway.app)**
+
+2.  **Новый проект**
+    - New Project → Deploy from GitHub repo
+    - Выберите ваш репозиторий
+    - Root Directory: `/backend`
+
+3.  **Переменные окружения**
+    ```env
+    MONGODB_URI=mongodb+srv://...
+    BOT_TOKEN=your_telegram_bot_token
+    ADMIN_TELEGRAM_IDS=11,22,33
+    YUKASSA_SHOP_ID=your_shop_id
+    YUKASSA_SECRET_KEY=your_secret_key
+    YUKASSA_WEBHOOK_SECRET=your_webhook_secret
+    PORT=3000
+    NODE_ENV=production
+    FRONTEND_URL=https://your-frontend.vercel.app
+    ```
+
+4.  **Настройте старт**
+    - Railway автоматически определит `npm start` из package.json
+
+5.  **Получите URL**
+    - Railway предоставит URL типа: `https://your-app.up.railway.app`
+
+---
 
 ## Настройка ЮKassa Webhook
 
-1. **Откройте [ЮKassa Dashboard](https://yookassa.ru)**
-2. **Настройки → Уведомления**
-3. **HTTP-уведомления**
-   - URL: `https://your-backend.railway.app/api/webhook/payment`
-   - События: `payment.succeeded`
-   - Создайте секретный ключ webhook
+1.  **Откройте [ЮKassa Dashboard](https://yookassa.ru)**
+2.  **Настройки → Уведомления**
+3.  **HTTP-уведомления**
+    - URL: `https://your-backend-domain.com/api/webhook/payment`
+    - События: `payment.succeeded`
+    - Создайте секретный ключ webhook
 
-4. **Сохраните ключ в переменные окружения backend**
-   ```env
-   YUKASSA_WEBHOOK_SECRET=your_generated_secret
-   ```
+4.  **Сохраните ключ в переменные окружения backend**
+    ```env
+    YUKASSA_WEBHOOK_SECRET=your_generated_secret
+    ```
 
 ## Telegram Bot
 
@@ -159,99 +229,3 @@ initializeBot(process.env.BOT_TOKEN);
 ```bash
 pm2 start bot.js --name telegram-bot
 ```
-
-## Проверка деплоя
-
-1. **Frontend health check**
-   ```
-   https://your-frontend.vercel.app
-   ```
-
-2. **Backend health check**
-   ```
-   https://your-backend.railway.app/health
-   ```
-   
-3. **Database**
-   ```bash
-   # В MongoDB Atlas Dashboard
-   # Проверьте Collections: users, projects, histories, plans
-   ```
-
-4. **Telegram Bot**
-   ```
-   Отправьте /start боту
-   Откройте WebApp
-   Проверьте автоматическую авторизацию
-   ```
-
-## Мониторинг и логирование
-
-### Railway
-- Встроенные логи в реальном времени
-- Метрики CPU/RAM
-
-### PM2 (VPS)
-```bash
-pm2 logs seo-backend
-pm2 monit
-```
-
-### Sentry (опционально)
-```bash
-npm install @sentry/node
-```
-
-## Обновление
-
-### Frontend
-```bash
-# Vercel автоматически деплоит при push в main
-git push origin main
-```
-
-### Backend
-```bash
-# Railway автоматически деплоит при push
-git push origin main
-
-# Или вручную на VPS
-cd backend
-git pull
-pm2 restart seo-backend
-```
-
-## Безопасность
-
-1. **HTTPS обязателен** - Railway/Vercel автоматически предоставляют SSL
-2. **CORS** - настроен в `server.js`, указать реальный URL frontend
-3. **Rate Limiting** (опционально):
-   ```bash
-   npm install express-rate-limit
-   ```
-
-4. **Secrets** - никогда не коммитьте `.env` файлы в git
-
-## Бэкапы
-
-### База данных
-MongoDB Atlas делает автоматические бэкапы.
-
-### Код
-Git repository - ваш бэкап кода.
-
-## Troubleshooting
-
-### CORS ошибки
-- Проверьте `FRONTEND_URL` в backend `.env`
-- Убедитесь в правильном URL без trailing slash
-
-### Webhook не работает
-- Проверьте URL в ЮKassa Dashboard
-- Логи backend: `payment.succeeded` events
-- Проверьте `YUKASSA_WEBHOOK_SECRET`
-
-### Bot не отправляет уведомления
-- Убедитесь что `BOT_TOKEN` правильный
-- Проверьте что bot.ts запущен
-- Проверьте логи backend

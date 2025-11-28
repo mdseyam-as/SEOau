@@ -75,9 +75,10 @@ Frontend будет доступен на `http://localhost:5173`
 
 ## 📚 Документация
 
+- **[AMVERA_QUICKSTART.md](./AMVERA_QUICKSTART.md) - Быстрый старт деплоя на Amvera** ⚡
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - Детальное руководство по деплою
 - [TELEGRAM_BOT_INTEGRATION.md](./TELEGRAM_BOT_INTEGRATION.md) - Интеграция с Telegram ботом
 - [DATABASE_SETUP.md](./DATABASE_SETUP.md) - Настройка MongoDB
-- [DEPLOYMENT.md](./DEPLOYMENT.md) - Деплой в продакшн
 
 ## 🔑 Переменные окружения
 
