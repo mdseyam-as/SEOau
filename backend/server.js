@@ -10,58 +10,8 @@ import { validateTelegramAuth } from './middleware/auth.js';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import projectRoutes from './routes/projects.js';
-import historyRoutes from './routes/history.js';
-import planRoutes from './routes/plans.js';
-import webhookRoutes from './routes/webhook.js';
-
-// Import utilities
-import { initializeBot } from './utils/subscriptionManager.js';
-
-// Load environment variables
-dotenv.config();
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(cors({
-    origin: process.env.FRONTEND_URL || '*',
-    credentials: true
-}));
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Request logging
-app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-    next();
-});
-
-// Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/seo-generator')
-    .then(() => {
-        console.log('✅ Connected to MongoDB');
-    })
-    .catch((error) => {
-        console.error('❌ MongoDB connection error:', error);
-        process.exit(1);
-    });
-
-// Initialize Telegram Bot
-if (process.env.BOT_TOKEN) {
-    initializeBot(process.env.BOT_TOKEN);
-    console.log('✅ Telegram Bot initialized');
-} else {
-    console.warn('⚠️  BOT_TOKEN not set - Telegram notifications disabled');
-}
-
-// Health check
-app.get('/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+timestamp: new Date().toISOString(),
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
     });
 });
 
