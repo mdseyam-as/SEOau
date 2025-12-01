@@ -49,20 +49,32 @@ export const AdminPanel: React.FC = () => {
     setSystemPrompt(settings.systemPrompt || DEFAULT_PROMPT_TEMPLATE);
   }, []);
 
-  const loadData = () => {
-    const loadedPlans = authService.getPlans();
-    setUsers(authService.getUsers());
-    setPlans(loadedPlans);
-    setModels(authService.getModels());
+  const loadData = async () => {
+    try {
+      // Load Plans (Public API)
+      const { plans: loadedPlans } = await apiService.getPlans();
+      setPlans(loadedPlans);
 
-    // Set default selected plan for manual assignment
-    if (!manualPlanId && loadedPlans.length > 0) {
-      const defaultPlan = loadedPlans.find(p => p.isDefault) || loadedPlans[0];
-      setManualPlanId(defaultPlan.id);
+      // Load Users (Admin API)
+      const { users: loadedUsers } = await apiService.getAllUsers();
+      setUsers(loadedUsers);
+
+      // Load Models (Local for now, or add API later)
+      setModels(authService.getModels());
+
+      // Set default selected plan for manual assignment
+      if (!manualPlanId && loadedPlans.length > 0) {
+        const defaultPlan = loadedPlans.find(p => p.isDefault) || loadedPlans[0];
+        setManualPlanId(defaultPlan.id);
+      }
+    } catch (error) {
+      console.error('Failed to load admin data:', error);
+      // Fallback to local if API fails (e.g. not admin)
+      // setUsers(authService.getUsers()); 
     }
   };
 
-  const handleManualSubscription = () => {
+  const handleManualSubscription = async () => {
     if (!manualTgId) return alert('Введите Telegram ID');
     if (!manualPlanId) return alert('Выберите тариф');
 
@@ -70,14 +82,32 @@ export const AdminPanel: React.FC = () => {
       const tgId = parseInt(manualTgId.trim());
       if (isNaN(tgId)) return alert('Telegram ID должен быть числом');
 
-      authService.grantSubscription(tgId, manualPlanId, manualDays);
+      // Try to get user first
+      try {
+        await apiService.getUser(tgId);
+        // If exists, update
+        await apiService.updateUser(tgId, {
+          planId: manualPlanId,
+          subscriptionExpiry: new Date(Date.now() + manualDays * 86400000).toISOString()
+        });
+      } catch (e) {
+        // If not found (404), create
+        await apiService.createUser({
+          telegramId: tgId,
+          firstName: `User ${tgId}`,
+          planId: manualPlanId,
+          subscriptionExpiry: new Date(Date.now() + manualDays * 86400000).toISOString()
+        });
+      }
+
       setManualSuccess(true);
       setManualTgId('');
       loadData();
 
       setTimeout(() => setManualSuccess(false), 3000);
     } catch (e) {
-      alert('Ошибка при выдаче подписки');
+      console.error(e);
+      alert('Ошибка при выдаче подписки: ' + (e as Error).message);
     }
   };
 
@@ -119,22 +149,21 @@ export const AdminPanel: React.FC = () => {
       updatedUser.subscriptionExpiry = expiry.toISOString();
     }
 
-    // Обновляем локальное состояние (для текущей админки)
-    authService.updateUser(updatedUser);
-
     // И ОБЯЗАТЕЛЬНО — обновляем запись в Mongo через API
     try {
       await apiService.updateUser(updatedUser.telegramId, {
         planId: updatedUser.planId,
         subscriptionExpiry: updatedUser.subscriptionExpiry,
       });
+
+      // Reload data to reflect changes
+      await loadData();
     } catch (e) {
       console.error('Failed to update user on backend', e);
       alert('Не удалось обновить пользователя в БД: ' + (e as Error).message);
     }
 
     setEditingUser(null);
-    loadData();
   };
 
   // Plan Editing Logic
@@ -154,30 +183,35 @@ export const AdminPanel: React.FC = () => {
     setEditingPlan(newPlan);
   };
 
-  const handleSavePlan = () => {
+  const handleSavePlan = async () => {
     if (!editingPlan) return;
 
-    const existingIndex = plans.findIndex(p => p.id === editingPlan.id);
-    const updatedPlans = [...plans];
+    try {
+      const existingIndex = plans.findIndex(p => p.id === editingPlan.id);
 
-    if (existingIndex >= 0) {
-      updatedPlans[existingIndex] = editingPlan;
-    } else {
-      updatedPlans.push(editingPlan);
+      if (existingIndex >= 0) {
+        await apiService.updatePlan(editingPlan.id, editingPlan);
+      } else {
+        await apiService.createPlan(editingPlan);
+      }
+
+      setEditingPlan(null);
+      loadData();
+    } catch (e) {
+      console.error(e);
+      alert('Ошибка при сохранении тарифа');
     }
-
-    authService.savePlans(updatedPlans);
-    setPlans(updatedPlans);
-    setEditingPlan(null);
-    loadData();
   };
 
-  const handleDeletePlan = (id: string) => {
+  const handleDeletePlan = async (id: string) => {
     if (!confirm('Вы уверены? Пользователи с этим тарифом могут потерять доступ.')) return;
-    const updatedPlans = plans.filter(p => p.id !== id);
-    if (updatedPlans.length === 0) return alert('Нельзя удалить последний тариф');
-    authService.savePlans(updatedPlans);
-    loadData();
+    try {
+      await apiService.deletePlan(id);
+      loadData();
+    } catch (e) {
+      console.error(e);
+      alert('Ошибка при удалении тарифа');
+    }
   };
 
   const toggleModelInPlan = (modelId: string) => {
