@@ -1,11 +1,9 @@
 import { User, SubscriptionPlan, Project, HistoryItem, GenerationConfig, SeoResult } from '../types';
 
-// Vite injects import.meta.env in runtime; для TypeScript подстрахуемся декларацией
-declare const importMetaEnv: { VITE_API_URL?: string; DEV?: boolean };
-
-const API_URL = typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL
-    ? (import.meta as any).env.VITE_API_URL
-    : (importMetaEnv.VITE_API_URL || '/api');
+// Безопасно читаем переменные окружения Vite через any-каст,
+// чтобы не ломать типы в TypeScript и не требовать глобальных переменных.
+const env = (typeof import.meta !== 'undefined' ? (import.meta as any).env : {}) || {};
+const API_URL: string = env.VITE_API_URL || '/api';
 
 class ApiService {
     private initData: string = '';
@@ -29,9 +27,7 @@ class ApiService {
         };
 
         // In Vite dev-mode we can bypass Telegram auth via X-Dev-Telegram-Id
-        const isDev = typeof import.meta !== 'undefined'
-            ? (import.meta as any).env?.DEV
-            : importMetaEnv.DEV;
+        const isDev = !!env.DEV;
 
         if (isDev && this.devTelegramId) {
             (headers as any)['X-Dev-Telegram-Id'] = String(this.devTelegramId);
