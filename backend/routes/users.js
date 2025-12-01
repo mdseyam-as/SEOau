@@ -5,6 +5,77 @@ import Plan from '../models/Plan.js';
 const router = express.Router();
 
 /**
+ * Helper: ensure that the requester is an admin based on DB role
+ */
+async function ensureAdmin(req, res) {
+    try {
+        const requester = await User.findOne({ telegramId: req.telegramUser.id });
+        if (!requester || requester.role !== 'admin') {
+            res.status(403).json({ error: 'Forbidden' });
+            return null;
+        }
+        return requester;
+    } catch (e) {
+        console.error('Admin check error:', e);
+        res.status(500).json({ error: 'Admin check failed' });
+        return null;
+    }
+}
+
+/**
+ * GET /api/users
+ * Get all users (Admin only)
+ */
+router.get('/', async (req, res) => {
+    try {
+        const adminUser = await ensureAdmin(req, res);
+        if (!adminUser) return;
+
+        const users = await User.find().sort({ createdAt: -1 });
+        res.json({ users });
+    } catch (error) {
+        console.error('Get all users error:', error);
+        res.status(500).json({ error: 'Failed to get users' });
+    }
+});
+
+/**
+ * POST /api/users
+ * Create new user (Admin only)
+ */
+router.post('/', async (req, res) => {
+    try {
+        const adminUser = await ensureAdmin(req, res);
+        if (!adminUser) return;
+
+        const { telegramId, firstName, username, planId } = req.body;
+
+        if (!telegramId || !firstName) {
+            return res.status(400).json({ error: 'Telegram ID and First Name are required' });
+        }
+
+        const existingUser = await User.findOne({ telegramId });
+        if (existingUser) {
+            return res.status(400).json({ error: 'User already exists' });
+        }
+
+        const user = new User({
+            telegramId,
+            firstName,
+            username,
+            planId: planId || 'free',
+            role: 'user'
+        });
+
+        await user.save();
+        res.json({ success: true, user });
+    } catch (error) {
+        console.error('Create user error:', error);
+        res.status(500).json({ error: 'Failed to create user' });
+    }
+});
+
+/**
  * GET /api/users/:id
  * Get user by Telegram ID
  */
