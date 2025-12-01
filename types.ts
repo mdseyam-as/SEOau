@@ -10,7 +10,7 @@ export enum AIModel {
   GEMINI_2_0_PRO_EXP = 'google/gemini-2.0-pro-exp-02-05',
   GEMINI_1_5_PRO = 'google/gemini-pro-1.5',
   GEMINI_3_PRO_PREVIEW = 'google/gemini-3-pro-preview',
-  
+
   // Anthropic
   CLAUDE_3_5_SONNET = 'anthropic/claude-3.5-sonnet',
   CLAUDE_3_OPUS = 'anthropic/claude-3-opus',
@@ -30,7 +30,7 @@ export enum AIModel {
   GROK_4_FAST = 'x-ai/grok-4-fast',
   GROK_4_1_FAST = 'x-ai/grok-4.1-fast',
   GROK_4_1_FAST_FREE = 'x-ai/grok-4.1-fast:free',
-  GROK_CODE_FAST = 'x-ai/grok-2-1212', 
+  GROK_CODE_FAST = 'x-ai/grok-2-1212',
 
   // Qwen (Alibaba)
   QWEN_MAX = 'qwen/qwen-max',
@@ -46,7 +46,7 @@ export enum AIModel {
 
   // Meta
   LLAMA_3_3_70B = 'meta-llama/llama-3.3-70b-instruct',
-  
+
   // Mistral
   MISTRAL_LARGE = 'mistralai/mistral-large-2411',
 }
@@ -78,25 +78,25 @@ export interface GenerationConfig {
   // Brand Context
   websiteName: string;
   targetCountry: string;
-  
+
   // SEO Details
   targetUrl: string;
   topic: string;
   lsiKeywords: string;
   competitorUrls: string; // Keeps the string format for backward compatibility, but UI handles as list
   competitorFiles?: { name: string; content: string }[]; // New field for uploaded competitor files
-  
+
   // Style
   tone: TextTone;
   style: TextStyle;
   exampleContent?: string;
-  
+
   // Technical
   minChars: number;
   maxChars: number;
   minParas: number;
   maxParas: number;
-  model: string; 
+  model: string;
 }
 
 export interface SeoMetrics {
@@ -135,4 +135,35 @@ export interface HistoryItem {
   targetUrl: string;
   config: GenerationConfig;
   result: SeoResult;
+}
+
+export interface User {
+  _id: string;
+  telegramId: number;
+  username?: string;
+  firstName: string;
+  role: 'user' | 'admin';
+  planId: string;
+  subscriptionExpiry?: string;
+  generationsUsed: number;
+  lastGenerationMonth?: string;
+  generationsUsedToday: number;
+  lastGenerationDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  maxChars: number;
+  allowedModels: string[];
+  isDefault: boolean;
+  maxGenerationsPerMonth: number;
+  maxGenerationsPerDay: number;
+  maxKeywords: number;
+  canCheckSpam: boolean;
+  canOptimizeRelevance: boolean;
+  priceRub: number;
+  durationDays: number;
 }
