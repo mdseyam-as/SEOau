@@ -1,4 +1,4 @@
-# SEO Generator - Telegram WebApp
+# SEO Generator - Telegram WebApp 🚀
 
 Мощный генератор SEO-контента, интегрированный с Telegram как WebApp.
 
