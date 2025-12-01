@@ -5,6 +5,26 @@ import { validateTelegramWebAppData, extractTelegramUser } from '../utils/telegr
  */
 export function validateTelegramAuth(req, res, next) {
     try {
+        // --- DEV BYPASS (for local development without Telegram) ---
+        // Enabled only when NODE_ENV !== 'production' AND DEV_BYPASS_TELEGRAM === 'true'
+        if (process.env.NODE_ENV !== 'production' && process.env.DEV_BYPASS_TELEGRAM === 'true') {
+            const devIdHeader = req.headers['x-dev-telegram-id'];
+            const devIdBody = req.body?.devTelegramId;
+            const devIdQuery = req.query?.devTelegramId;
+
+            const devId = parseInt(devIdHeader || devIdBody || devIdQuery, 10);
+
+            if (!isNaN(devId)) {
+                req.telegramUser = {
+                    id: devId,
+                    first_name: 'DevUser',
+                    username: `dev_${devId}`
+                };
+                return next();
+            }
+        }
+
+        // --- PRODUCTION PATH (Telegram WebApp auth) ---
         const initData = req.headers['x-telegram-init-data'] || req.body.initData;
 
         if (!initData) {

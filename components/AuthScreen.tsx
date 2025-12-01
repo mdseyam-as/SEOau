@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Send, Smartphone } from 'lucide-react';
-import { authService } from '../services/authService';
 import { apiService } from '../services/apiService';
 
 interface AuthScreenProps {
@@ -56,18 +55,22 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     if (!devId) return;
 
     setIsLoading(true);
-    try {
-      // Simulation of Telegram User Object
-      const mockUser = {
-        id: parseInt(devId),
-        first_name: `TestUser_${devId.slice(-4)}`,
-        username: `user_${devId}`
-      };
+    setError(null);
 
-      const user = await authService.loginOrRegisterTelegram(mockUser);
+    try {
+      const numericId = parseInt(devId, 10);
+      if (isNaN(numericId)) {
+        throw new Error('ID должен быть числом');
+      }
+
+      // Сообщаем apiService, что в dev-режиме нужно подставлять этот ID
+      apiService.setDevTelegramId(numericId);
+
+      // Логинимся через БЭКЕНД как обычно — он примет X-Dev-Telegram-Id
+      const { user } = await apiService.login();
       onLogin(user);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Ошибка dev-логина');
       setIsLoading(false);
     }
   };

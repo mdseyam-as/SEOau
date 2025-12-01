@@ -1,12 +1,24 @@
 import { User, SubscriptionPlan, Project, HistoryItem, GenerationConfig, SeoResult } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+// Vite injects import.meta.env in runtime; для TypeScript подстрахуемся декларацией
+declare const importMetaEnv: { VITE_API_URL?: string; DEV?: boolean };
+
+const API_URL = typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL
+    ? (import.meta as any).env.VITE_API_URL
+    : (importMetaEnv.VITE_API_URL || '/api');
 
 class ApiService {
     private initData: string = '';
+    // Dev-only Telegram ID used when running outside Telegram WebApp
+    private devTelegramId: number | null = null;
 
     setInitData(initData: string) {
         this.initData = initData;
+    }
+
+    // Used in dev-mode to send X-Dev-Telegram-Id header
+    setDevTelegramId(id: number | null) {
+        this.devTelegramId = id;
     }
 
     private async request(endpoint: string, options: RequestInit = {}) {
@@ -15,6 +27,15 @@ class ApiService {
             'X-Telegram-Init-Data': this.initData,
             ...options.headers
         };
+
+        // In Vite dev-mode we can bypass Telegram auth via X-Dev-Telegram-Id
+        const isDev = typeof import.meta !== 'undefined'
+            ? (import.meta as any).env?.DEV
+            : importMetaEnv.DEV;
+
+        if (isDev && this.devTelegramId) {
+            (headers as any)['X-Dev-Telegram-Id'] = String(this.devTelegramId);
+        }
 
         const response = await fetch(`${API_URL}${endpoint}`, {
             ...options,
@@ -39,6 +60,17 @@ class ApiService {
     }
 
     // Users
+    async getAllUsers(): Promise<{ users: User[] }> {
+        return this.request('/users');
+    }
+
+    async createUser(data: Partial<User>): Promise<{ user: User }> {
+        return this.request('/users', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
     async getUser(telegramId: number): Promise<{ user: User }> {
         return this.request(`/users/${telegramId}`);
     }
