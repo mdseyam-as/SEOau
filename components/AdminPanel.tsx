@@ -5,6 +5,7 @@ import { Shield, Plus, Check, Clock, User as UserIcon, Calendar, Settings, Save,
 import { authService, User, SubscriptionPlan } from '../services/authService';
 import { DEFAULT_PROMPT_TEMPLATE } from '../services/geminiService';
 import { AIModel, ModelConfig } from '../types';
+import { apiService } from '../services/apiService';
 
 type TabType = 'users' | 'settings' | 'plans' | 'models';
 
@@ -13,7 +14,7 @@ export const AdminPanel: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [models, setModels] = useState<ModelConfig[]>([]);
-  
+
   // Manual Subscription State
   const [manualTgId, setManualTgId] = useState('');
   const [manualPlanId, setManualPlanId] = useState('');
@@ -25,7 +26,7 @@ export const AdminPanel: React.FC = () => {
   const [newExpiryDate, setNewExpiryDate] = useState('');
   const [newUserPlanId, setNewUserPlanId] = useState('');
   const [userSearch, setUserSearch] = useState('');
-  
+
   // Plan Management State
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
 
@@ -33,7 +34,7 @@ export const AdminPanel: React.FC = () => {
   const [isCreatingModel, setIsCreatingModel] = useState(false);
   const [newModel, setNewModel] = useState<ModelConfig>({ id: '', name: '', provider: 'Custom' });
   const [editingModelId, setEditingModelId] = useState<string | null>(null); // For inline editing
-  
+
   // Settings State
   const [telegramLink, setTelegramLink] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -53,7 +54,7 @@ export const AdminPanel: React.FC = () => {
     setUsers(authService.getUsers());
     setPlans(loadedPlans);
     setModels(authService.getModels());
-    
+
     // Set default selected plan for manual assignment
     if (!manualPlanId && loadedPlans.length > 0) {
       const defaultPlan = loadedPlans.find(p => p.isDefault) || loadedPlans[0];
@@ -64,16 +65,16 @@ export const AdminPanel: React.FC = () => {
   const handleManualSubscription = () => {
     if (!manualTgId) return alert('Введите Telegram ID');
     if (!manualPlanId) return alert('Выберите тариф');
-    
+
     try {
       const tgId = parseInt(manualTgId.trim());
       if (isNaN(tgId)) return alert('Telegram ID должен быть числом');
-      
+
       authService.grantSubscription(tgId, manualPlanId, manualDays);
       setManualSuccess(true);
       setManualTgId('');
       loadData();
-      
+
       setTimeout(() => setManualSuccess(false), 3000);
     } catch (e) {
       alert('Ошибка при выдаче подписки');
@@ -81,7 +82,7 @@ export const AdminPanel: React.FC = () => {
   };
 
   const handleSaveSettings = () => {
-    authService.saveGlobalSettings({ 
+    authService.saveGlobalSettings({
       telegramLink,
       openRouterApiKey: apiKey,
       systemPrompt: systemPrompt
@@ -107,18 +108,31 @@ export const AdminPanel: React.FC = () => {
     }
   };
 
-  const handleSaveUserSubscription = () => {
+  const handleSaveUserSubscription = async () => {
     if (!editingUser) return;
-    
+
     let updatedUser = { ...editingUser, planId: newUserPlanId };
 
     if (newExpiryDate) {
-       const expiry = new Date(newExpiryDate);
-       expiry.setHours(23, 59, 59, 999);
-       updatedUser.subscriptionExpiry = expiry.toISOString();
+      const expiry = new Date(newExpiryDate);
+      expiry.setHours(23, 59, 59, 999);
+      updatedUser.subscriptionExpiry = expiry.toISOString();
     }
 
+    // Обновляем локальное состояние (для текущей админки)
     authService.updateUser(updatedUser);
+
+    // И ОБЯЗАТЕЛЬНО — обновляем запись в Mongo через API
+    try {
+      await apiService.updateUser(updatedUser.telegramId, {
+        planId: updatedUser.planId,
+        subscriptionExpiry: updatedUser.subscriptionExpiry,
+      });
+    } catch (e) {
+      console.error('Failed to update user on backend', e);
+      alert('Не удалось обновить пользователя в БД: ' + (e as Error).message);
+    }
+
     setEditingUser(null);
     loadData();
   };
@@ -142,16 +156,16 @@ export const AdminPanel: React.FC = () => {
 
   const handleSavePlan = () => {
     if (!editingPlan) return;
-    
+
     const existingIndex = plans.findIndex(p => p.id === editingPlan.id);
     const updatedPlans = [...plans];
-    
+
     if (existingIndex >= 0) {
       updatedPlans[existingIndex] = editingPlan;
     } else {
       updatedPlans.push(editingPlan);
     }
-    
+
     authService.savePlans(updatedPlans);
     setPlans(updatedPlans);
     setEditingPlan(null);
@@ -180,17 +194,17 @@ export const AdminPanel: React.FC = () => {
 
   const handleSaveModel = () => {
     if (!newModel.id || !newModel.name || !newModel.provider) {
-       return alert("Все поля обязательны");
+      return alert("Все поля обязательны");
     }
 
     if (isCreatingModel) {
-       // Check for duplicate ID
-       if (models.some(m => m.id === newModel.id)) {
-         return alert("Модель с таким ID уже существует");
-       }
-       authService.addModel(newModel);
+      // Check for duplicate ID
+      if (models.some(m => m.id === newModel.id)) {
+        return alert("Модель с таким ID уже существует");
+      }
+      authService.addModel(newModel);
     } else {
-       authService.updateModel(newModel);
+      authService.updateModel(newModel);
     }
 
     setModels(authService.getModels());
@@ -202,7 +216,7 @@ export const AdminPanel: React.FC = () => {
   const handleEditModel = (model: ModelConfig) => {
     setIsCreatingModel(false);
     setEditingModelId(model.id);
-    setNewModel({...model});
+    setNewModel({ ...model });
   };
 
   const handleDeleteModel = (id: string) => {
@@ -228,7 +242,7 @@ export const AdminPanel: React.FC = () => {
     return new Date(isoString) < new Date();
   };
 
-  const filteredUsers = users.filter(u => 
+  const filteredUsers = users.filter(u =>
     u.firstName.toLowerCase().includes(userSearch.toLowerCase()) ||
     (u.username && u.username.toLowerCase().includes(userSearch.toLowerCase())) ||
     String(u.telegramId).includes(userSearch)
@@ -236,7 +250,7 @@ export const AdminPanel: React.FC = () => {
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
-      
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <Shield className="w-8 h-8 text-brand-green" />
@@ -251,7 +265,7 @@ export const AdminPanel: React.FC = () => {
           <button onClick={() => setActiveTab('plans')} className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'plans' ? 'bg-white text-brand-green shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
             <Layers className="w-4 h-4" /> Тарифы
           </button>
-           <button onClick={() => setActiveTab('models')} className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'models' ? 'bg-white text-brand-green shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+          <button onClick={() => setActiveTab('models')} className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'models' ? 'bg-white text-brand-green shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
             <Cpu className="w-4 h-4" /> Модели ИИ
           </button>
           <button onClick={() => setActiveTab('settings')} className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'settings' ? 'bg-white text-brand-green shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -263,7 +277,7 @@ export const AdminPanel: React.FC = () => {
       {/* --- USERS TAB --- */}
       {activeTab === 'users' && (
         <div className="space-y-6">
-          
+
           {/* Manual Subscription Grant */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
@@ -272,9 +286,9 @@ export const AdminPanel: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
               <div>
                 <label className="block text-xs font-bold text-slate-500 mb-1">Telegram ID</label>
-                <input 
-                  type="number" 
-                  placeholder="Например: 12345678" 
+                <input
+                  type="number"
+                  placeholder="Например: 12345678"
                   value={manualTgId}
                   onChange={(e) => setManualTgId(e.target.value)}
                   className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-green outline-none"
@@ -294,7 +308,7 @@ export const AdminPanel: React.FC = () => {
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-500 mb-1">Срок (дней)</label>
-                <select 
+                <select
                   value={manualDays}
                   onChange={(e) => setManualDays(Number(e.target.value))}
                   className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-green outline-none"
@@ -305,7 +319,7 @@ export const AdminPanel: React.FC = () => {
                   <option value={365}>1 год (365 дней)</option>
                 </select>
               </div>
-              <button 
+              <button
                 onClick={handleManualSubscription}
                 className="w-full bg-brand-green hover:bg-green-700 text-white p-2.5 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2"
               >
@@ -326,9 +340,9 @@ export const AdminPanel: React.FC = () => {
               </div>
               <div className="relative w-full md:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Поиск по ID или имени..." 
+                <input
+                  type="text"
+                  placeholder="Поиск по ID или имени..."
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
                   className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-brand-green"
@@ -360,11 +374,11 @@ export const AdminPanel: React.FC = () => {
                       const expired = isExpired(user.subscriptionExpiry);
                       const isAdmin = user.role === 'admin';
                       const plan = plans.find(p => p.id === user.planId);
-                      
+
                       // Check for day reset visual only
                       const today = new Date().toISOString().slice(0, 10);
                       const usedToday = user.lastGenerationDate === today ? (user.generationsUsedToday || 0) : 0;
-                      
+
                       return (
                         <tr key={user.telegramId} className="bg-white border-b border-gray-100 hover:bg-gray-50">
                           <td className="px-6 py-4">
@@ -376,7 +390,7 @@ export const AdminPanel: React.FC = () => {
                               {getPlanName(user.planId)}
                             </span>
                           </td>
-                           <td className="px-6 py-4">
+                          <td className="px-6 py-4">
                             <div className="text-xs font-mono flex flex-col gap-1">
                               <span>M: {user.generationsUsed || 0} / {plan?.maxGenerationsPerMonth ? plan.maxGenerationsPerMonth : '∞'}</span>
                               <span className="text-gray-400">D: {usedToday} / {plan?.maxGenerationsPerDay ? plan.maxGenerationsPerDay : '∞'}</span>
@@ -424,129 +438,129 @@ export const AdminPanel: React.FC = () => {
 
       {/* --- MODELS TAB (NEW) --- */}
       {activeTab === 'models' && (
-         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-               <div>
-                  <h3 className="text-lg font-bold text-slate-900">Модели ИИ</h3>
-                  <p className="text-sm text-slate-500">Управление списком моделей доступных в приложении</p>
-               </div>
-               <button 
-                  onClick={() => { setIsCreatingModel(true); setNewModel({ id: '', name: '', provider: 'Custom' }); setEditingModelId(null); }}
-                  className="bg-brand-green hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors"
-               >
-                  <Plus className="w-4 h-4" /> Добавить модель
-               </button>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Модели ИИ</h3>
+              <p className="text-sm text-slate-500">Управление списком моделей доступных в приложении</p>
             </div>
+            <button
+              onClick={() => { setIsCreatingModel(true); setNewModel({ id: '', name: '', provider: 'Custom' }); setEditingModelId(null); }}
+              className="bg-brand-green hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors"
+            >
+              <Plus className="w-4 h-4" /> Добавить модель
+            </button>
+          </div>
 
-            {/* Models Table/List */}
-             <div className="overflow-x-auto border border-gray-200 rounded-lg">
-               <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
-                     <tr>
-                        <th className="px-6 py-3">Название (Display Name)</th>
-                        <th className="px-6 py-3">Model ID (API String)</th>
-                        <th className="px-6 py-3">Провайдер/Группа</th>
-                        <th className="px-6 py-3 text-right">Действия</th>
-                     </tr>
-                  </thead>
-                  <tbody>
-                     {models.length === 0 ? (
-                        <tr><td colSpan={4} className="p-6 text-center text-gray-400">Нет добавленных моделей</td></tr>
-                     ) : (
-                        models.map((model) => (
-                           <tr key={model.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
-                              <td className="px-6 py-4">
-                                 {editingModelId === model.id ? (
-                                    <input 
-                                       type="text" 
-                                       value={newModel.name} 
-                                       onChange={(e) => setNewModel({...newModel, name: e.target.value})}
-                                       className="w-full p-2 border rounded text-sm"
-                                       placeholder="Имя модели"
-                                    />
-                                 ) : (
-                                    <span className="font-bold text-slate-700">{model.name}</span>
-                                 )}
-                              </td>
-                              <td className="px-6 py-4 font-mono text-xs text-slate-600">
-                                 {/* ID cannot be edited once created easily without re-creating, locking it for simple edit */}
-                                 {model.id}
-                              </td>
-                              <td className="px-6 py-4">
-                                 {editingModelId === model.id ? (
-                                     <input 
-                                       type="text" 
-                                       value={newModel.provider} 
-                                       onChange={(e) => setNewModel({...newModel, provider: e.target.value})}
-                                       className="w-full p-2 border rounded text-sm"
-                                       placeholder="Провайдер"
-                                    />
-                                 ) : (
-                                    <span className="inline-block px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">{model.provider}</span>
-                                 )}
-                              </td>
-                              <td className="px-6 py-4 text-right flex justify-end gap-2">
-                                 {editingModelId === model.id ? (
-                                    <>
-                                       <button onClick={handleSaveModel} className="text-green-600 hover:bg-green-50 p-1.5 rounded"><Save className="w-4 h-4" /></button>
-                                       <button onClick={() => { setEditingModelId(null); setIsCreatingModel(false); }} className="text-gray-400 hover:bg-gray-100 p-1.5 rounded"><X className="w-4 h-4" /></button>
-                                    </>
-                                 ) : (
-                                    <>
-                                       <button onClick={() => handleEditModel(model)} className="text-brand-green hover:bg-green-50 p-1.5 rounded"><Edit2 className="w-4 h-4" /></button>
-                                       <button onClick={() => handleDeleteModel(model.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><Trash2 className="w-4 h-4" /></button>
-                                    </>
-                                 )}
-                              </td>
-                           </tr>
-                        ))
-                     )}
-                     
-                     {/* Creation Row */}
-                     {isCreatingModel && (
-                        <tr className="bg-green-50/50 border-t-2 border-brand-green/20">
-                            <td className="px-6 py-4">
-                                 <input 
-                                    type="text" 
-                                    value={newModel.name} 
-                                    onChange={(e) => setNewModel({...newModel, name: e.target.value})}
-                                    className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-brand-green outline-none"
-                                    placeholder="Имя (напр. GPT-5)"
-                                    autoFocus
-                                 />
-                           </td>
-                           <td className="px-6 py-4">
-                                 <input 
-                                    type="text" 
-                                    value={newModel.id} 
-                                    onChange={(e) => setNewModel({...newModel, id: e.target.value})}
-                                    className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-brand-green outline-none font-mono"
-                                    placeholder="API ID (openai/gpt-5)"
-                                 />
-                           </td>
-                           <td className="px-6 py-4">
-                                 <input 
-                                    type="text" 
-                                    value={newModel.provider} 
-                                    onChange={(e) => setNewModel({...newModel, provider: e.target.value})}
-                                    className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-brand-green outline-none"
-                                    placeholder="Провайдер (напр. OpenAI)"
-                                 />
-                           </td>
-                            <td className="px-6 py-4 text-right flex justify-end gap-2">
-                               <button onClick={handleSaveModel} className="bg-brand-green text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-700">Сохранить</button>
-                               <button onClick={() => setIsCreatingModel(false)} className="bg-gray-200 text-gray-700 px-3 py-1.5 rounded text-xs font-bold hover:bg-gray-300">Отмена</button>
-                            </td>
-                        </tr>
-                     )}
-                  </tbody>
-               </table>
-             </div>
-             <p className="text-xs text-gray-500 mt-4">
-               💡 Используйте ID модели в формате OpenRouter (например: <code>openai/gpt-4o</code>, <code>google/gemini-pro-1.5</code>). <br/>
-               Удаление модели не удалит её из истории генераций, но она станет недоступна для новых задач и настройки тарифов.
-             </p>
-         </div>
+          {/* Models Table/List */}
+          <div className="overflow-x-auto border border-gray-200 rounded-lg">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3">Название (Display Name)</th>
+                  <th className="px-6 py-3">Model ID (API String)</th>
+                  <th className="px-6 py-3">Провайдер/Группа</th>
+                  <th className="px-6 py-3 text-right">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {models.length === 0 ? (
+                  <tr><td colSpan={4} className="p-6 text-center text-gray-400">Нет добавленных моделей</td></tr>
+                ) : (
+                  models.map((model) => (
+                    <tr key={model.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        {editingModelId === model.id ? (
+                          <input
+                            type="text"
+                            value={newModel.name}
+                            onChange={(e) => setNewModel({ ...newModel, name: e.target.value })}
+                            className="w-full p-2 border rounded text-sm"
+                            placeholder="Имя модели"
+                          />
+                        ) : (
+                          <span className="font-bold text-slate-700">{model.name}</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 font-mono text-xs text-slate-600">
+                        {/* ID cannot be edited once created easily without re-creating, locking it for simple edit */}
+                        {model.id}
+                      </td>
+                      <td className="px-6 py-4">
+                        {editingModelId === model.id ? (
+                          <input
+                            type="text"
+                            value={newModel.provider}
+                            onChange={(e) => setNewModel({ ...newModel, provider: e.target.value })}
+                            className="w-full p-2 border rounded text-sm"
+                            placeholder="Провайдер"
+                          />
+                        ) : (
+                          <span className="inline-block px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">{model.provider}</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right flex justify-end gap-2">
+                        {editingModelId === model.id ? (
+                          <>
+                            <button onClick={handleSaveModel} className="text-green-600 hover:bg-green-50 p-1.5 rounded"><Save className="w-4 h-4" /></button>
+                            <button onClick={() => { setEditingModelId(null); setIsCreatingModel(false); }} className="text-gray-400 hover:bg-gray-100 p-1.5 rounded"><X className="w-4 h-4" /></button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={() => handleEditModel(model)} className="text-brand-green hover:bg-green-50 p-1.5 rounded"><Edit2 className="w-4 h-4" /></button>
+                            <button onClick={() => handleDeleteModel(model.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><Trash2 className="w-4 h-4" /></button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+
+                {/* Creation Row */}
+                {isCreatingModel && (
+                  <tr className="bg-green-50/50 border-t-2 border-brand-green/20">
+                    <td className="px-6 py-4">
+                      <input
+                        type="text"
+                        value={newModel.name}
+                        onChange={(e) => setNewModel({ ...newModel, name: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-brand-green outline-none"
+                        placeholder="Имя (напр. GPT-5)"
+                        autoFocus
+                      />
+                    </td>
+                    <td className="px-6 py-4">
+                      <input
+                        type="text"
+                        value={newModel.id}
+                        onChange={(e) => setNewModel({ ...newModel, id: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-brand-green outline-none font-mono"
+                        placeholder="API ID (openai/gpt-5)"
+                      />
+                    </td>
+                    <td className="px-6 py-4">
+                      <input
+                        type="text"
+                        value={newModel.provider}
+                        onChange={(e) => setNewModel({ ...newModel, provider: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-brand-green outline-none"
+                        placeholder="Провайдер (напр. OpenAI)"
+                      />
+                    </td>
+                    <td className="px-6 py-4 text-right flex justify-end gap-2">
+                      <button onClick={handleSaveModel} className="bg-brand-green text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-700">Сохранить</button>
+                      <button onClick={() => setIsCreatingModel(false)} className="bg-gray-200 text-gray-700 px-3 py-1.5 rounded text-xs font-bold hover:bg-gray-300">Отмена</button>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-gray-500 mt-4">
+            💡 Используйте ID модели в формате OpenRouter (например: <code>openai/gpt-4o</code>, <code>google/gemini-pro-1.5</code>). <br />
+            Удаление модели не удалит её из истории генераций, но она станет недоступна для новых задач и настройки тарифов.
+          </p>
+        </div>
       )}
 
       {/* --- PLANS TAB --- */}
@@ -557,7 +571,7 @@ export const AdminPanel: React.FC = () => {
               <h3 className="text-lg font-bold text-slate-900">Тарифные планы</h3>
               <p className="text-sm text-slate-500">Настройка ограничений и доступа к моделям</p>
             </div>
-            <button 
+            <button
               onClick={handleCreatePlan}
               className="bg-brand-green hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors"
             >
@@ -574,14 +588,14 @@ export const AdminPanel: React.FC = () => {
                     {plan.isDefault && <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">Default</span>}
                   </div>
                   <div className="flex gap-1">
-                    <button 
+                    <button
                       onClick={() => setEditingPlan(plan)}
                       className="p-1.5 text-gray-500 hover:text-brand-green hover:bg-white rounded-lg transition-colors"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     {!plan.isDefault && (
-                      <button 
+                      <button
                         onClick={() => handleDeletePlan(plan.id)}
                         className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-white rounded-lg transition-colors"
                       >
@@ -590,44 +604,44 @@ export const AdminPanel: React.FC = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="space-y-2 text-sm text-slate-600">
                   <p className="flex justify-between">
-                    <span>Лимит символов:</span> 
+                    <span>Лимит символов:</span>
                     <span className="font-mono font-bold">{plan.maxChars}</span>
                   </p>
-                   <p className="flex justify-between">
-                    <span>Генераций/Мес:</span> 
+                  <p className="flex justify-between">
+                    <span>Генераций/Мес:</span>
                     <span className="font-mono font-bold">
                       {plan.maxGenerationsPerMonth ? plan.maxGenerationsPerMonth : '∞'}
                     </span>
                   </p>
                   <p className="flex justify-between">
-                    <span>Генераций/Сутки:</span> 
+                    <span>Генераций/Сутки:</span>
                     <span className="font-mono font-bold">
                       {plan.maxGenerationsPerDay ? plan.maxGenerationsPerDay : '∞'}
                     </span>
                   </p>
                   <p className="flex justify-between">
-                    <span>Ключей в Excel:</span> 
+                    <span>Ключей в Excel:</span>
                     <span className="font-mono font-bold">
                       {plan.maxKeywords ? plan.maxKeywords : '∞'}
                     </span>
                   </p>
-                   <p className="flex justify-between items-center">
-                    <span>Проверка спама:</span> 
+                  <p className="flex justify-between items-center">
+                    <span>Проверка спама:</span>
                     <span className={`text-xs px-2 py-0.5 rounded ${plan.canCheckSpam ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {plan.canCheckSpam ? 'Включено' : 'Выключено'}
                     </span>
                   </p>
-                   <p className="flex justify-between items-center">
-                    <span>Улучшение (Relevance):</span> 
+                  <p className="flex justify-between items-center">
+                    <span>Улучшение (Relevance):</span>
                     <span className={`text-xs px-2 py-0.5 rounded ${plan.canOptimizeRelevance ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {plan.canOptimizeRelevance ? 'Включено' : 'Выключено'}
                     </span>
                   </p>
                   <p className="flex justify-between">
-                    <span>Доступно моделей:</span> 
+                    <span>Доступно моделей:</span>
                     <span className="font-mono font-bold">{plan.allowedModels.length}</span>
                   </p>
                 </div>
@@ -669,7 +683,7 @@ export const AdminPanel: React.FC = () => {
               {settingsSaved ? 'Сохранено' : 'Сохранить все'}
             </button>
           </div>
-          
+
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Telegram Link */}
@@ -705,14 +719,14 @@ export const AdminPanel: React.FC = () => {
                 <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
                   <FileText className="w-4 h-4" /> Системный Промпт (Global)
                 </label>
-                <button 
+                <button
                   onClick={handleResetPrompt}
                   className="text-xs flex items-center gap-1 text-slate-500 hover:text-red-600 transition-colors"
-                 >
-                   <RotateCcw className="w-3 h-3" /> Сбросить
-                 </button>
+                >
+                  <RotateCcw className="w-3 h-3" /> Сбросить
+                </button>
               </div>
-              
+
               <textarea
                 value={systemPrompt}
                 onChange={(e) => setSystemPrompt(e.target.value)}
@@ -728,13 +742,13 @@ export const AdminPanel: React.FC = () => {
       {editingUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md relative">
-            <button 
+            <button
               onClick={() => setEditingUser(null)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
             >
               <X className="w-5 h-5" />
             </button>
-            
+
             <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
               <Edit2 className="w-5 h-5 text-brand-green" />
               Редактирование подписки
@@ -796,13 +810,13 @@ export const AdminPanel: React.FC = () => {
       {editingPlan && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl relative flex flex-col max-h-[90vh]">
-            <button 
+            <button
               onClick={() => setEditingPlan(null)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
             >
               <X className="w-5 h-5" />
             </button>
-            
+
             <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
               <Layers className="w-5 h-5 text-brand-green" />
               {plans.some(p => p.id === editingPlan.id) ? 'Редактировать тариф' : 'Создать тариф'}
@@ -850,9 +864,9 @@ export const AdminPanel: React.FC = () => {
                   />
                   <p className="text-xs text-gray-400 mt-1">0 или пустое поле = Безлимит</p>
                 </div>
-                 <div>
+                <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
-                     <Database className="w-3 h-3" /> Лимит ключей (Excel)
+                    <Database className="w-3 h-3" /> Лимит ключей (Excel)
                   </label>
                   <input
                     type="number"
@@ -866,45 +880,45 @@ export const AdminPanel: React.FC = () => {
               </div>
 
               <div className="mb-6 space-y-3">
-                 <label className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
-                  <input 
-                    type="checkbox" 
+                <label className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                  <input
+                    type="checkbox"
                     checked={editingPlan.canCheckSpam || false}
-                    onChange={(e) => setEditingPlan({...editingPlan, canCheckSpam: e.target.checked})}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, canCheckSpam: e.target.checked })}
                     className="rounded text-brand-green focus:ring-brand-green w-5 h-5"
                   />
                   <div>
-                     <span className="text-sm font-bold text-slate-700 flex items-center gap-1">
-                       <AlertOctagon className="w-4 h-4 text-orange-500" /> Проверка на спам
-                     </span>
-                     <p className="text-xs text-slate-500">
-                       Разрешить пользователям этого тарифа проверять и редактировать тексты на переспам (Grok 4.1 Fast)
-                     </p>
+                    <span className="text-sm font-bold text-slate-700 flex items-center gap-1">
+                      <AlertOctagon className="w-4 h-4 text-orange-500" /> Проверка на спам
+                    </span>
+                    <p className="text-xs text-slate-500">
+                      Разрешить пользователям этого тарифа проверять и редактировать тексты на переспам (Grok 4.1 Fast)
+                    </p>
                   </div>
                 </label>
 
                 <label className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={editingPlan.canOptimizeRelevance || false}
-                    onChange={(e) => setEditingPlan({...editingPlan, canOptimizeRelevance: e.target.checked})}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, canOptimizeRelevance: e.target.checked })}
                     className="rounded text-brand-green focus:ring-brand-green w-5 h-5"
                   />
                   <div>
-                     <span className="text-sm font-bold text-slate-700 flex items-center gap-1">
-                       <TrendingUp className="w-4 h-4 text-blue-500" /> Улучшение Релевантности
-                     </span>
-                     <p className="text-xs text-slate-500">
-                       Разрешить функцию автоматического добавления недостающих ключей
-                     </p>
+                    <span className="text-sm font-bold text-slate-700 flex items-center gap-1">
+                      <TrendingUp className="w-4 h-4 text-blue-500" /> Улучшение Релевантности
+                    </span>
+                    <p className="text-xs text-slate-500">
+                      Разрешить функцию автоматического добавления недостающих ключей
+                    </p>
                   </div>
                 </label>
 
                 <label className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={editingPlan.isDefault || false}
-                    onChange={(e) => setEditingPlan({...editingPlan, isDefault: e.target.checked})}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, isDefault: e.target.checked })}
                     className="rounded text-brand-green focus:ring-brand-green w-5 h-5"
                   />
                   <div>
@@ -918,34 +932,34 @@ export const AdminPanel: React.FC = () => {
                 <div className="flex justify-between items-center mb-3">
                   <label className="block text-sm font-bold text-slate-700">Доступные модели</label>
                   <div className="flex gap-2">
-                    <button 
-                      onClick={() => setEditingPlan({...editingPlan, allowedModels: models.map(m => m.id)})}
+                    <button
+                      onClick={() => setEditingPlan({ ...editingPlan, allowedModels: models.map(m => m.id) })}
                       className="text-xs text-brand-green hover:underline"
                     >
                       Выбрать все
                     </button>
-                    <button 
-                       onClick={() => setEditingPlan({...editingPlan, allowedModels: []})}
-                       className="text-xs text-red-500 hover:underline"
+                    <button
+                      onClick={() => setEditingPlan({ ...editingPlan, allowedModels: [] })}
+                      className="text-xs text-red-500 hover:underline"
                     >
                       Сбросить
                     </button>
                   </div>
                 </div>
                 <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 max-h-60 overflow-y-auto custom-scrollbar grid grid-cols-1 md:grid-cols-2 gap-2">
-                   {models.map(model => (
-                      <label key={model.id} className="flex items-center gap-2 p-2 hover:bg-white rounded cursor-pointer transition-colors">
-                        <input 
-                          type="checkbox" 
-                          checked={editingPlan.allowedModels.includes(model.id)}
-                          onChange={() => toggleModelInPlan(model.id)}
-                          className="rounded text-brand-green focus:ring-brand-green w-4 h-4"
-                        />
-                        <span className="text-sm text-slate-700 truncate" title={model.id}>
-                          {model.name}
-                        </span>
-                      </label>
-                   ))}
+                  {models.map(model => (
+                    <label key={model.id} className="flex items-center gap-2 p-2 hover:bg-white rounded cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={editingPlan.allowedModels.includes(model.id)}
+                        onChange={() => toggleModelInPlan(model.id)}
+                        className="rounded text-brand-green focus:ring-brand-green w-4 h-4"
+                      />
+                      <span className="text-sm text-slate-700 truncate" title={model.id}>
+                        {model.name}
+                      </span>
+                    </label>
+                  ))}
                 </div>
               </div>
             </div>

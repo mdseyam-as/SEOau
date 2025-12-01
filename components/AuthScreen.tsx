@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Send, Smartphone } from 'lucide-react';
 import { authService } from '../services/authService';
+import { apiService } from '../services/apiService';
 
 interface AuthScreenProps {
   onLogin: (user: any) => void;
@@ -32,13 +33,20 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const handleTelegramLogin = async () => {
     setIsLoading(true);
     try {
-      const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-      if (!tgUser) throw new Error("Не удалось получить данные Telegram");
+      const tg = window.Telegram?.WebApp;
+      if (!tg?.initData) {
+        throw new Error("initData пустое, Telegram WebApp не передал данные");
+      }
 
-      const user = await authService.loginOrRegisterTelegram(tgUser);
+      // Передаём initData в apiService, чтобы оно ушло в заголовке X-Telegram-Init-Data
+      apiService.setInitData(tg.initData);
+
+      // Логинимся через бэкенд (создаёт/находит юзера в Mongo)
+      const { user } = await apiService.login();
       onLogin(user);
     } catch (err: any) {
-      setError("Ошибка авторизации через Telegram: " + err.message);
+      setError("Ошибка авторизации через Telegram: " + (err.message || ""));
+    } finally {
       setIsLoading(false);
     }
   };
@@ -46,7 +54,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const handleDevLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!devId) return;
-    
+
     setIsLoading(true);
     try {
       // Simulation of Telegram User Object
@@ -55,7 +63,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         first_name: `TestUser_${devId.slice(-4)}`,
         username: `user_${devId}`
       };
-      
+
       const user = await authService.loginOrRegisterTelegram(mockUser);
       onLogin(user);
     } catch (err: any) {
@@ -67,7 +75,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-500">
-        
+
         {/* Header Area */}
         <div className="bg-brand-green p-8 text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
@@ -82,7 +90,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
         {/* Content Area */}
         <div className="p-8">
-          
+
           {error && (
             <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center animate-in fade-in">
               {error}
@@ -95,15 +103,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
               <p className="text-slate-600 font-medium">Авторизация...</p>
             </div>
           ) : isTelegramEnv ? (
-             <div className="text-center py-8">
-               <p className="text-slate-600">Подождите, идет вход через Telegram...</p>
-             </div>
+            <div className="text-center py-8">
+              <p className="text-slate-600">Подождите, идет вход через Telegram...</p>
+            </div>
           ) : (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-xl font-bold text-slate-800 mb-2">Вход в систему</h2>
                 <p className="text-slate-500 text-sm">
-                  Приложение не запущено внутри Telegram. <br/>
+                  Приложение не запущено внутри Telegram. <br />
                   Используйте симуляцию ID для входа.
                 </p>
               </div>

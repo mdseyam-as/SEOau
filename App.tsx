@@ -13,6 +13,7 @@ import { GenerationConfig, KeywordRow, SeoResult, AIModel, Project, TextTone, Te
 import { LayoutDashboard, LogOut, ShieldCheck, Clock, Lock, ExternalLink, ChevronRight, Home, History, Sparkles, Zap } from 'lucide-react';
 import { User, authService, SubscriptionPlan } from './services/authService';
 import { projectService } from './services/projectService';
+import { apiService } from './services/apiService';
 
 const DEFAULT_CONFIG: GenerationConfig = {
   websiteName: '',
@@ -32,9 +33,30 @@ const DEFAULT_CONFIG: GenerationConfig = {
 };
 
 export default function App() {
+  // Detect if running in Telegram WebApp environment
+  const isTelegramEnv = typeof window !== 'undefined' && !!window.Telegram?.WebApp?.initData;
+
+  // Helper function to check limits (API or localStorage based on environment)
+  const checkLimits = async (user: User) => {
+    if (isTelegramEnv) {
+      return apiService.checkLimits(user.telegramId);
+    }
+    // dev-режим
+    return authService.checkGenerationLimit(user);
+  };
+
+  // Helper function to increment usage (API or localStorage based on environment)
+  const incrementUsage = async (user: User) => {
+    if (isTelegramEnv) {
+      const { user: updatedUser } = await apiService.incrementUsage(user.telegramId);
+      return updatedUser;
+    }
+    // dev-режим
+    return authService.incrementGenerationUsage(user.telegramId);
+  };
   const [user, setUser] = useState<User | null>(null);
   const [userPlan, setUserPlan] = useState<SubscriptionPlan | null>(null);
-  
+
   // Project State
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
@@ -47,10 +69,10 @@ export default function App() {
   const [result, setResult] = useState<SeoResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Spam Fix State
   const [isFixingSpam, setIsFixingSpam] = useState(false);
-  
+
   // Relevance Optimization State
   const [isOptimizingRelevance, setIsOptimizingRelevance] = useState(false);
 
@@ -69,10 +91,10 @@ export default function App() {
       const plan = authService.getPlanById(user.planId);
       setUserPlan(plan);
       loadProjects();
-      
+
       // Update config if current model is not allowed in new plan
       if (!plan.allowedModels.includes(config.model as string) && plan.allowedModels.length > 0) {
-          setConfig(prev => ({...prev, model: plan.allowedModels[0] as AIModel}));
+        setConfig(prev => ({ ...prev, model: plan.allowedModels[0] as AIModel }));
       }
     }
   }, [user]);
@@ -126,12 +148,12 @@ export default function App() {
     if (!user) return;
 
     // 1. Check Generation Limit
-    const limitCheck = authService.checkGenerationLimit(user);
+    const limitCheck = await checkLimits(user);
     if (!limitCheck.allowed) {
       if (limitCheck.reason === 'daily_limit') {
-         setError(`Превышен дневной лимит генераций (${userPlan?.maxGenerationsPerDay || 0}). Приходите завтра!`);
+        setError(`Превышен дневной лимит генераций (${userPlan?.maxGenerationsPerDay || 0}). Приходите завтра!`);
       } else {
-         setError(`Превышен месячный лимит генераций (${userPlan?.maxGenerationsPerMonth || 0}). Обновите подписку.`);
+        setError(`Превышен месячный лимит генераций (${userPlan?.maxGenerationsPerMonth || 0}). Обновите подписку.`);
       }
       return;
     }
@@ -142,8 +164,8 @@ export default function App() {
     }
 
     if (!config.websiteName) {
-       setError("Пожалуйста, укажите название сайта/бренда.");
-       return;
+      setError("Пожалуйста, укажите название сайта/бренда.");
+      return;
     }
 
     setIsGenerating(true);
@@ -152,20 +174,20 @@ export default function App() {
 
     try {
       const data = await generateSeoContent(config, keywords);
-      
+
       // -- SPAM CHECK INTEGRATION --
       if (userPlan?.canCheckSpam) {
-         try {
-           const spamResult = await checkContentForSpam(data.content);
-           data.spamScore = spamResult.spamScore;
-           data.spamAnalysis = spamResult.spamAnalysis;
-         } catch (spamError) {
-           console.error("Auto spam check failed", spamError);
-         }
+        try {
+          const spamResult = await checkContentForSpam(data.content);
+          data.spamScore = spamResult.spamScore;
+          data.spamAnalysis = spamResult.spamAnalysis;
+        } catch (spamError) {
+          console.error("Auto spam check failed", spamError);
+        }
       }
-      
+
       setResult(data);
-      
+
       // Save to History if in a project
       if (currentProject) {
         projectService.addToHistory(currentProject.id, config, data);
@@ -174,7 +196,7 @@ export default function App() {
       }
 
       // 2. Increment usage
-      const updatedUser = authService.incrementGenerationUsage(user.telegramId);
+      const updatedUser = await incrementUsage(user);
       setUser(updatedUser); // Update local state to reflect count change
 
     } catch (err: any) {
@@ -186,25 +208,25 @@ export default function App() {
 
   const handleFixSpam = async (content: string, analysis: string, model: string) => {
     if (!userPlan?.canCheckSpam || !result || !user) return;
-    
+
     // 1. Check Limits (Fixing counts as a generation)
-    const limitCheck = authService.checkGenerationLimit(user);
+    const limitCheck = await checkLimits(user);
     if (!limitCheck.allowed) {
-        const msg = limitCheck.reason === 'daily_limit'
-            ? `Превышен дневной лимит (${userPlan?.maxGenerationsPerDay}). Исправление недоступно.`
-            : `Превышен месячный лимит (${userPlan?.maxGenerationsPerMonth}). Исправление недоступно.`;
-        alert(msg);
-        return;
+      const msg = limitCheck.reason === 'daily_limit'
+        ? `Превышен дневной лимит (${userPlan?.maxGenerationsPerDay}). Исправление недоступно.`
+        : `Превышен месячный лимит (${userPlan?.maxGenerationsPerMonth}). Исправление недоступно.`;
+      alert(msg);
+      return;
     }
 
     setIsFixingSpam(true);
     try {
       // 2. Rewriting text using the User-Selected Model
       const newContent = await fixContentSpam(content, analysis, model);
-      
+
       // Update result with new content
       const updatedResult = { ...result, content: newContent };
-      
+
       // 3. Re-check spam on new content using Grok (Standard Procedure)
       try {
         const reCheck = await checkContentForSpam(newContent);
@@ -214,7 +236,7 @@ export default function App() {
         console.error("Re-check failed", e);
         updatedResult.spamAnalysis = "Текст обновлен, но повторный анализ не удался.";
       }
-      
+
       // Re-calculate Metrics
       try {
         updatedResult.metrics = calculateSeoMetrics(newContent, keywords);
@@ -223,7 +245,7 @@ export default function App() {
       setResult(updatedResult);
 
       // 4. Increment usage
-      const updatedUser = authService.incrementGenerationUsage(user.telegramId);
+      const updatedUser = await incrementUsage(user);
       setUser(updatedUser);
 
       // Optionally update history if needed, but complex to find/replace
@@ -241,48 +263,48 @@ export default function App() {
   };
 
   const handleOptimizeRelevance = async (missingKeywords: string[]) => {
-      if (!userPlan?.canOptimizeRelevance || !result || !user) return;
-      
-      const limitCheck = authService.checkGenerationLimit(user);
-      if (!limitCheck.allowed) {
-        alert("Лимит генераций исчерпан. Функция недоступна.");
-        return;
-      }
+    if (!userPlan?.canOptimizeRelevance || !result || !user) return;
 
-      setIsOptimizingRelevance(true);
+    const limitCheck = await checkLimits(user);
+    if (!limitCheck.allowed) {
+      alert("Лимит генераций исчерпан. Функция недоступна.");
+      return;
+    }
+
+    setIsOptimizingRelevance(true);
+    try {
+      const newContent = await optimizeContentRelevance(result.content, missingKeywords, config);
+
+      const updatedResult = { ...result, content: newContent };
+
+      // Recalculate metrics
       try {
-        const newContent = await optimizeContentRelevance(result.content, missingKeywords, config);
-        
-        const updatedResult = { ...result, content: newContent };
-        
-        // Recalculate metrics
+        updatedResult.metrics = calculateSeoMetrics(newContent, keywords);
+      } catch (e) { console.error("Metrics recalc failed", e); }
+
+      // Re-check spam
+      if (userPlan.canCheckSpam) {
         try {
-           updatedResult.metrics = calculateSeoMetrics(newContent, keywords);
-        } catch (e) { console.error("Metrics recalc failed", e); }
-        
-        // Re-check spam
-        if (userPlan.canCheckSpam) {
-           try {
-             const spam = await checkContentForSpam(newContent);
-             updatedResult.spamScore = spam.spamScore;
-             updatedResult.spamAnalysis = spam.spamAnalysis;
-           } catch(e) {}
-        }
-
-        setResult(updatedResult);
-        
-        const updatedUser = authService.incrementGenerationUsage(user.telegramId);
-        setUser(updatedUser);
-
-        if (currentProject) {
-           projectService.addToHistory(currentProject.id, { ...config, topic: config.topic + " (Optimize)" }, updatedResult);
-           setProjectHistory(projectService.getHistory(currentProject.id));
-        }
-      } catch (err: any) {
-        alert("Ошибка оптимизации: " + err.message);
-      } finally {
-        setIsOptimizingRelevance(false);
+          const spam = await checkContentForSpam(newContent);
+          updatedResult.spamScore = spam.spamScore;
+          updatedResult.spamAnalysis = spam.spamAnalysis;
+        } catch (e) { }
       }
+
+      setResult(updatedResult);
+
+      const updatedUser = await incrementUsage(user);
+      setUser(updatedUser);
+
+      if (currentProject) {
+        projectService.addToHistory(currentProject.id, { ...config, topic: config.topic + " (Optimize)" }, updatedResult);
+        setProjectHistory(projectService.getHistory(currentProject.id));
+      }
+    } catch (err: any) {
+      alert("Ошибка оптимизации: " + err.message);
+    } finally {
+      setIsOptimizingRelevance(false);
+    }
   };
 
   const handleDeleteHistoryItem = (id: string) => {
@@ -336,8 +358,8 @@ export default function App() {
     // --- Project Selection View ---
     if (!currentProject) {
       return (
-        <ProjectList 
-          projects={projects} 
+        <ProjectList
+          projects={projects}
           onCreateProject={handleCreateProject}
           onSelectProject={setCurrentProject}
           onDeleteProject={handleDeleteProject}
@@ -350,31 +372,31 @@ export default function App() {
       <div className="space-y-6">
         {/* Project Header & Breadcrumbs */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-           <div>
-             <div className="flex items-center text-sm text-slate-500 mb-1">
-               <button onClick={() => setCurrentProject(null)} className="hover:text-brand-green flex items-center gap-1">
-                 <Home className="w-3 h-3" /> Проекты
-               </button>
-               <ChevronRight className="w-4 h-4 mx-1" />
-               <span className="font-bold text-slate-800">{currentProject.name}</span>
-             </div>
-             <h2 className="text-xl font-bold text-slate-900">{currentProject.name}</h2>
-           </div>
+          <div>
+            <div className="flex items-center text-sm text-slate-500 mb-1">
+              <button onClick={() => setCurrentProject(null)} className="hover:text-brand-green flex items-center gap-1">
+                <Home className="w-3 h-3" /> Проекты
+              </button>
+              <ChevronRight className="w-4 h-4 mx-1" />
+              <span className="font-bold text-slate-800">{currentProject.name}</span>
+            </div>
+            <h2 className="text-xl font-bold text-slate-900">{currentProject.name}</h2>
+          </div>
 
-           <div className="flex p-1 bg-gray-100 rounded-lg w-full md:w-auto">
-             <button
-               onClick={() => setProjectTab('generator')}
-               className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'generator' ? 'bg-white text-brand-green shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-             >
-               <Sparkles className="w-4 h-4" /> Генератор
-             </button>
-             <button
-               onClick={() => setProjectTab('history')}
-               className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'history' ? 'bg-white text-brand-green shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-             >
-               <History className="w-4 h-4" /> История <span className="text-xs bg-gray-200 px-1.5 py-0.5 rounded-full text-gray-600 ml-1">{projectHistory.length}</span>
-             </button>
-           </div>
+          <div className="flex p-1 bg-gray-100 rounded-lg w-full md:w-auto">
+            <button
+              onClick={() => setProjectTab('generator')}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'generator' ? 'bg-white text-brand-green shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Sparkles className="w-4 h-4" /> Генератор
+            </button>
+            <button
+              onClick={() => setProjectTab('history')}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'history' ? 'bg-white text-brand-green shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <History className="w-4 h-4" /> История <span className="text-xs bg-gray-200 px-1.5 py-0.5 rounded-full text-gray-600 ml-1">{projectHistory.length}</span>
+            </button>
+          </div>
         </div>
 
         {projectTab === 'history' ? (
@@ -383,7 +405,7 @@ export default function App() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 animate-in fade-in slide-in-from-bottom-2">
             {/* Left Sidebar: Inputs */}
             <div className="lg:col-span-4 space-y-6 order-1">
-              
+
               {/* Subscription Alert */}
               {isLocked && (
                 <div className="relative overflow-hidden bg-white rounded-xl shadow-lg border border-red-100 animate-in slide-in-from-top duration-500 z-10">
@@ -403,9 +425,9 @@ export default function App() {
                       </div>
                     </div>
                     <div className="space-y-3">
-                      <a 
-                        href={telegramLink} 
-                        target="_blank" 
+                      <a
+                        href={telegramLink}
+                        target="_blank"
                         rel="noreferrer"
                         className="block w-full bg-[#0088cc] hover:bg-[#0077b5] text-white text-xs font-bold py-2 px-3 rounded-lg text-center transition-colors flex items-center justify-center gap-2"
                       >
@@ -419,18 +441,18 @@ export default function App() {
 
               <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-200">
                 <h2 className="font-bold text-lg mb-4 text-slate-900">1. Источник данных</h2>
-                <FileUpload 
-                   onKeywordsLoaded={setKeywords} 
-                   disabled={isLocked}
-                   maxKeywords={userPlan?.maxKeywords} 
+                <FileUpload
+                  onKeywordsLoaded={setKeywords}
+                  disabled={isLocked}
+                  maxKeywords={userPlan?.maxKeywords}
                 />
                 <KeywordList keywords={keywords} />
               </div>
 
-              <SettingsForm 
+              <SettingsForm
                 key={currentProject ? currentProject.id : 'global'}
-                config={config} 
-                onChange={setConfig} 
+                config={config}
+                onChange={setConfig}
                 disabled={isGenerating}
                 isLocked={isLocked}
                 onSubmit={handleGenerate}
@@ -468,8 +490,8 @@ export default function App() {
 
               {!isGenerating && result && (
                 <div className={isLocked ? 'opacity-60 grayscale-[0.5] pointer-events-none select-none blur-[1px]' : ''}>
-                  <ResultView 
-                    result={result} 
+                  <ResultView
+                    result={result}
                     onFixSpam={userPlan?.canCheckSpam ? handleFixSpam : undefined}
                     isFixingSpam={isFixingSpam}
                     userPlan={userPlan}
@@ -498,7 +520,7 @@ export default function App() {
               <h1 className="text-lg md:text-xl font-bold tracking-tight truncate">SEO Generator</h1>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4">
             {/* Admin Toggle */}
             {user.role === 'admin' && (
@@ -518,48 +540,48 @@ export default function App() {
             {user.role !== 'admin' && (
               <div className="hidden md:flex items-center gap-2">
                 {/* Generation Usage Counter - REMAINING */}
-                 <div className="flex flex-col items-end sm:flex-row sm:items-center gap-2 bg-slate-700 px-3 py-1.5 rounded-lg sm:rounded-full border border-slate-600" title="Осталось генераций">
-                    <Zap className={`w-4 h-4 text-yellow-400`} />
-                    <div className="flex flex-col sm:flex-row gap-0 sm:gap-3 text-xs sm:text-sm font-medium text-gray-200">
-                      <span title="Осталось на сегодня">
-                        Сутки: <span className={(typeof dailyRemaining === 'number' && dailyRemaining <= 0) ? 'text-red-400' : 'text-white'}>{dailyRemaining}</span>
-                      </span>
-                      <span className="hidden sm:inline text-slate-500">|</span>
-                      <span title="Осталось на месяц">
-                        Всего: <span className={(typeof monthlyRemaining === 'number' && monthlyRemaining <= 0) ? 'text-red-400' : 'text-white'}>{monthlyRemaining}</span>
-                      </span>
-                    </div>
-                 </div>
+                <div className="flex flex-col items-end sm:flex-row sm:items-center gap-2 bg-slate-700 px-3 py-1.5 rounded-lg sm:rounded-full border border-slate-600" title="Осталось генераций">
+                  <Zap className={`w-4 h-4 text-yellow-400`} />
+                  <div className="flex flex-col sm:flex-row gap-0 sm:gap-3 text-xs sm:text-sm font-medium text-gray-200">
+                    <span title="Осталось на сегодня">
+                      Сутки: <span className={(typeof dailyRemaining === 'number' && dailyRemaining <= 0) ? 'text-red-400' : 'text-white'}>{dailyRemaining}</span>
+                    </span>
+                    <span className="hidden sm:inline text-slate-500">|</span>
+                    <span title="Осталось на месяц">
+                      Всего: <span className={(typeof monthlyRemaining === 'number' && monthlyRemaining <= 0) ? 'text-red-400' : 'text-white'}>{monthlyRemaining}</span>
+                    </span>
+                  </div>
+                </div>
 
                 {isSubscriptionActive ? (
-                   <div className="flex items-center gap-2 bg-brand-green/10 bg-opacity-20 px-3 py-1.5 rounded-full border border-brand-green/30">
-                     <Clock className="w-4 h-4 text-brand-green" />
-                     {user.planId === 'free' ? (
-                        <span className="text-sm font-medium text-green-400">Бессрочно</span>
-                     ) : (
-                        <span className="text-sm font-medium text-green-400">
-                          {daysRemaining} дн.
-                        </span>
-                     )}
-                     {userPlan && (
-                        <span className="hidden lg:inline text-xs bg-brand-dark/50 px-2 py-0.5 rounded text-gray-300 ml-1">
-                          {userPlan.name}
-                        </span>
-                     )}
-                   </div>
+                  <div className="flex items-center gap-2 bg-brand-green/10 bg-opacity-20 px-3 py-1.5 rounded-full border border-brand-green/30">
+                    <Clock className="w-4 h-4 text-brand-green" />
+                    {user.planId === 'free' ? (
+                      <span className="text-sm font-medium text-green-400">Бессрочно</span>
+                    ) : (
+                      <span className="text-sm font-medium text-green-400">
+                        {daysRemaining} дн.
+                      </span>
+                    )}
+                    {userPlan && (
+                      <span className="hidden lg:inline text-xs bg-brand-dark/50 px-2 py-0.5 rounded text-gray-300 ml-1">
+                        {userPlan.name}
+                      </span>
+                    )}
+                  </div>
                 ) : (
-                   <div className="flex items-center gap-2 bg-red-500/20 px-3 py-1.5 rounded-full border border-red-500/50">
-                      <Lock className="w-4 h-4 text-red-400" />
-                      <span className="text-sm font-medium text-red-400">Нет доступа</span>
-                   </div>
+                  <div className="flex items-center gap-2 bg-red-500/20 px-3 py-1.5 rounded-full border border-red-500/50">
+                    <Lock className="w-4 h-4 text-red-400" />
+                    <span className="text-sm font-medium text-red-400">Нет доступа</span>
+                  </div>
                 )}
               </div>
             )}
-            
+
             <div className="hidden md:block text-sm text-slate-400">
-               {user.firstName} {user.username ? `(@${user.username})` : ''}
+              {user.firstName} {user.username ? `(@${user.username})` : ''}
             </div>
-            <button 
+            <button
               onClick={handleLogout}
               className="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-white"
               title="Выйти"
