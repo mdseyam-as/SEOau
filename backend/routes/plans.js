@@ -1,6 +1,7 @@
 import express from 'express';
 import Plan from '../models/Plan.js';
-import { requireAdmin } from '../middleware/auth.js';
+import User from '../models/User.js';
+import { validateTelegramAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -38,10 +39,33 @@ router.get('/:id', async (req, res) => {
 });
 
 /**
+ * Middleware to check admin role from DB
+ */
+const checkAdminRole = async (req, res, next) => {
+    try {
+        if (!req.telegramUser) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const user = await User.findOne({ telegramId: req.telegramUser.id });
+
+        if (!user || user.role !== 'admin') {
+            return res.status(403).json({ error: 'Access denied. Admin only.' });
+        }
+
+        req.user = user; // Attach full user object
+        next();
+    } catch (error) {
+        console.error('Admin check error:', error);
+        res.status(500).json({ error: 'Admin check failed' });
+    }
+};
+
+/**
  * POST /api/plans
  * Create new plan (admin only)
  */
-router.post('/', requireAdmin, async (req, res) => {
+router.post('/', validateTelegramAuth, checkAdminRole, async (req, res) => {
     try {
         const plan = new Plan(req.body);
         await plan.save();
@@ -57,7 +81,7 @@ router.post('/', requireAdmin, async (req, res) => {
  * PUT /api/plans/:id
  * Update plan (admin only)
  */
-router.put('/:id', requireAdmin, async (req, res) => {
+router.put('/:id', validateTelegramAuth, checkAdminRole, async (req, res) => {
     try {
         const plan = await Plan.findOneAndUpdate(
             { id: req.params.id },
@@ -80,7 +104,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
  * DELETE /api/plans/:id
  * Delete plan (admin only)
  */
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', validateTelegramAuth, checkAdminRole, async (req, res) => {
     try {
         const plan = await Plan.findOneAndDelete({ id: req.params.id });
 
