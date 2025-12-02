@@ -88,22 +88,35 @@ export default function App() {
   // Update plan when user changes
   useEffect(() => {
     if (user) {
-      const plan = authService.getPlanById(user.planId);
-      setUserPlan(plan);
-      loadProjects();
+      const loadPlan = async () => {
+        try {
+          const { plan } = await apiService.getPlan(user.planId);
+          setUserPlan(plan);
 
-      // Update config if current model is not allowed in new plan
-      if (!plan.allowedModels.includes(config.model as string) && plan.allowedModels.length > 0) {
-        setConfig(prev => ({ ...prev, model: plan.allowedModels[0] as AIModel }));
-      }
+          // Update config if current model is not allowed in new plan
+          if (!plan.allowedModels.includes(config.model as string) && plan.allowedModels.length > 0) {
+            setConfig(prev => ({ ...prev, model: plan.allowedModels[0] as AIModel }));
+          }
+        } catch (e) {
+          console.error("Failed to load plan", e);
+          // Fallback to local if API fails
+          const localPlan = authService.getPlanById(user.planId);
+          setUserPlan(localPlan);
+        }
+      };
+      loadPlan();
+      loadProjects();
     }
   }, [user]);
 
   // Load history when project changes
   useEffect(() => {
     if (currentProject) {
-      const history = projectService.getHistory(currentProject.id);
-      setProjectHistory(history);
+      const loadHistory = async () => {
+        const history = await projectService.getHistory(currentProject.id);
+        setProjectHistory(history);
+      };
+      loadHistory();
       // Reset generator when entering project
       setKeywords([]);
       setConfig(DEFAULT_CONFIG);
@@ -112,22 +125,23 @@ export default function App() {
     }
   }, [currentProject]);
 
-  const loadProjects = () => {
+  const loadProjects = async () => {
     if (user) {
-      setProjects(projectService.getProjects(user.telegramId));
+      const loadedProjects = await projectService.getProjects(user.telegramId);
+      setProjects(loadedProjects);
     }
   };
 
-  const handleCreateProject = (name: string, description: string) => {
+  const handleCreateProject = async (name: string, description: string) => {
     if (user) {
-      projectService.createProject(user.telegramId, name, description);
-      loadProjects();
+      await projectService.createProject(user.telegramId, name, description);
+      await loadProjects();
     }
   };
 
-  const handleDeleteProject = (id: string) => {
-    projectService.deleteProject(id);
-    loadProjects();
+  const handleDeleteProject = async (id: string) => {
+    await projectService.deleteProject(id);
+    await loadProjects();
   };
 
   const isSubscriptionActive = React.useMemo(() => {
@@ -190,9 +204,10 @@ export default function App() {
 
       // Save to History if in a project
       if (currentProject) {
-        projectService.addToHistory(currentProject.id, config, data);
+        await projectService.addToHistory(currentProject.id, config, data);
         // Refresh history
-        setProjectHistory(projectService.getHistory(currentProject.id));
+        const history = await projectService.getHistory(currentProject.id);
+        setProjectHistory(history);
       }
 
       // 2. Increment usage
@@ -251,8 +266,9 @@ export default function App() {
       // Optionally update history if needed, but complex to find/replace
       if (currentProject) {
         // Just add as a new history item for now to preserve original
-        projectService.addToHistory(currentProject.id, { ...config, topic: config.topic + " (Fix Spam)" }, updatedResult);
-        setProjectHistory(projectService.getHistory(currentProject.id));
+        await projectService.addToHistory(currentProject.id, { ...config, topic: config.topic + " (Fix Spam)" }, updatedResult);
+        const history = await projectService.getHistory(currentProject.id);
+        setProjectHistory(history);
       }
 
     } catch (err: any) {
@@ -297,8 +313,9 @@ export default function App() {
       setUser(updatedUser);
 
       if (currentProject) {
-        projectService.addToHistory(currentProject.id, { ...config, topic: config.topic + " (Optimize)" }, updatedResult);
-        setProjectHistory(projectService.getHistory(currentProject.id));
+        await projectService.addToHistory(currentProject.id, { ...config, topic: config.topic + " (Optimize)" }, updatedResult);
+        const history = await projectService.getHistory(currentProject.id);
+        setProjectHistory(history);
       }
     } catch (err: any) {
       alert("Ошибка оптимизации: " + err.message);
@@ -307,10 +324,11 @@ export default function App() {
     }
   };
 
-  const handleDeleteHistoryItem = (id: string) => {
-    projectService.deleteHistoryItem(id);
+  const handleDeleteHistoryItem = async (id: string) => {
+    await projectService.deleteHistoryItem(id);
     if (currentProject) {
-      setProjectHistory(projectService.getHistory(currentProject.id));
+      const history = await projectService.getHistory(currentProject.id);
+      setProjectHistory(history);
     }
   };
 
@@ -324,8 +342,18 @@ export default function App() {
     setCurrentProject(null);
   };
 
-  const handleLogin = (loggedInUser: User) => {
+  const handleLogin = async (loggedInUser: User) => {
     setUser(loggedInUser);
+
+    // Load global settings from backend (API key, system prompt, etc.)
+    try {
+      await authService.loadGlobalSettings();
+      const settings = authService.getGlobalSettings();
+      setTelegramLink(settings.telegramLink);
+    } catch (e) {
+      console.error('Failed to load global settings:', e);
+    }
+
     if (loggedInUser.role === 'admin') {
       // Don't auto-show admin panel, let them choose.
       // But we can default to projects.

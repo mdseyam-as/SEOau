@@ -128,15 +128,44 @@ const DEFAULT_PLANS: SubscriptionPlan[] = [
   }
 ];
 
+// In-memory cache for global settings loaded from backend
+let cachedGlobalSettings: GlobalSettings = {
+  telegramLink: 'https://t.me/bankkz_admin',
+  openRouterApiKey: '',
+  systemPrompt: ''
+};
+
 export const authService = {
   // --- Settings ---
-  getGlobalSettings: (): GlobalSettings => {
-    const settings = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    return settings ? JSON.parse(settings) : { telegramLink: 'https://t.me/bankkz_admin', openRouterApiKey: '', systemPrompt: '' };
+
+  // Load settings from backend (should be called on app initialization)
+  loadGlobalSettings: async (): Promise<GlobalSettings> => {
+    try {
+      // Import apiService dynamically to avoid circular dependency
+      const { apiService } = await import('./apiService');
+      const { settings } = await apiService.getSettings();
+      cachedGlobalSettings = settings;
+      return settings;
+    } catch (e) {
+      console.error('Failed to load global settings from backend:', e);
+      return cachedGlobalSettings; // Return cached/default values
+    }
   },
 
-  saveGlobalSettings: (settings: GlobalSettings) => {
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  getGlobalSettings: (): GlobalSettings => {
+    return cachedGlobalSettings;
+  },
+
+  saveGlobalSettings: async (settings: GlobalSettings): Promise<void> => {
+    try {
+      // Import apiService dynamically to avoid circular dependency
+      const { apiService } = await import('./apiService');
+      const { settings: updatedSettings } = await apiService.updateSettings(settings);
+      cachedGlobalSettings = updatedSettings;
+    } catch (e) {
+      console.error('Failed to save global settings:', e);
+      throw e;
+    }
   },
 
   // --- Model Management ---

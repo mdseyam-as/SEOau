@@ -111,14 +111,19 @@ export const AdminPanel: React.FC = () => {
     }
   };
 
-  const handleSaveSettings = () => {
-    authService.saveGlobalSettings({
-      telegramLink,
-      openRouterApiKey: apiKey,
-      systemPrompt: systemPrompt
-    });
-    setSettingsSaved(true);
-    setTimeout(() => setSettingsSaved(false), 2000);
+  const handleSaveSettings = async () => {
+    try {
+      await authService.saveGlobalSettings({
+        telegramLink,
+        openRouterApiKey: apiKey,
+        systemPrompt: systemPrompt
+      });
+      setSettingsSaved(true);
+      setTimeout(() => setSettingsSaved(false), 2000);
+    } catch (e) {
+      console.error('Failed to save settings:', e);
+      alert('Ошибка при сохранении настроек: ' + (e as Error).message);
+    }
   };
 
   const handleResetPrompt = () => {

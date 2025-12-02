@@ -155,6 +155,18 @@ class ApiService {
             method: 'DELETE'
         });
     }
+
+    // Settings
+    async getSettings(): Promise<{ settings: { openRouterApiKey: string; systemPrompt: string; telegramLink: string } }> {
+        return this.request('/settings');
+    }
+
+    async updateSettings(settings: { openRouterApiKey?: string; systemPrompt?: string; telegramLink?: string }): Promise<{ settings: { openRouterApiKey: string; systemPrompt: string; telegramLink: string } }> {
+        return this.request('/settings', {
+            method: 'PUT',
+            body: JSON.stringify(settings)
+        });
+    }
 }
 
 export const apiService = new ApiService();

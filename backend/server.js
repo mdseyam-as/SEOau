@@ -13,6 +13,7 @@ import projectRoutes from './routes/projects.js';
 import historyRoutes from './routes/history.js';
 import planRoutes from './routes/plans.js';
 import webhookRoutes from './routes/webhook.js';
+import settingsRoutes from './routes/settings.js';
 
 // Import utilities
 import { initializeBot } from './utils/subscriptionManager.js';
@@ -76,6 +77,7 @@ app.use('/api/auth', validateTelegramAuth, authRoutes);
 app.use('/api/users', validateTelegramAuth, userRoutes);
 app.use('/api/projects', validateTelegramAuth, projectRoutes);
 app.use('/api/history', validateTelegramAuth, historyRoutes);
+app.use('/api/settings', validateTelegramAuth, settingsRoutes);
 
 // Serve Vite-built frontend
 import path from 'path';
