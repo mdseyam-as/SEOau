@@ -1,5 +1,6 @@
 import express from 'express';
 import Settings from '../models/Settings.js';
+import User from '../models/User.js';
 import { validateTelegramAuth as auth } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -40,8 +41,11 @@ router.get('/', auth, async (req, res) => {
  */
 router.put('/', auth, async (req, res) => {
     try {
-        // Check if user is admin
-        if (req.user.role !== 'admin') {
+        // Fetch user from DB to check role
+        // req.telegramUser is set by auth middleware
+        const user = await User.findOne({ telegramId: req.telegramUser.id });
+
+        if (!user || user.role !== 'admin') {
             return res.status(403).json({ error: 'Access denied. Admin only.' });
         }
 
