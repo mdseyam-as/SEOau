@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Send, Smartphone } from 'lucide-react';
+import { LayoutDashboard, Send, Smartphone, Loader2 } from 'lucide-react';
 import { apiService } from '../services/apiService';
 
 interface AuthScreenProps {
@@ -76,23 +76,27 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-3 sm:p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-500">
+    <div className="min-h-screen bg-mesh-animated flex items-center justify-center p-3 sm:p-4 relative overflow-hidden">
+      {/* Decorative Elements */}
+      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-brand-green/20 rounded-full blur-3xl animate-pulse-slow"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-brand-purple/20 rounded-full blur-3xl animate-pulse-slow delay-1000"></div>
+
+      <div className="w-full max-w-md glass-card rounded-2xl shadow-glass overflow-hidden animate-in fade-in zoom-in duration-700 relative z-10">
 
         {/* Header Area */}
-        <div className="bg-brand-green p-6 sm:p-8 text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+        <div className="bg-gradient-to-br from-brand-green/90 to-emerald-600/90 p-6 sm:p-8 text-center relative overflow-hidden backdrop-blur-sm">
+          <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 animate-gradient-x"></div>
           <div className="relative z-10 flex flex-col items-center">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-3 sm:mb-4 shadow-inner">
-              <LayoutDashboard className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 shadow-glow border border-white/20 animate-float">
+              <LayoutDashboard className="w-8 h-8 sm:w-10 sm:h-10 text-white drop-shadow-md" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">SEO Generator</h1>
-            <p className="text-green-100 text-xs sm:text-sm mt-1">Telegram Mini App v2.1</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-sm">SEO Generator</h1>
+            <p className="text-green-50 text-xs sm:text-sm mt-2 font-medium bg-white/10 px-3 py-1 rounded-full border border-white/10">Telegram Mini App v2.1</p>
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="p-6 sm:p-8">
+        <div className="p-6 sm:p-8 bg-white/60 backdrop-blur-md">
 
           {error && (
             <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center animate-in fade-in">
@@ -119,19 +123,19 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 </p>
               </div>
 
-              <form onSubmit={handleDevLogin} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Telegram ID (Simulated)</label>
-                  <div className="relative">
+              <form onSubmit={handleDevLogin} className="space-y-5">
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-slate-700 ml-1">Telegram ID (Dev Mode)</label>
+                  <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Smartphone className="h-5 w-5 text-gray-400" />
+                      <Smartphone className="h-5 w-5 text-slate-400 group-focus-within:text-brand-green transition-colors" />
                     </div>
                     <input
                       type="number"
                       value={devId}
                       onChange={(e) => setDevId(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-3 bg-white/80 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green transition-all shadow-sm group-hover:shadow-md"
                       placeholder="Например: 123456789"
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent outline-none text-sm"
                       required
                     />
                   </div>
@@ -139,18 +143,21 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
                 <button
                   type="submit"
-                  className="w-full bg-[#2AABEE] hover:bg-[#229ED9] text-white font-bold py-3 rounded-lg transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg"
+                  disabled={isLoading}
+                  className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-gradient-to-r from-brand-green to-emerald-600 hover:from-emerald-500 hover:to-brand-green focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-green disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-glow"
                 >
-                  <Send className="w-4 h-4" />
-                  Войти (Dev Mode)
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
+                      Вход...
+                    </>
+                  ) : (
+                    'Войти (Dev Mode)'
+                  )}
                 </button>
-              </form>
-
-              <div className="pt-4 border-t border-gray-100 text-center">
-                <p className="text-xs text-gray-400">
-                  Для добавления администратора, добавьте ID в массив ADMIN_IDS в коде.
-                </p>
-              </div>
+              </form>    <p className="text-xs text-gray-400">
+                Для добавления администратора, добавьте ID в массив ADMIN_IDS в коде.
+              </p>
             </div>
           )}
         </div>

@@ -535,17 +535,18 @@ export default function App() {
     );
   };
 
+  // Render
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans pb-10 md:pb-20 animate-in fade-in duration-500">
+    <div className="min-h-screen bg-mesh-animated text-slate-100 font-sans pb-10 md:pb-20 animate-in fade-in duration-700">
       {/* Header */}
-      <header className="bg-brand-dark text-white shadow-md sticky top-0 z-50">
+      <header className="glass-panel-dark sticky top-0 z-50 border-b border-white/5 shadow-glass">
         <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 md:py-4 flex items-center justify-between xl:max-w-7xl">
-          <div className="flex items-center gap-2 sm:gap-3 cursor-pointer min-w-0" onClick={() => { setCurrentProject(null); setShowAdminPanel(false); }}>
-            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-brand-green rounded-lg flex items-center justify-center shadow-lg shrink-0">
+          <div className="flex items-center gap-3 sm:gap-4 cursor-pointer min-w-0 group" onClick={() => { setCurrentProject(null); setShowAdminPanel(false); }}>
+            <div className="w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-br from-brand-green to-emerald-600 rounded-xl flex items-center justify-center shadow-glow-sm shrink-0 group-hover:scale-105 transition-transform duration-300">
               <LayoutDashboard className="text-white w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-base sm:text-lg md:text-xl font-bold tracking-tight truncate">SEO Generator</h1>
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">SEO Generator</h1>
             </div>
           </div>
 
@@ -555,8 +556,10 @@ export default function App() {
               <button
                 onClick={() => { setShowAdminPanel(!showAdminPanel); setCurrentProject(null); }}
                 className={`
-                  px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-full font-medium flex items-center gap-1 sm:gap-2 transition-colors whitespace-nowrap
-                  ${showAdminPanel ? 'bg-white text-brand-dark' : 'bg-slate-700 text-white hover:bg-slate-600'}
+                  px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-full font-medium flex items-center gap-2 transition-all duration-300 whitespace-nowrap
+                  ${showAdminPanel
+                    ? 'bg-white text-brand-dark shadow-glow'
+                    : 'bg-white/10 text-white hover:bg-white/20 border border-white/10'}
                 `}
               >
                 <ShieldCheck className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -566,52 +569,54 @@ export default function App() {
 
             {/* Subscription Counter (For Users) */}
             {user.role !== 'admin' && (
-              <div className="hidden sm:flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-3">
                 {/* Generation Usage Counter - REMAINING */}
-                <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-700 px-2 sm:px-3 py-1.5 rounded-full border border-slate-600" title="Осталось генераций">
-                  <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 shrink-0" />
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-gray-200">
+                <div className="flex items-center gap-2 sm:gap-3 bg-white/5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/10 backdrop-blur-sm" title="Осталось генераций">
+                  <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 shrink-0 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]" />
+                  <div className="flex items-center gap-2 sm:gap-3 text-xs font-medium text-gray-200">
                     <span title="Осталось на сегодня" className="whitespace-nowrap">
-                      <span className="hidden lg:inline">Сутки: </span><span className={(typeof dailyRemaining === 'number' && dailyRemaining <= 0) ? 'text-red-400' : 'text-white'}>{dailyRemaining}</span>
+                      <span className="hidden lg:inline text-gray-400">Сутки: </span>
+                      <span className={`font-bold ${(typeof dailyRemaining === 'number' && dailyRemaining <= 0) ? 'text-red-400' : 'text-white'}`}>{dailyRemaining}</span>
                     </span>
-                    <span className="text-slate-500">|</span>
+                    <span className="text-white/20">|</span>
                     <span title="Осталось на месяц" className="whitespace-nowrap">
-                      <span className="hidden lg:inline">Всего: </span><span className={(typeof monthlyRemaining === 'number' && monthlyRemaining <= 0) ? 'text-red-400' : 'text-white'}>{monthlyRemaining}</span>
+                      <span className="hidden lg:inline text-gray-400">Всего: </span>
+                      <span className={`font-bold ${(typeof monthlyRemaining === 'number' && monthlyRemaining <= 0) ? 'text-red-400' : 'text-white'}`}>{monthlyRemaining}</span>
                     </span>
                   </div>
                 </div>
 
                 {isSubscriptionActive ? (
-                  <div className="flex items-center gap-1.5 sm:gap-2 bg-brand-green/10 bg-opacity-20 px-2 sm:px-3 py-1.5 rounded-full border border-brand-green/30">
-                    <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-brand-green shrink-0" />
+                  <div className="flex items-center gap-2 sm:gap-3 bg-brand-green/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-brand-green/30 backdrop-blur-sm">
+                    <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-brand-green shrink-0 drop-shadow-[0_0_8px_rgba(0,220,130,0.5)]" />
                     {user.planId === 'free' ? (
-                      <span className="text-xs sm:text-sm font-medium text-green-400 whitespace-nowrap">Бессрочно</span>
+                      <span className="text-xs sm:text-sm font-bold text-brand-green whitespace-nowrap">Бессрочно</span>
                     ) : (
-                      <span className="text-xs sm:text-sm font-medium text-green-400 whitespace-nowrap">
+                      <span className="text-xs sm:text-sm font-bold text-brand-green whitespace-nowrap">
                         {daysRemaining} дн.
                       </span>
                     )}
                     {userPlan && (
-                      <span className="hidden xl:inline text-xs bg-brand-dark/50 px-2 py-0.5 rounded text-gray-300">
+                      <span className="hidden xl:inline text-xs bg-brand-green/20 px-2 py-0.5 rounded text-brand-green font-medium ml-1">
                         {userPlan.name}
                       </span>
                     )}
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 sm:gap-2 bg-red-500/20 px-2 sm:px-3 py-1.5 rounded-full border border-red-500/50">
+                  <div className="flex items-center gap-2 sm:gap-3 bg-red-500/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-red-500/30 backdrop-blur-sm">
                     <Lock className="w-3 h-3 sm:w-4 sm:h-4 text-red-400 shrink-0" />
-                    <span className="text-xs sm:text-sm font-medium text-red-400 whitespace-nowrap">Нет доступа</span>
+                    <span className="text-xs sm:text-sm font-bold text-red-400 whitespace-nowrap">Нет доступа</span>
                   </div>
                 )}
               </div>
             )}
 
-            <div className="hidden lg:block text-xs sm:text-sm text-slate-400 max-w-[120px] xl:max-w-none truncate">
+            <div className="hidden lg:block text-xs sm:text-sm text-slate-300 max-w-[120px] xl:max-w-none truncate font-medium">
               {user.firstName} {user.username ? `(@${user.username})` : ''}
             </div>
             <button
               onClick={handleLogout}
-              className="p-1.5 sm:p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-white shrink-0"
+              className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full transition-all duration-300 text-slate-400 hover:text-white shrink-0 active:scale-95"
               title="Выйти"
             >
               <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />

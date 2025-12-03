@@ -26,12 +26,12 @@ export const HistoryList: React.FC<HistoryListProps> = ({ history, onDelete }) =
 
   if (history.length === 0) {
     return (
-      <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-300">
-        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Clock className="w-8 h-8 text-gray-300" />
+      <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm">
+        <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse-slow">
+          <Clock className="w-8 h-8 text-slate-500" />
         </div>
-        <h3 className="text-lg font-medium text-slate-900">История пуста</h3>
-        <p className="text-slate-500 text-sm mt-1">Здесь будут отображаться результаты ваших генераций.</p>
+        <h3 className="text-lg sm:text-xl font-medium text-white">История пуста</h3>
+        <p className="text-slate-400 text-sm mt-2">Здесь будут отображаться результаты ваших генераций.</p>
       </div>
     );
   }
@@ -39,30 +39,30 @@ export const HistoryList: React.FC<HistoryListProps> = ({ history, onDelete }) =
   return (
     <div className="space-y-4">
       {history.map((item) => (
-        <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all">
+        <div key={item.id} className="glass-panel rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-glow-sm">
           <div
-            className={`p-3 sm:p-4 md:p-5 cursor-pointer flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between sm:items-center ${expandedId === item.id ? 'bg-gray-50' : 'hover:bg-gray-50/50'}`}
+            className={`p-4 sm:p-5 cursor-pointer flex flex-col sm:flex-row gap-4 justify-between sm:items-center ${expandedId === item.id ? 'bg-white/5' : 'hover:bg-white/5'}`}
             onClick={() => toggleExpand(item.id)}
           >
-            <div className="flex items-start gap-3">
-              <div className={`p-2 rounded-lg mt-1 md:mt-0 ${expandedId === item.id ? 'bg-white shadow-sm text-brand-green' : 'bg-gray-100 text-gray-500'}`}>
+            <div className="flex items-start gap-4">
+              <div className={`p-2.5 rounded-xl mt-1 md:mt-0 transition-colors ${expandedId === item.id ? 'bg-brand-green/20 text-brand-green' : 'bg-white/5 text-slate-400'}`}>
                 <FileText className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-bold text-slate-800 text-sm md:text-base">
+                <h4 className="font-bold text-white text-base md:text-lg mb-1">
                   {item.topic || 'Без темы'}
                 </h4>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-slate-500">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> {formatDate(item.timestamp)}
+                <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-400 font-medium">
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" /> {formatDate(item.timestamp)}
                   </span>
                   {item.targetUrl && (
-                    <span className="font-mono text-gray-400">
+                    <span className="font-mono text-slate-500 bg-white/5 px-2 py-0.5 rounded">
                       {item.targetUrl}
                     </span>
                   )}
                   {item.config?.model && (
-                    <span className="px-1.5 py-0.5 bg-gray-200 rounded text-[10px] text-gray-600">
+                    <span className="px-2 py-0.5 bg-brand-purple/20 text-brand-purple rounded border border-brand-purple/20">
                       {item.config.model.split('/').pop()}
                     </span>
                   )}
@@ -70,13 +70,13 @@ export const HistoryList: React.FC<HistoryListProps> = ({ history, onDelete }) =
               </div>
             </div>
 
-            <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto border-t md:border-t-0 border-gray-100 pt-3 md:pt-0">
+            <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto border-t md:border-t-0 border-white/5 pt-3 md:pt-0 mt-2 md:mt-0">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   if (confirm('Удалить эту запись?')) onDelete(item.id);
                 }}
-                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                 title="Удалить"
               >
                 <Trash2 className="w-4 h-4" />
@@ -93,23 +93,30 @@ export const HistoryList: React.FC<HistoryListProps> = ({ history, onDelete }) =
           </div>
 
           {expandedId === item.id && (
-            <div className="border-t border-gray-200 p-4 md:p-6 bg-white animate-in slide-in-from-top-2">
+            <div className="border-t border-white/10 p-4 md:p-6 bg-black/20 animate-in slide-in-from-top-2">
               <ResultView result={item.result} />
 
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <h5 className="font-bold text-slate-700 text-sm mb-3">Использованные настройки:</h5>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-600 bg-gray-50 p-4 rounded-lg">
+              <div className="mt-8 pt-6 border-t border-white/10">
+                <h5 className="font-bold text-white text-sm mb-4 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-brand-green" />
+                  Использованные настройки:
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-300 bg-white/5 p-5 rounded-xl border border-white/5">
                   <div>
-                    <span className="font-bold">Модель:</span> {item.config.model}
+                    <span className="font-bold text-slate-400 block mb-1">Модель:</span>
+                    <span className="text-white bg-white/10 px-2 py-1 rounded">{item.config.model}</span>
                   </div>
                   <div>
-                    <span className="font-bold">Лимиты:</span> {item.config.minChars} - {item.config.maxChars} симв.
+                    <span className="font-bold text-slate-400 block mb-1">Лимиты:</span>
+                    <span className="text-white">{item.config.minChars} - {item.config.maxChars} симв.</span>
                   </div>
                   <div>
-                    <span className="font-bold">LSI:</span> {item.config.lsiKeywords || 'Нет'}
+                    <span className="font-bold text-slate-400 block mb-1">LSI Ключи:</span>
+                    <span className="text-white italic">{item.config.lsiKeywords || 'Нет'}</span>
                   </div>
                   <div>
-                    <span className="font-bold">Конкуренты:</span> {item.config.competitorUrls || 'Нет'}
+                    <span className="font-bold text-slate-400 block mb-1">Конкуренты:</span>
+                    <span className="text-brand-blue underline truncate block max-w-full">{item.config.competitorUrls || 'Нет'}</span>
                   </div>
                 </div>
               </div>

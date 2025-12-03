@@ -188,12 +188,12 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
       onClick={onSubmit}
       disabled={isDisabled || !config.topic || !config.websiteName || isOverLimit}
       className={`
-        w-full py-3 md:py-4 rounded-lg font-bold text-white shadow-lg transition-all mt-2 text-sm md:text-base flex items-center justify-center gap-2
+        w-full py-3.5 md:py-4.5 rounded-xl font-bold text-white shadow-lg transition-all mt-4 text-sm md:text-base flex items-center justify-center gap-2
         ${isLocked
-          ? 'bg-gray-400 cursor-not-allowed'
+          ? 'bg-slate-700 cursor-not-allowed opacity-50'
           : (disabled || !config.topic || !config.websiteName || isOverLimit)
-            ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-brand-green hover:bg-green-700 hover:shadow-xl active:scale-[0.99]'}
+            ? 'bg-slate-700 cursor-not-allowed opacity-50'
+            : 'bg-gradient-to-r from-brand-green to-emerald-600 hover:from-emerald-500 hover:to-brand-green hover:shadow-glow transform hover:-translate-y-0.5 active:scale-95'}
       `}
     >
       {isLocked ? (
@@ -223,11 +223,13 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
   }, [availableModels]);
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col ${isLocked ? 'opacity-75' : ''}`}>
+    <div className={`glass-panel rounded-2xl flex flex-col ${isLocked ? 'opacity-75' : ''}`}>
       {/* Header */}
-      <div className="flex border-b border-gray-200 p-3 sm:p-4 bg-gray-50/50 rounded-t-xl">
-        <h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm sm:text-base">
-          <Settings2 className="w-4 h-4 sm:w-5 sm:h-5 text-brand-green" />
+      <div className="flex border-b border-white/10 p-4 sm:p-5 bg-white/5 rounded-t-2xl backdrop-blur-sm">
+        <h3 className="font-bold text-white flex items-center gap-2.5 text-base sm:text-lg">
+          <div className="p-1.5 bg-brand-green/20 rounded-lg">
+            <Settings2 className="w-4 h-4 sm:w-5 sm:h-5 text-brand-green" />
+          </div>
           Настройки генерации
         </h3>
       </div>
@@ -238,46 +240,46 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
         )}
 
         {/* Context & Brand Section */}
-        <div className="bg-gray-50 p-3 sm:p-4 rounded-lg border border-gray-100 space-y-3 sm:space-y-4">
-          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-700 border-b border-gray-200 pb-2 mb-2">
+        <div className="bg-white/5 p-4 sm:p-5 rounded-xl border border-white/10 space-y-4 sm:space-y-5">
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-300 border-b border-white/10 pb-3 mb-2">
             <Globe className="w-3 h-3 sm:w-4 sm:h-4 text-brand-green" />
             Контекст Бренда
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">Название сайта/бренда</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1.5">Название сайта/бренда</label>
               <input
                 type="text"
                 value={config.websiteName}
                 onChange={(e) => handleChange('websiteName', e.target.value)}
                 placeholder="Например: MyShop, CryptoBlog"
-                className="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-brand-green outline-none text-sm"
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none text-sm placeholder-slate-600 transition-all"
                 disabled={isDisabled}
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1">Целевая страна/регион</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1.5">Целевая страна/регион</label>
               <input
                 type="text"
                 value={config.targetCountry}
                 onChange={(e) => handleChange('targetCountry', e.target.value)}
                 placeholder="Казахстан, РФ, США..."
-                className="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-brand-green outline-none text-sm"
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none text-sm placeholder-slate-600 transition-all"
                 disabled={isDisabled}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1 flex items-center gap-1">
+              <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
                 <Mic className="w-3 h-3" /> Тон голоса (Tone of Voice)
               </label>
               <select
                 value={config.tone}
                 onChange={(e) => handleChange('tone', e.target.value)}
-                className="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-brand-green outline-none text-sm"
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none text-sm [&>option]:text-slate-900 transition-all"
                 disabled={isDisabled}
               >
                 {Object.values(TextTone).map(t => (
@@ -286,13 +288,13 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1 flex items-center gap-1">
+              <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
                 <Feather className="w-3 h-3" /> Стиль текста (Style)
               </label>
               <select
                 value={config.style}
                 onChange={(e) => handleChange('style', e.target.value)}
-                className="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-brand-green outline-none text-sm"
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none text-sm [&>option]:text-slate-900 transition-all"
                 disabled={isDisabled}
               >
                 {Object.values(TextStyle).map(s => (
@@ -304,26 +306,26 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
         </div>
 
         {/* Topic & URL */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
           <div>
-            <label className="block text-sm font-bold text-slate-900 mb-2">Тема статьи</label>
+            <label className="block text-sm font-bold text-slate-200 mb-2">Тема статьи</label>
             <input
               type="text"
               value={config.topic}
               onChange={(e) => handleChange('topic', e.target.value)}
               placeholder="Например: Обзор смартфонов 2024"
-              className="w-full p-3 bg-white border border-gray-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-brand-green outline-none shadow-sm placeholder-gray-400 text-sm"
+              className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none shadow-sm placeholder-slate-600 text-sm transition-all"
               disabled={isDisabled}
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-slate-900 mb-2">URL страницы (Slug)</label>
+            <label className="block text-sm font-bold text-slate-200 mb-2">URL страницы (Slug)</label>
             <input
               type="text"
               value={config.targetUrl}
               onChange={(e) => handleChange('targetUrl', e.target.value)}
               placeholder="/blog/smartphones-2024"
-              className="w-full p-3 bg-white border border-gray-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-brand-green outline-none shadow-sm placeholder-gray-400 text-sm"
+              className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none shadow-sm placeholder-slate-600 text-sm transition-all"
               disabled={isDisabled}
             />
           </div>
@@ -331,21 +333,21 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
 
         {/* Model Selection */}
         <div>
-          <label className="block text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
+          <label className="block text-sm font-bold text-slate-200 mb-2 flex items-center gap-2">
             <Cpu className="w-4 h-4 text-brand-green" /> Модель ИИ
           </label>
 
           {isFreePlan ? (
-            <div className="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-slate-500 text-sm flex items-center justify-between select-none">
+            <div className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 text-sm flex items-center justify-between select-none">
               <span>Автоматический выбор (Free)</span>
-              <Lock className="w-4 h-4 text-gray-400" />
+              <Lock className="w-4 h-4 text-slate-500" />
             </div>
           ) : (
             <div className="relative">
               <select
                 value={config.model}
                 onChange={(e) => handleChange('model', e.target.value)}
-                className="w-full p-3 bg-white border border-gray-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-brand-green focus:border-transparent shadow-sm text-sm appearance-none"
+                className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green shadow-sm text-sm appearance-none [&>optgroup]:text-slate-900 [&>optgroup>option]:text-slate-900 transition-all"
                 disabled={isDisabled}
               >
                 {Object.keys(groupedModels).map(provider => {
@@ -360,21 +362,21 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                   );
                 })}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
                 <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
               </div>
             </div>
           )}
           {userPlan && (
-            <p className="text-[10px] text-gray-400 mt-1">
+            <p className="text-[10px] text-slate-500 mt-1.5 ml-1">
               {isFreePlan ? 'Базовый доступ' : `Доступно моделей: ${userPlan.allowedModels.length} (Тариф: ${userPlan.name})`}
             </p>
           )}
         </div>
 
         {/* Competitor Links & Files */}
-        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <label className="block text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+        <div className="p-4 sm:p-5 bg-white/5 rounded-xl border border-white/10">
+          <label className="block text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
             <LinkIcon className="w-4 h-4 text-brand-green" /> Ссылки на конкурентов
           </label>
 
@@ -387,13 +389,13 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                   onChange={(e) => updateCompetitorLink(idx, e.target.value)}
                   onPaste={(e) => handleLinkPaste(e, idx)}
                   placeholder="https://competitor.com/article..."
-                  className="flex-1 p-3 bg-white border border-gray-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-brand-green outline-none shadow-sm placeholder-gray-400 text-sm"
+                  className="flex-1 p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none shadow-sm placeholder-slate-600 text-sm transition-all"
                   disabled={isDisabled}
                 />
                 <button
                   onClick={() => removeCompetitorLink(idx)}
                   disabled={isDisabled}
-                  className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                  className="p-3 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors border border-transparent hover:border-red-500/20"
                   title="Удалить ссылку"
                 >
                   <Trash2 className="w-5 h-5" />
@@ -405,21 +407,21 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
           {competitorFiles.length > 0 && (
             <div className="space-y-2 mb-4">
               {competitorFiles.map((file, idx) => (
-                <div key={`file-${idx}`} className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div key={`file-${idx}`} className="flex items-center justify-between p-3 bg-brand-green/10 border border-brand-green/20 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <div className="bg-white p-2 rounded-lg">
+                    <div className="bg-white/10 p-2 rounded-lg">
                       {file.name.endsWith('.xlsx') || file.name.endsWith('.xls') ? (
-                        <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                        <FileSpreadsheet className="w-4 h-4 text-green-400" />
                       ) : (
-                        <FileText className="w-4 h-4 text-blue-600" />
+                        <FileText className="w-4 h-4 text-blue-400" />
                       )}
                     </div>
-                    <span className="text-sm font-medium text-slate-700 truncate max-w-[200px]">{file.name}</span>
+                    <span className="text-sm font-medium text-slate-200 truncate max-w-[200px]">{file.name}</span>
                   </div>
                   <button
                     onClick={() => removeCompetitorFile(idx)}
                     disabled={isDisabled}
-                    className="text-gray-400 hover:text-red-500 p-1"
+                    className="text-slate-400 hover:text-red-400 p-1"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -428,11 +430,11 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={addCompetitorLink}
               disabled={isDisabled}
-              className="flex-1 py-3 border border-gray-300 bg-white rounded-lg text-slate-600 font-bold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm shadow-sm"
+              className="flex-1 py-3 border border-white/10 bg-white/5 rounded-xl text-slate-300 font-bold hover:bg-white/10 transition-colors flex items-center justify-center gap-2 text-sm shadow-sm"
             >
               <Plus className="w-4 h-4" /> Добавить ссылку
             </button>
@@ -449,7 +451,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               <button
                 onClick={() => !isDisabled && competitorFileRef.current?.click()}
                 disabled={isDisabled || isFileLoading}
-                className="w-full h-full py-3 border border-gray-300 bg-white rounded-lg text-slate-600 font-bold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm shadow-sm"
+                className="w-full h-full py-3 border border-white/10 bg-white/5 rounded-xl text-slate-300 font-bold hover:bg-white/10 transition-colors flex items-center justify-center gap-2 text-sm shadow-sm"
               >
                 {isFileLoading ? (
                   <div className="w-4 h-4 border-2 border-brand-green border-t-transparent rounded-full animate-spin"></div>
@@ -460,7 +462,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               </button>
             </div>
           </div>
-          <p className="text-[10px] md:text-xs text-gray-500 mt-2">
+          <p className="text-[10px] md:text-xs text-slate-500 mt-3">
             Укажите ссылки или загрузите файлы конкурентов для анализа структуры.
             Файлы .docx и Excel будут использованы как контекст.
           </p>
@@ -468,7 +470,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
 
         {/* Example Content (DOCX Upload) */}
         <div>
-          <label className="block text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
+          <label className="block text-sm font-bold text-slate-200 mb-2 flex items-center gap-2">
             <FileText className="w-4 h-4 text-brand-green" /> Пример текста (файл .docx)
           </label>
 
@@ -476,9 +478,9 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
             <div
               onClick={() => !isDisabled && fileInputRef.current?.click()}
               className={`
-                border-2 border-dashed border-gray-300 rounded-lg p-6 
-                text-center transition-colors
-                ${isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'cursor-pointer hover:border-brand-green hover:bg-green-50'}
+                border-2 border-dashed border-white/10 rounded-xl p-6 
+                text-center transition-all bg-white/5
+                ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-brand-green hover:bg-white/10'}
               `}
             >
               <input
@@ -490,28 +492,28 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                 disabled={isDisabled}
               />
               {isDocxLoading ? (
-                <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
+                <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
                   <div className="w-4 h-4 border-2 border-brand-green border-t-transparent rounded-full animate-spin"></div>
                   Чтение...
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-2">
-                  <Upload className="w-6 h-6 text-gray-400" />
-                  <span className="text-sm text-slate-600 font-medium">Загрузить .docx</span>
+                  <Upload className="w-6 h-6 text-slate-400" />
+                  <span className="text-sm text-slate-400 font-medium">Загрузить .docx</span>
                 </div>
               )}
             </div>
           ) : (
-            <div className="flex items-center justify-between bg-green-50 border border-brand-green rounded-lg p-3">
+            <div className="flex items-center justify-between bg-brand-green/10 border border-brand-green/30 rounded-xl p-3">
               <div className="flex items-center gap-3 overflow-hidden">
-                <div className="bg-white p-2 rounded-full flex-shrink-0">
+                <div className="bg-white/10 p-2 rounded-full flex-shrink-0">
                   <FileText className="w-4 h-4 text-brand-green" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-800 truncate">
+                  <p className="text-sm font-bold text-white truncate">
                     {docxFileName}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-400">
                     {config.exampleContent ? `${config.exampleContent.length} символов` : 'Файл загружен'}
                   </p>
                 </div>
@@ -519,7 +521,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               <button
                 onClick={clearExample}
                 disabled={isDisabled}
-                className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                className="text-slate-400 hover:text-red-400 transition-colors p-1"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -529,43 +531,43 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
 
         {/* LSI Keywords */}
         <div>
-          <label className="block text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
+          <label className="block text-sm font-bold text-slate-200 mb-2 flex items-center gap-2">
             <Settings2 className="w-4 h-4 text-brand-green" /> LSI ключи (набор слов)
           </label>
           <textarea
             value={config.lsiKeywords}
             onChange={(e) => handleChange('lsiKeywords', e.target.value)}
             placeholder="дополнительные тематические слова через запятую..."
-            className="w-full p-3 bg-white border border-gray-300 rounded-lg text-slate-900 h-20 md:h-24 focus:ring-2 focus:ring-brand-green outline-none resize-none shadow-sm placeholder-gray-400 text-sm"
+            className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-white h-20 md:h-24 focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none resize-none shadow-sm placeholder-slate-600 text-sm transition-all"
             disabled={isDisabled}
           />
         </div>
 
         {/* Length Controls */}
-        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="p-4 sm:p-5 bg-white/5 rounded-xl border border-white/10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
             <div>
-              <label className="block text-sm font-bold text-slate-900 mb-2 flex items-center gap-2 justify-between">
+              <label className="block text-sm font-bold text-slate-200 mb-2 flex items-center gap-2 justify-between">
                 <span className="flex items-center gap-2"><Type className="w-4 h-4 text-brand-green" /> Количество символов</span>
                 {userPlan && (
-                  <span className="text-[10px] text-slate-400 font-normal">Лимит: {userPlan.maxChars}</span>
+                  <span className="text-[10px] text-slate-500 font-normal">Лимит: {userPlan.maxChars}</span>
                 )}
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <input
                   type="number"
                   value={config.minChars}
                   onChange={(e) => handleChange('minChars', parseInt(e.target.value))}
-                  className="w-full p-2 bg-white border border-gray-300 rounded-lg text-slate-900 shadow-sm focus:ring-1 focus:ring-brand-green text-sm"
+                  className="w-full p-2.5 bg-white/5 border border-white/10 rounded-xl text-white shadow-sm focus:ring-1 focus:ring-brand-green text-sm outline-none"
                   placeholder="Мин"
                   disabled={isDisabled}
                 />
-                <span className="text-slate-400 font-bold">-</span>
+                <span className="text-slate-500 font-bold">-</span>
                 <input
                   type="number"
                   value={config.maxChars}
                   onChange={(e) => handleChange('maxChars', parseInt(e.target.value))}
-                  className={`w-full p-2 bg-white border rounded-lg text-slate-900 shadow-sm focus:ring-1 text-sm ${isOverLimit ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-brand-green'}`}
+                  className={`w-full p-2.5 bg-white/5 border rounded-xl text-white shadow-sm focus:ring-1 text-sm outline-none ${isOverLimit ? 'border-red-500 focus:ring-red-500' : 'border-white/10 focus:ring-brand-green'}`}
                   placeholder="Макс"
                   disabled={isDisabled}
                 />
@@ -573,24 +575,24 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
+              <label className="block text-sm font-bold text-slate-200 mb-2 flex items-center gap-2">
                 <AlignLeft className="w-4 h-4 text-brand-green" /> Абзацы
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <input
                   type="number"
                   value={config.minParas}
                   onChange={(e) => handleChange('minParas', parseInt(e.target.value))}
-                  className="w-full p-2 bg-white border border-gray-300 rounded-lg text-slate-900 shadow-sm focus:ring-1 focus:ring-brand-green text-sm"
+                  className="w-full p-2.5 bg-white/5 border border-white/10 rounded-xl text-white shadow-sm focus:ring-1 focus:ring-brand-green text-sm outline-none"
                   placeholder="Мин"
                   disabled={isDisabled}
                 />
-                <span className="text-slate-400 font-bold">-</span>
+                <span className="text-slate-500 font-bold">-</span>
                 <input
                   type="number"
                   value={config.maxParas}
                   onChange={(e) => handleChange('maxParas', parseInt(e.target.value))}
-                  className="w-full p-2 bg-white border border-gray-300 rounded-lg text-slate-900 shadow-sm focus:ring-1 focus:ring-brand-green text-sm"
+                  className="w-full p-2.5 bg-white/5 border border-white/10 rounded-xl text-white shadow-sm focus:ring-1 focus:ring-brand-green text-sm outline-none"
                   placeholder="Макс"
                   disabled={isDisabled}
                 />
