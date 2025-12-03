@@ -18,6 +18,18 @@ const projectSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     }
+}, {
+    toJSON: {
+        virtuals: true,
+        transform: function (doc, ret) {
+            ret.id = ret._id;
+            delete ret._id;
+            delete ret.__v;
+        }
+    },
+    toObject: {
+        virtuals: true
+    }
 });
 
 // Index for faster user project queries

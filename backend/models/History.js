@@ -27,6 +27,18 @@ const historySchema = new mongoose.Schema({
         type: mongoose.Schema.Types.Mixed, // Store entire result object
         required: true
     }
+}, {
+    toJSON: {
+        virtuals: true,
+        transform: function (doc, ret) {
+            ret.id = ret._id;
+            delete ret._id;
+            delete ret.__v;
+        }
+    },
+    toObject: {
+        virtuals: true
+    }
 });
 
 // Index for faster project history queries
