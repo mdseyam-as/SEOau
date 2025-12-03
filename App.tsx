@@ -539,88 +539,88 @@ export default function App() {
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans pb-10 md:pb-20 animate-in fade-in duration-500">
       {/* Header */}
       <header className="bg-brand-dark text-white shadow-md sticky top-0 z-50">
-        <div className="container mx-auto px-4 md:px-6 py-4 flex items-center justify-between xl:max-w-7xl">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setCurrentProject(null); setShowAdminPanel(false); }}>
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-brand-green rounded-lg flex items-center justify-center shadow-lg shrink-0">
-              <LayoutDashboard className="text-white w-5 h-5 md:w-6 md:h-6" />
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 md:py-4 flex items-center justify-between xl:max-w-7xl">
+          <div className="flex items-center gap-2 sm:gap-3 cursor-pointer min-w-0" onClick={() => { setCurrentProject(null); setShowAdminPanel(false); }}>
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-brand-green rounded-lg flex items-center justify-center shadow-lg shrink-0">
+              <LayoutDashboard className="text-white w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div className="overflow-hidden">
-              <h1 className="text-lg md:text-xl font-bold tracking-tight truncate">SEO Generator</h1>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg md:text-xl font-bold tracking-tight truncate">SEO Generator</h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
             {/* Admin Toggle */}
             {user.role === 'admin' && (
               <button
                 onClick={() => { setShowAdminPanel(!showAdminPanel); setCurrentProject(null); }}
                 className={`
-                  px-3 py-1.5 text-xs md:text-sm rounded-full font-medium flex items-center gap-2 transition-colors
+                  px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-full font-medium flex items-center gap-1 sm:gap-2 transition-colors whitespace-nowrap
                   ${showAdminPanel ? 'bg-white text-brand-dark' : 'bg-slate-700 text-white hover:bg-slate-600'}
                 `}
               >
-                <ShieldCheck className="w-4 h-4" />
-                {showAdminPanel ? 'Выйти' : 'Админка'}
+                <ShieldCheck className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline">{showAdminPanel ? 'Выйти' : 'Админка'}</span>
               </button>
             )}
 
             {/* Subscription Counter (For Users) */}
             {user.role !== 'admin' && (
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-2">
                 {/* Generation Usage Counter - REMAINING */}
-                <div className="flex flex-col items-end sm:flex-row sm:items-center gap-2 bg-slate-700 px-3 py-1.5 rounded-lg sm:rounded-full border border-slate-600" title="Осталось генераций">
-                  <Zap className={`w-4 h-4 text-yellow-400`} />
-                  <div className="flex flex-col sm:flex-row gap-0 sm:gap-3 text-xs sm:text-sm font-medium text-gray-200">
-                    <span title="Осталось на сегодня">
-                      Сутки: <span className={(typeof dailyRemaining === 'number' && dailyRemaining <= 0) ? 'text-red-400' : 'text-white'}>{dailyRemaining}</span>
+                <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-700 px-2 sm:px-3 py-1.5 rounded-full border border-slate-600" title="Осталось генераций">
+                  <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 shrink-0" />
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-gray-200">
+                    <span title="Осталось на сегодня" className="whitespace-nowrap">
+                      <span className="hidden lg:inline">Сутки: </span><span className={(typeof dailyRemaining === 'number' && dailyRemaining <= 0) ? 'text-red-400' : 'text-white'}>{dailyRemaining}</span>
                     </span>
-                    <span className="hidden sm:inline text-slate-500">|</span>
-                    <span title="Осталось на месяц">
-                      Всего: <span className={(typeof monthlyRemaining === 'number' && monthlyRemaining <= 0) ? 'text-red-400' : 'text-white'}>{monthlyRemaining}</span>
+                    <span className="text-slate-500">|</span>
+                    <span title="Осталось на месяц" className="whitespace-nowrap">
+                      <span className="hidden lg:inline">Всего: </span><span className={(typeof monthlyRemaining === 'number' && monthlyRemaining <= 0) ? 'text-red-400' : 'text-white'}>{monthlyRemaining}</span>
                     </span>
                   </div>
                 </div>
 
                 {isSubscriptionActive ? (
-                  <div className="flex items-center gap-2 bg-brand-green/10 bg-opacity-20 px-3 py-1.5 rounded-full border border-brand-green/30">
-                    <Clock className="w-4 h-4 text-brand-green" />
+                  <div className="flex items-center gap-1.5 sm:gap-2 bg-brand-green/10 bg-opacity-20 px-2 sm:px-3 py-1.5 rounded-full border border-brand-green/30">
+                    <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-brand-green shrink-0" />
                     {user.planId === 'free' ? (
-                      <span className="text-sm font-medium text-green-400">Бессрочно</span>
+                      <span className="text-xs sm:text-sm font-medium text-green-400 whitespace-nowrap">Бессрочно</span>
                     ) : (
-                      <span className="text-sm font-medium text-green-400">
+                      <span className="text-xs sm:text-sm font-medium text-green-400 whitespace-nowrap">
                         {daysRemaining} дн.
                       </span>
                     )}
                     {userPlan && (
-                      <span className="hidden lg:inline text-xs bg-brand-dark/50 px-2 py-0.5 rounded text-gray-300 ml-1">
+                      <span className="hidden xl:inline text-xs bg-brand-dark/50 px-2 py-0.5 rounded text-gray-300">
                         {userPlan.name}
                       </span>
                     )}
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 bg-red-500/20 px-3 py-1.5 rounded-full border border-red-500/50">
-                    <Lock className="w-4 h-4 text-red-400" />
-                    <span className="text-sm font-medium text-red-400">Нет доступа</span>
+                  <div className="flex items-center gap-1.5 sm:gap-2 bg-red-500/20 px-2 sm:px-3 py-1.5 rounded-full border border-red-500/50">
+                    <Lock className="w-3 h-3 sm:w-4 sm:h-4 text-red-400 shrink-0" />
+                    <span className="text-xs sm:text-sm font-medium text-red-400 whitespace-nowrap">Нет доступа</span>
                   </div>
                 )}
               </div>
             )}
 
-            <div className="hidden md:block text-sm text-slate-400">
+            <div className="hidden lg:block text-xs sm:text-sm text-slate-400 max-w-[120px] xl:max-w-none truncate">
               {user.firstName} {user.username ? `(@${user.username})` : ''}
             </div>
             <button
               onClick={handleLogout}
-              className="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-white"
+              className="p-1.5 sm:p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-white shrink-0"
               title="Выйти"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 md:px-6 py-6 md:py-8 xl:max-w-7xl">
+      <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 xl:max-w-7xl">
         {renderContent()}
       </main>
     </div>

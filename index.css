@@ -1,0 +1,404 @@
+/* ============================================
+   SEO Generator - Global Responsive Styles
+   ============================================ */
+
+/* Base Styles & Reset */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   Responsive Typography
+   ============================================ */
+
+/* Mobile-first approach */
+:root {
+  /* Base font sizes */
+  --font-size-xs: 0.75rem;
+  /* 12px */
+  --font-size-sm: 0.875rem;
+  /* 14px */
+  --font-size-base: 1rem;
+  /* 16px */
+  --font-size-lg: 1.125rem;
+  /* 18px */
+  --font-size-xl: 1.25rem;
+  /* 20px */
+  --font-size-2xl: 1.5rem;
+  /* 24px */
+  --font-size-3xl: 1.875rem;
+  /* 30px */
+
+  /* Touch target sizes */
+  --touch-target-min: 44px;
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) {
+  :root {
+    --font-size-base: 1rem;
+    --font-size-lg: 1.25rem;
+    --font-size-xl: 1.5rem;
+    --font-size-2xl: 1.75rem;
+    --font-size-3xl: 2rem;
+  }
+}
+
+/* Desktop adjustments */
+@media (min-width: 1024px) {
+  :root {
+    --font-size-2xl: 2rem;
+    --font-size-3xl: 2.25rem;
+  }
+}
+
+/* ============================================
+   Touch-Friendly Elements
+   ============================================ */
+
+/* Ensure all interactive elements are touch-friendly */
+button,
+a,
+input[type="button"],
+input[type="submit"],
+.touch-target {
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+}
+
+/* Increase tap area for small icons on mobile */
+@media (max-width: 767px) {
+
+  button svg,
+  a svg {
+    padding: 0.5rem;
+    margin: -0.5rem;
+  }
+}
+
+/* ============================================
+   Responsive Utilities
+   ============================================ */
+
+/* Hide on mobile */
+@media (max-width: 767px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+/* Hide on tablet */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .hide-tablet {
+    display: none !important;
+  }
+}
+
+/* Hide on desktop */
+@media (min-width: 1024px) {
+  .hide-desktop {
+    display: none !important;
+  }
+}
+
+/* Show only on mobile */
+.show-mobile {
+  display: none !important;
+}
+
+@media (max-width: 767px) {
+  .show-mobile {
+    display: block !important;
+  }
+}
+
+/* ============================================
+   Responsive Containers
+   ============================================ */
+
+/* Prevent horizontal scroll */
+.container,
+.container-fluid {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* ============================================
+   Responsive Tables
+   ============================================ */
+
+/* Mobile-friendly table wrapper */
+@media (max-width: 767px) {
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-responsive table {
+    min-width: 600px;
+  }
+}
+
+/* Card-based table layout for very small screens */
+@media (max-width: 480px) {
+  .table-card-mobile {
+    display: block;
+  }
+
+  .table-card-mobile thead {
+    display: none;
+  }
+
+  .table-card-mobile tbody,
+  .table-card-mobile tr,
+  .table-card-mobile td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-card-mobile tr {
+    margin-bottom: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .table-card-mobile td {
+    text-align: right;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .table-card-mobile td:last-child {
+    border-bottom: none;
+  }
+
+  .table-card-mobile td::before {
+    content: attr(data-label);
+    float: left;
+    font-weight: bold;
+    color: #6b7280;
+  }
+}
+
+/* ============================================
+   Responsive Forms
+   ============================================ */
+
+/* Stack form elements on mobile */
+@media (max-width: 767px) {
+  .form-row {
+    flex-direction: column;
+  }
+
+  .form-row>* {
+    width: 100% !important;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Larger input fields on mobile for better usability */
+@media (max-width: 767px) {
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px;
+    /* Prevents zoom on iOS */
+    padding: 0.75rem;
+  }
+}
+
+/* ============================================
+   Responsive Modals
+   ============================================ */
+
+@media (max-width: 767px) {
+  .modal-content {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+}
+
+/* ============================================
+   Smooth Scrolling
+   ============================================ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+}
+
+/* ============================================
+   Accessibility Improvements
+   ============================================ */
+
+/* Focus visible for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid #00A859;
+  outline-offset: 2px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================
+   Custom Scrollbar (Desktop only)
+   ============================================ */
+
+@media (min-width: 1024px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+}
+
+/* ============================================
+   Responsive Grid Helpers
+   ============================================ */
+
+/* Auto-fit grid for cards */
+.grid-auto-fit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .grid-auto-fit {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   Text Truncation Utilities
+   ============================================ */
+
+.truncate-1 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.truncate-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ============================================
+   Responsive Spacing
+   ============================================ */
+
+@media (max-width: 767px) {
+  .responsive-padding {
+    padding: 1rem !important;
+  }
+
+  .responsive-margin {
+    margin: 1rem !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-padding {
+    padding: 1.5rem !important;
+  }
+
+  .responsive-margin {
+    margin: 1.5rem !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-padding {
+    padding: 2rem !important;
+  }
+
+  .responsive-margin {
+    margin: 2rem !important;
+  }
+}

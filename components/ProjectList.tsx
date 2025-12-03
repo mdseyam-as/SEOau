@@ -35,29 +35,29 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Folder className="w-6 h-6 text-brand-green" />
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <Folder className="w-5 h-5 sm:w-6 sm:h-6 text-brand-green" />
             Мои проекты
           </h2>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-slate-500 text-xs sm:text-sm mt-1">
             Управляйте задачами генерации по проектам
           </p>
         </div>
         <button
           onClick={() => setIsCreating(true)}
-          className="bg-brand-green hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all shadow-md active:scale-95"
+          className="w-full sm:w-auto bg-brand-green hover:bg-green-700 text-white px-4 sm:px-5 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
         >
-          <FolderPlus className="w-5 h-5" />
+          <FolderPlus className="w-4 h-4 sm:w-5 sm:h-5" />
           Новый проект
         </button>
       </div>
 
       {isCreating && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md animate-in zoom-in duration-200">
-            <h3 className="text-xl font-bold text-slate-900 mb-4">Создание проекта</h3>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-xl shadow-2xl p-5 sm:p-6 w-full max-w-md animate-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-4">Создание проекта</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Название</label>
@@ -102,17 +102,17 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
       )}
 
       {projects.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Folder className="w-8 h-8 text-gray-400" />
+        <div className="text-center py-16 sm:py-20 bg-white rounded-xl border border-dashed border-gray-300">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Folder className="w-7 h-7 sm:w-8 sm:h-8 text-gray-400" />
           </div>
-          <h3 className="text-lg font-medium text-slate-900">Нет проектов</h3>
-          <p className="text-slate-500 text-sm mt-1">Создайте свой первый проект, чтобы начать генерацию</p>
+          <h3 className="text-base sm:text-lg font-medium text-slate-900">Нет проектов</h3>
+          <p className="text-slate-500 text-xs sm:text-sm mt-1 px-4">Создайте свой первый проект, чтобы начать генерацию</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {projects.map((project) => (
-            <div 
+            <div
               key={project.id}
               className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:border-brand-green hover:shadow-md transition-all group flex flex-col h-full"
             >
@@ -123,7 +123,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if(confirm('Удалить проект и всю историю?')) onDeleteProject(project.id);
+                    if (confirm('Удалить проект и всю историю?')) onDeleteProject(project.id);
                   }}
                   className="text-gray-400 hover:text-red-500 p-1 rounded-md hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
                   title="Удалить проект"

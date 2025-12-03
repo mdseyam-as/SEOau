@@ -76,23 +76,23 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-3 sm:p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-500">
 
         {/* Header Area */}
-        <div className="bg-brand-green p-8 text-center relative overflow-hidden">
+        <div className="bg-brand-green p-6 sm:p-8 text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
           <div className="relative z-10 flex flex-col items-center">
-            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-4 shadow-inner">
-              <LayoutDashboard className="w-8 h-8 text-white" />
+            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-3 sm:mb-4 shadow-inner">
+              <LayoutDashboard className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">SEO Generator</h1>
-            <p className="text-green-100 text-sm mt-1">Telegram Mini App v2.1</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">SEO Generator</h1>
+            <p className="text-green-100 text-xs sm:text-sm mt-1">Telegram Mini App v2.1</p>
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="p-8">
+        <div className="p-6 sm:p-8">
 
           {error && (
             <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center animate-in fade-in">
