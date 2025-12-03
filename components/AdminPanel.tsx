@@ -917,7 +917,7 @@ export const AdminPanel: React.FC = () => {
                     placeholder="0 = Безлимит"
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none"
                   />
-                  <p className="text-xs text-gray-400 mt-1">0 или пустое поле = Безлимит</p>
+                  <p className="text-xs text-gray-600 mt-1">0 или пустое поле = Безлимит</p>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">Генераций в сутки</label>
@@ -928,7 +928,7 @@ export const AdminPanel: React.FC = () => {
                     placeholder="0 = Безлимит"
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none"
                   />
-                  <p className="text-xs text-gray-400 mt-1">0 или пустое поле = Безлимит</p>
+                  <p className="text-xs text-gray-600 mt-1">0 или пустое поле = Безлимит</p>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
@@ -941,7 +941,7 @@ export const AdminPanel: React.FC = () => {
                     placeholder="0 = Безлимит"
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none"
                   />
-                  <p className="text-xs text-gray-400 mt-1">0 = Безлимит (Загрузка всех строк)</p>
+                  <p className="text-xs text-gray-600 mt-1">0 = Безлимит (Загрузка всех строк)</p>
                 </div>
               </div>
 

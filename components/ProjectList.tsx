@@ -138,15 +138,15 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                 </button>
               </div>
 
-              <h3 className="font-bold text-xl text-slate-800 mb-2 line-clamp-1 group-hover:text-brand-green transition-colors" title={project.name}>
+              <h3 className="font-bold text-xl text-white mb-2 line-clamp-1 group-hover:text-brand-green transition-colors drop-shadow-sm" title={project.name}>
                 {project.name}
               </h3>
-              <p className="text-slate-500 text-sm mb-6 line-clamp-2 h-10 leading-relaxed">
+              <p className="text-slate-300 text-sm mb-6 line-clamp-2 h-10 leading-relaxed">
                 {project.description || 'Нет описания'}
               </p>
 
-              <div className="mt-auto flex items-center justify-between pt-4 border-t border-slate-100 relative z-10">
-                <div className="flex items-center text-xs text-slate-400 gap-1.5 font-medium">
+              <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/10 relative z-10">
+                <div className="flex items-center text-xs text-slate-300 gap-1.5 font-medium">
                   <Clock className="w-3.5 h-3.5" />
                   {formatDate(project.createdAt)}
                 </div>
