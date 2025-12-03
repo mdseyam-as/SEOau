@@ -39,6 +39,7 @@ export const AdminPanel: React.FC = () => {
   const [telegramLink, setTelegramLink] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [systemPrompt, setSystemPrompt] = useState('');
+  const [spamCheckModel, setSpamCheckModel] = useState('x-ai/grok-4.1-fast');
   const [settingsSaved, setSettingsSaved] = useState(false);
 
   useEffect(() => {
@@ -47,6 +48,7 @@ export const AdminPanel: React.FC = () => {
     setTelegramLink(settings.telegramLink);
     setApiKey(settings.openRouterApiKey || '');
     setSystemPrompt(settings.systemPrompt || DEFAULT_PROMPT_TEMPLATE);
+    setSpamCheckModel(settings.spamCheckModel || 'x-ai/grok-4.1-fast');
   }, []);
 
   const loadData = async () => {
@@ -116,7 +118,8 @@ export const AdminPanel: React.FC = () => {
       await authService.saveGlobalSettings({
         telegramLink,
         openRouterApiKey: apiKey,
-        systemPrompt: systemPrompt
+        systemPrompt: systemPrompt,
+        spamCheckModel: spamCheckModel
       });
       setSettingsSaved(true);
       setTimeout(() => setSettingsSaved(false), 2000);
@@ -750,6 +753,30 @@ export const AdminPanel: React.FC = () => {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none font-mono text-sm"
                 />
               </div>
+            </div>
+
+            {/* Spam Check Model Selection */}
+            <div className="border-t border-gray-200 pt-6">
+              <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                <AlertOctagon className="w-4 h-4" /> Модель для Проверки Переспама
+              </label>
+              <select
+                value={spamCheckModel}
+                onChange={(e) => setSpamCheckModel(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none text-sm"
+              >
+                {models
+                  .filter(m => m.provider.includes('xAI') || m.provider.includes('Grok') || m.provider.includes('Gemini') || m.provider.includes('Claude') || m.provider.includes('GPT'))
+                  .map(model => (
+                    <option key={model.id} value={model.id}>
+                      {model.name} ({model.id})
+                    </option>
+                  ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-2">
+                Эта модель будет использоваться для автоматического анализа переспама после генерации текста.
+                Рекомендуется использовать быстрые модели (Grok, Gemini Flash).
+              </p>
             </div>
 
             {/* System Prompt */}

@@ -19,6 +19,11 @@ const settingsSchema = new mongoose.Schema({
         default: 'https://t.me/bankkz_admin'
     },
 
+    spamCheckModel: {
+        type: String,
+        default: 'x-ai/grok-4.1-fast'
+    },
+
     updatedAt: {
         type: Date,
         default: Date.now

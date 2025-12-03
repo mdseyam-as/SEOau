@@ -35,6 +35,7 @@ export interface GlobalSettings {
   telegramLink: string;
   openRouterApiKey?: string;
   systemPrompt?: string;
+  spamCheckModel?: string;
 }
 
 // ADD YOUR TELEGRAM ID HERE TO BECOME ADMIN
@@ -132,7 +133,8 @@ const DEFAULT_PLANS: SubscriptionPlan[] = [
 let cachedGlobalSettings: GlobalSettings = {
   telegramLink: 'https://t.me/bankkz_admin',
   openRouterApiKey: '',
-  systemPrompt: ''
+  systemPrompt: '',
+  spamCheckModel: 'x-ai/grok-4.1-fast'
 };
 
 export const authService = {

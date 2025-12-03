@@ -119,7 +119,7 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFix
               </h3>
               <p className={`text-sm mb-4 leading-relaxed ${isSpamError ? 'text-red-400 bg-red-500/10 p-4 rounded-xl border border-red-500/20 font-medium' : 'text-slate-300'}`}>
                 {isSpamError
-                  ? '⚠️ Не удалось выполнить анализ переспама. Возможно, сервис Grok временно недоступен или требуется настройка API на сервере. Вы можете продолжить работу с текстом без этого анализа.'
+                  ? `⚠️ ${result.spamAnalysis || 'Не удалось выполнить анализ переспама. Попробуйте снова или обратитесь к администратору.'}`
                   : (result.spamAnalysis || 'Анализ не предоставлен.')
                 }
               </p>

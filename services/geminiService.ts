@@ -5,9 +5,6 @@ import { authService } from './authService';
 const DEFAULT_SITE_URL = 'https://example.com';
 const DEFAULT_SITE_NAME = 'SeoGenerator';
 
-// Use this model specifically for spam checking and fixing
-const SPAM_CHECK_MODEL = AIModel.GROK_4_1_FAST;
-
 export const DEFAULT_PROMPT_TEMPLATE = `You are a Senior SEO Copywriter and Content Strategist for **{{websiteName}}**.
 
 ### OBJECTIVE
@@ -70,7 +67,7 @@ const getApiKey = () => {
 // Helper to sanitize headers (Browsers throw 'Failed to fetch' if headers contain non-ASCII chars)
 const getHeaders = (apiKey: string, siteName: string) => {
   // Strip characters that are not in the printable ASCII range (0x20-0x7E)
-  const safeSiteName = (siteName || DEFAULT_SITE_NAME).replace(/[^\x20-\x7E]/g, ''); 
+  const safeSiteName = (siteName || DEFAULT_SITE_NAME).replace(/[^\x20-\x7E]/g, '');
   return {
     "Authorization": `Bearer ${apiKey.trim()}`,
     "HTTP-Referer": DEFAULT_SITE_URL,
@@ -82,14 +79,16 @@ const getHeaders = (apiKey: string, siteName: string) => {
 // --- SPAM CHECK FUNCTIONS ---
 
 export const checkContentForSpam = async (content: string): Promise<{ spamScore: number; spamAnalysis: string }> => {
-  const apiKey = getApiKey();
-
   try {
+    const apiKey = getApiKey();
+    const globalSettings = authService.getGlobalSettings();
+    const model = globalSettings.spamCheckModel || 'x-ai/grok-4.1-fast'; // Fallback to default
+
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: getHeaders(apiKey, DEFAULT_SITE_NAME),
       body: JSON.stringify({
-        "model": SPAM_CHECK_MODEL,
+        "model": model,
         "messages": [
           {
             "role": "system",
@@ -108,7 +107,7 @@ export const checkContentForSpam = async (content: string): Promise<{ spamScore:
             Text:
             """
             ${content.substring(0, 15000)} 
-            """` 
+            """`
           }
         ],
         "temperature": 0.1,
@@ -116,23 +115,39 @@ export const checkContentForSpam = async (content: string): Promise<{ spamScore:
     });
 
     if (!response.ok) {
-        const errText = await response.text();
-        console.error("OpenRouter Spam Check Error:", errText);
-        throw new Error(`API Error: ${response.status}`);
+      const errText = await response.text();
+      console.error("OpenRouter Spam Check Error:", response.status, errText);
+
+      // Better error reporting
+      if (response.status === 401) {
+        return { spamScore: -1, spamAnalysis: "Ошибка авторизации API. Проверьте настройки API ключа в админ-панели." };
+      } else if (response.status === 402) {
+        return { spamScore: -1, spamAnalysis: "Недостаточно средств на балансе API ключа. Пополните баланс OpenRouter." };
+      } else if (response.status === 429) {
+        return { spamScore: -1, spamAnalysis: "Превышен лимит запросов к API. Попробуйте позже." };
+      } else if (response.status === 503) {
+        return { spamScore: -1, spamAnalysis: "Сервис Grok временно недоступен. Попробуйте позже." };
+      }
+
+      return { spamScore: -1, spamAnalysis: `Ошибка API (${response.status}): ${errText.substring(0, 100)}` };
     }
 
     const data = await response.json();
     const rawContent = data.choices?.[0]?.message?.content;
-    
-    if (!rawContent) return { spamScore: -1, spamAnalysis: "Could not analyze" };
+
+    if (!rawContent) {
+      console.error("Empty response from Grok API");
+      return { spamScore: -1, spamAnalysis: "Пустой ответ от API. Попробуйте снова." };
+    }
 
     const jsonString = rawContent.replace(/^```json\s*/, "").replace(/\s*```$/, "");
     let result;
     try {
-        result = JSON.parse(jsonString);
-    } catch {
-        // Fallback if not valid JSON
-        return { spamScore: -1, spamAnalysis: "Ошибка парсинга ответа модели. " + rawContent.substring(0, 100) + "..." };
+      result = JSON.parse(jsonString);
+    } catch (parseError) {
+      // Fallback if not valid JSON
+      console.error("JSON parse error:", parseError, "Raw content:", rawContent);
+      return { spamScore: -1, spamAnalysis: "Ошибка парсинга ответа модели. Попробуйте снова." };
     }
 
     return {
@@ -142,7 +157,17 @@ export const checkContentForSpam = async (content: string): Promise<{ spamScore:
 
   } catch (e: any) {
     console.error("Spam Check Error:", e);
-    return { spamScore: -1, spamAnalysis: `Ошибка при анализе: ${e.message || "Unknown error"}` };
+
+    // Network or other errors
+    if (e.message?.includes("API ключ не настроен")) {
+      return { spamScore: -1, spamAnalysis: "API ключ не настроен. Обратитесь к администратору для настройки OpenRouter API ключа." };
+    }
+
+    if (e.name === 'TypeError' && e.message?.includes('fetch')) {
+      return { spamScore: -1, spamAnalysis: "Ошибка сети. Проверьте подключение к интернету." };
+    }
+
+    return { spamScore: -1, spamAnalysis: `Ошибка при анализе: ${e.message || "Неизвестная ошибка"}` };
   }
 };
 
@@ -150,7 +175,7 @@ export const fixContentSpam = async (content: string, analysis: string, model: s
   const apiKey = getApiKey();
 
   try {
-     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: getHeaders(apiKey, DEFAULT_SITE_NAME),
       body: JSON.stringify({
@@ -191,11 +216,11 @@ export const fixContentSpam = async (content: string, analysis: string, model: s
 // --- OPTIMIZATION (INCREASE RELEVANCE) ---
 
 export const optimizeContentRelevance = async (content: string, missingKeywords: string[], config: GenerationConfig): Promise<string> => {
-   const apiKey = getApiKey();
-   const missingStr = missingKeywords.join(', ');
+  const apiKey = getApiKey();
+  const missingStr = missingKeywords.join(', ');
 
-   try {
-     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: getHeaders(apiKey, config.websiteName || DEFAULT_SITE_NAME),
       body: JSON.stringify({
@@ -232,48 +257,48 @@ export const optimizeContentRelevance = async (content: string, missingKeywords:
     const data = await response.json();
     return data.choices?.[0]?.message?.content || content;
 
-   } catch (e) {
-     console.error("Optimization Error", e);
-     throw e;
-   }
+  } catch (e) {
+    console.error("Optimization Error", e);
+    throw e;
+  }
 };
 
 // --- METRICS CALCULATION (EXPORTED HELPER) ---
 
 export const calculateSeoMetrics = (content: string, keywords: KeywordRow[]): SeoMetrics => {
-    // 1. Word Count
-    const wordCount = content.split(/\s+/).length;
+  // 1. Word Count
+  const wordCount = content.split(/\s+/).length;
 
-    // 2. Keyword Analysis (Top 15)
-    const top15 = keywords.slice(0, 15);
-    const contentLower = content.toLowerCase();
+  // 2. Keyword Analysis (Top 15)
+  const top15 = keywords.slice(0, 15);
+  const contentLower = content.toLowerCase();
 
-    const keywordAnalysis = top15.map(k => {
-      // Escape special regex chars
-      const escaped = k.keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      // Simple regex to count occurrences
-      const regex = new RegExp(escaped.toLowerCase(), 'g');
-      const matches = contentLower.match(regex);
-      return {
-        keyword: k.keyword,
-        targetFrequency: k.frequency,
-        actualCount: matches ? matches.length : 0
-      };
-    });
-
-    // 3. Relevance Score
-    // Logic: Percentage of top 15 keywords that appear at least once + bonus for multiple occurrences
-    const presentCount = keywordAnalysis.filter(k => k.actualCount > 0).length;
-    let score = Math.round((presentCount / Math.max(1, top15.length)) * 100);
-    
-    // Cap at 100
-    if (score > 100) score = 100;
-
+  const keywordAnalysis = top15.map(k => {
+    // Escape special regex chars
+    const escaped = k.keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Simple regex to count occurrences
+    const regex = new RegExp(escaped.toLowerCase(), 'g');
+    const matches = contentLower.match(regex);
     return {
-      wordCount,
-      relevanceScore: score,
-      keywordAnalysis
+      keyword: k.keyword,
+      targetFrequency: k.frequency,
+      actualCount: matches ? matches.length : 0
     };
+  });
+
+  // 3. Relevance Score
+  // Logic: Percentage of top 15 keywords that appear at least once + bonus for multiple occurrences
+  const presentCount = keywordAnalysis.filter(k => k.actualCount > 0).length;
+  let score = Math.round((presentCount / Math.max(1, top15.length)) * 100);
+
+  // Cap at 100
+  if (score > 100) score = 100;
+
+  return {
+    wordCount,
+    relevanceScore: score,
+    keywordAnalysis
+  };
 };
 
 
@@ -283,7 +308,7 @@ export const generateSeoContent = async (
   config: GenerationConfig,
   keywords: KeywordRow[]
 ): Promise<SeoResult> => {
-  
+
   const globalSettings = authService.getGlobalSettings();
   const apiKey = globalSettings.openRouterApiKey || process.env.API_KEY;
 
@@ -303,12 +328,12 @@ export const generateSeoContent = async (
     .join(', ');
 
   const competitorsList = config.competitorUrls.trim();
-  const competitorsFileContent = config.competitorFiles 
-    ? config.competitorFiles.map(f => `--- CONTENT FROM FILE: ${f.name} ---\n${f.content}`).join('\n\n') 
+  const competitorsFileContent = config.competitorFiles
+    ? config.competitorFiles.map(f => `--- CONTENT FROM FILE: ${f.name} ---\n${f.content}`).join('\n\n')
     : '';
 
   const competitors = [competitorsList, competitorsFileContent].filter(Boolean).join('\n\n') || "Provided context";
-  
+
   const exampleInstruction = config.exampleContent?.trim()
     ? `
     ### REFERENCE STYLE & STRUCTURE
