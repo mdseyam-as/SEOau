@@ -37,7 +37,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 glass-panel p-6 rounded-2xl">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
             <div className="p-2 bg-brand-green/20 rounded-lg border border-brand-green/30">
               <Folder className="w-6 h-6 sm:w-7 sm:h-7 text-brand-green drop-shadow-glow" />
             </div>

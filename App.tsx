@@ -546,7 +546,7 @@ export default function App() {
               <LayoutDashboard className="text-white w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">SEO Generator</h1>
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">SEO Generator</h1>
             </div>
           </div>
 
