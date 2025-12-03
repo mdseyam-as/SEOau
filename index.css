@@ -432,3 +432,77 @@ html {
   --tw-prose-th-borders: #334155;
   --tw-prose-td-borders: #334155;
 }
+
+/* ============================================
+   Animated Mesh Gradient Background
+   ============================================ */
+
+.bg-mesh-animated {
+  background: linear-gradient(135deg, #0B0F19 0%, #1a1f2e 50%, #0B0F19 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift 15s ease infinite;
+  position: relative;
+}
+
+.bg-mesh-animated::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 20% 50%, rgba(0, 220, 130, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(121, 40, 202, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 20%, rgba(56, 189, 248, 0.08) 0%, transparent 50%);
+  animation: mesh-float 20s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes gradient-shift {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes mesh-float {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(30px, -30px) scale(1.1);
+  }
+
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+}
+
+/* Glass Panel Dark Variant */
+.glass-panel-dark {
+  background: rgba(11, 15, 25, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Shadow Glass */
+.shadow-glass {
+  box-shadow:
+    0 8px 32px 0 rgba(0, 0, 0, 0.37),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+/* Brand Colors */
+.brand-blue {
+  color: #38BDF8;
+}
