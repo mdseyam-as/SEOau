@@ -14,6 +14,7 @@ import { LayoutDashboard, LogOut, ShieldCheck, Clock, Lock, ExternalLink, Chevro
 import { User, authService, SubscriptionPlan } from './services/authService';
 import { projectService } from './services/projectService';
 import { apiService } from './services/apiService';
+import { projectConfigService } from './services/projectConfigService';
 
 const DEFAULT_CONFIG: GenerationConfig = {
   websiteName: '',
@@ -117,9 +118,17 @@ export default function App() {
         setProjectHistory(history);
       };
       loadHistory();
-      // Reset generator when entering project
+
+      // Load saved config for this project or use default
+      const savedConfig = projectConfigService.getConfig(currentProject.id);
+      if (savedConfig) {
+        setConfig(savedConfig);
+      } else {
+        setConfig(DEFAULT_CONFIG);
+      }
+
+      // Reset generator state
       setKeywords([]);
-      setConfig(DEFAULT_CONFIG);
       setResult(null);
       setProjectTab('generator');
     }
@@ -140,9 +149,18 @@ export default function App() {
   };
 
   const handleDeleteProject = async (id: string) => {
+    // Delete saved config when deleting project
+    projectConfigService.deleteConfig(id);
     await projectService.deleteProject(id);
     await loadProjects();
   };
+
+  // Auto-save config when it changes (only if in a project)
+  useEffect(() => {
+    if (currentProject && config) {
+      projectConfigService.saveConfig(currentProject.id, config);
+    }
+  }, [config, currentProject]);
 
   const isSubscriptionActive = React.useMemo(() => {
     if (!user) return false;
