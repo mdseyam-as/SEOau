@@ -248,24 +248,24 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-1.5">Название сайта/бренда</label>
+              <label className="block text-xs font-bold text-slate-200 mb-1.5">Название сайта/бренда</label>
               <input
                 type="text"
                 value={config.websiteName}
                 onChange={(e) => handleChange('websiteName', e.target.value)}
                 placeholder="Например: MyShop, CryptoBlog"
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none text-sm placeholder-slate-600 transition-all"
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none text-sm placeholder-slate-400 transition-all"
                 disabled={isDisabled}
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-1.5">Целевая страна/регион</label>
+              <label className="block text-xs font-bold text-slate-200 mb-1.5">Целевая страна/регион</label>
               <input
                 type="text"
                 value={config.targetCountry}
                 onChange={(e) => handleChange('targetCountry', e.target.value)}
                 placeholder="Казахстан, РФ, США..."
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none text-sm placeholder-slate-600 transition-all"
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none text-sm placeholder-slate-400 transition-all"
                 disabled={isDisabled}
               />
             </div>
@@ -273,7 +273,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+              <label className="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1">
                 <Mic className="w-3 h-3" /> Тон голоса (Tone of Voice)
               </label>
               <select
@@ -288,7 +288,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1">
+              <label className="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1">
                 <Feather className="w-3 h-3" /> Стиль текста (Style)
               </label>
               <select
@@ -314,7 +314,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               value={config.topic}
               onChange={(e) => handleChange('topic', e.target.value)}
               placeholder="Например: Обзор смартфонов 2024"
-              className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none shadow-sm placeholder-slate-600 text-sm transition-all"
+              className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none shadow-sm placeholder-slate-400 text-sm transition-all"
               disabled={isDisabled}
             />
           </div>
@@ -325,7 +325,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               value={config.targetUrl}
               onChange={(e) => handleChange('targetUrl', e.target.value)}
               placeholder="/blog/smartphones-2024"
-              className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none shadow-sm placeholder-slate-600 text-sm transition-all"
+              className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none shadow-sm placeholder-slate-400 text-sm transition-all"
               disabled={isDisabled}
             />
           </div>
@@ -389,7 +389,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                   onChange={(e) => updateCompetitorLink(idx, e.target.value)}
                   onPaste={(e) => handleLinkPaste(e, idx)}
                   placeholder="https://competitor.com/article..."
-                  className="flex-1 p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none shadow-sm placeholder-slate-600 text-sm transition-all"
+                  className="flex-1 p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none shadow-sm placeholder-slate-400 text-sm transition-all"
                   disabled={isDisabled}
                 />
                 <button
@@ -538,7 +538,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
             value={config.lsiKeywords}
             onChange={(e) => handleChange('lsiKeywords', e.target.value)}
             placeholder="дополнительные тематические слова через запятую..."
-            className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-white h-20 md:h-24 focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none resize-none shadow-sm placeholder-slate-600 text-sm transition-all"
+            className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-white h-20 md:h-24 focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none resize-none shadow-sm placeholder-slate-400 text-sm transition-all"
             disabled={isDisabled}
           />
         </div>
