@@ -10,7 +10,7 @@ import { ProjectList } from './components/ProjectList';
 import { HistoryList } from './components/HistoryList';
 import { calculateSeoMetrics } from './services/geminiService';
 import { GenerationConfig, KeywordRow, SeoResult, AIModel, Project, TextTone, TextStyle } from './types';
-import { LayoutDashboard, LogOut, ShieldCheck, Clock, Lock, ExternalLink, ChevronRight, Home, History, Sparkles, Zap } from 'lucide-react';
+import { LayoutDashboard, LogOut, ShieldCheck, Clock, Lock, ExternalLink, ChevronRight, Home, History, Sparkles, Zap, Monitor } from 'lucide-react';
 import { User, authService, SubscriptionPlan } from './services/authService';
 import { projectService } from './services/projectService';
 import { apiService } from './services/apiService';
@@ -583,6 +583,21 @@ export default function App() {
             <div className="hidden lg:block text-xs sm:text-sm text-slate-300 max-w-[120px] xl:max-w-none truncate font-medium">
               {user.firstName} {user.username ? `(@${user.username})` : ''}
             </div>
+
+            {/* Open in Browser button - only show in Telegram WebApp */}
+            {window.Telegram?.WebApp && (
+              <button
+                onClick={() => {
+                  const url = window.location.href;
+                  window.Telegram?.WebApp?.openLink(url);
+                }}
+                className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full transition-all duration-300 text-slate-400 hover:text-white shrink-0 active:scale-95"
+                title="Открыть в браузере"
+              >
+                <Monitor className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            )}
+
             <button
               onClick={handleLogout}
               className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full transition-all duration-300 text-slate-400 hover:text-white shrink-0 active:scale-95"
