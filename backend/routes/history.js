@@ -1,14 +1,28 @@
 import express from 'express';
 import History from '../models/History.js';
 import Project from '../models/Project.js';
+import { validateParams, validateQuery } from '../middleware/validate.js';
+import { mongoIdSchema, historyQuerySchema } from '../schemas/index.js';
+import { z } from 'zod';
 
 const router = express.Router();
 
+// Schema for projectId param
+const projectIdParamSchema = z.object({
+    projectId: z.string().regex(/^[a-fA-F0-9]{24}$/, 'Invalid project ID')
+});
+
+// Schema for history query with pagination
+const historyPaginationSchema = z.object({
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20)
+});
+
 /**
  * GET /api/history/:projectId
- * Get history for a project
+ * Get history for a project with pagination
  */
-router.get('/:projectId', async (req, res) => {
+router.get('/:projectId', validateParams(projectIdParamSchema), validateQuery(historyPaginationSchema), async (req, res) => {
     try {
         // Verify project ownership
         const project = await Project.findById(req.params.projectId);
@@ -21,10 +35,27 @@ router.get('/:projectId', async (req, res) => {
             return res.status(403).json({ error: 'Forbidden' });
         }
 
-        const history = await History.find({ projectId: req.params.projectId })
-            .sort({ timestamp: -1 });
+        const { page, limit } = req.query;
+        const skip = (page - 1) * limit;
 
-        res.json({ history });
+        const [history, total] = await Promise.all([
+            History.find({ projectId: req.params.projectId })
+                .sort({ timestamp: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            History.countDocuments({ projectId: req.params.projectId })
+        ]);
+
+        res.json({
+            history,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
     } catch (error) {
         console.error('Get history error:', error);
         res.status(500).json({ error: 'Failed to get history' });

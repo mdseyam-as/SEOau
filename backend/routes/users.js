@@ -1,8 +1,19 @@
 import express from 'express';
 import User from '../models/User.js';
 import Plan from '../models/Plan.js';
+import { validate, validateQuery } from '../middleware/validate.js';
+import { updateUserSchema, adminUpdateUserSchema, paginationSchema } from '../schemas/index.js';
+import { z } from 'zod';
 
 const router = express.Router();
+
+// Schema for creating user (admin only)
+const createUserSchema = z.object({
+    telegramId: z.union([z.string(), z.number()]).transform(val => Number(val)),
+    firstName: z.string().min(1).max(100),
+    username: z.string().max(100).optional(),
+    planId: z.string().max(50).optional().default('free')
+});
 
 /**
  * Helper: ensure that the requester is an admin based on DB role
@@ -24,15 +35,34 @@ async function ensureAdmin(req, res) {
 
 /**
  * GET /api/users
- * Get all users (Admin only)
+ * Get all users with pagination (Admin only)
  */
-router.get('/', async (req, res) => {
+router.get('/', validateQuery(paginationSchema), async (req, res) => {
     try {
         const adminUser = await ensureAdmin(req, res);
         if (!adminUser) return;
 
-        const users = await User.find().sort({ createdAt: -1 });
-        res.json({ users });
+        const { page, limit } = req.query;
+        const skip = (page - 1) * limit;
+
+        const [users, total] = await Promise.all([
+            User.find()
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            User.countDocuments()
+        ]);
+
+        res.json({
+            users,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
     } catch (error) {
         console.error('Get all users error:', error);
         res.status(500).json({ error: 'Failed to get users' });
@@ -43,16 +73,12 @@ router.get('/', async (req, res) => {
  * POST /api/users
  * Create new user (Admin only)
  */
-router.post('/', async (req, res) => {
+router.post('/', validate(createUserSchema), async (req, res) => {
     try {
         const adminUser = await ensureAdmin(req, res);
         if (!adminUser) return;
 
         const { telegramId, firstName, username, planId } = req.body;
-
-        if (!telegramId || !firstName) {
-            return res.status(400).json({ error: 'Telegram ID and First Name are required' });
-        }
 
         const existingUser = await User.findOne({ telegramId });
         if (existingUser) {

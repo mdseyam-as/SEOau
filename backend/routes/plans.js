@@ -2,16 +2,27 @@ import express from 'express';
 import Plan from '../models/Plan.js';
 import User from '../models/User.js';
 import { validateTelegramAuth } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { createPlanSchema, updatePlanSchema } from '../schemas/index.js';
+import { cacheGet, cacheSet, cacheDel, cacheDelPattern, CACHE_KEYS } from '../utils/cache.js';
 
 const router = express.Router();
 
 /**
  * GET /api/plans
- * Get all plans (public)
+ * Get all plans (public) - cached
  */
 router.get('/', async (req, res) => {
     try {
-        const plans = await Plan.find().sort({ priceRub: 1 });
+        // Try cache first
+        let plans = await cacheGet(CACHE_KEYS.PLANS_ALL);
+
+        if (!plans) {
+            plans = await Plan.find().sort({ priceRub: 1 }).lean();
+            // Cache for 10 minutes
+            await cacheSet(CACHE_KEYS.PLANS_ALL, plans);
+        }
+
         res.json({ plans });
     } catch (error) {
         console.error('Get plans error:', error);
@@ -21,14 +32,24 @@ router.get('/', async (req, res) => {
 
 /**
  * GET /api/plans/:id
- * Get plan by ID
+ * Get plan by ID - cached
  */
 router.get('/:id', async (req, res) => {
     try {
-        const plan = await Plan.findOne({ id: req.params.id });
+        const cacheKey = CACHE_KEYS.PLAN(req.params.id);
+
+        // Try cache first
+        let plan = await cacheGet(cacheKey);
 
         if (!plan) {
-            return res.status(404).json({ error: 'Plan not found' });
+            plan = await Plan.findOne({ id: req.params.id }).lean();
+
+            if (!plan) {
+                return res.status(404).json({ error: 'Plan not found' });
+            }
+
+            // Cache for 10 minutes
+            await cacheSet(cacheKey, plan);
         }
 
         res.json({ plan });
@@ -65,10 +86,13 @@ const checkAdminRole = async (req, res, next) => {
  * POST /api/plans
  * Create new plan (admin only)
  */
-router.post('/', validateTelegramAuth, checkAdminRole, async (req, res) => {
+router.post('/', validateTelegramAuth, checkAdminRole, validate(createPlanSchema), async (req, res) => {
     try {
         const plan = new Plan(req.body);
         await plan.save();
+
+        // Invalidate plans cache
+        await cacheDel(CACHE_KEYS.PLANS_ALL);
 
         res.json({ success: true, plan });
     } catch (error) {
@@ -81,7 +105,7 @@ router.post('/', validateTelegramAuth, checkAdminRole, async (req, res) => {
  * PUT /api/plans/:id
  * Update plan (admin only)
  */
-router.put('/:id', validateTelegramAuth, checkAdminRole, async (req, res) => {
+router.put('/:id', validateTelegramAuth, checkAdminRole, validate(updatePlanSchema), async (req, res) => {
     try {
         const plan = await Plan.findOneAndUpdate(
             { id: req.params.id },
@@ -92,6 +116,12 @@ router.put('/:id', validateTelegramAuth, checkAdminRole, async (req, res) => {
         if (!plan) {
             return res.status(404).json({ error: 'Plan not found' });
         }
+
+        // Invalidate caches
+        await Promise.all([
+            cacheDel(CACHE_KEYS.PLANS_ALL),
+            cacheDel(CACHE_KEYS.PLAN(req.params.id))
+        ]);
 
         res.json({ success: true, plan });
     } catch (error) {
@@ -111,6 +141,12 @@ router.delete('/:id', validateTelegramAuth, checkAdminRole, async (req, res) => 
         if (!plan) {
             return res.status(404).json({ error: 'Plan not found' });
         }
+
+        // Invalidate caches
+        await Promise.all([
+            cacheDel(CACHE_KEYS.PLANS_ALL),
+            cacheDel(CACHE_KEYS.PLAN(req.params.id))
+        ]);
 
         res.json({ success: true });
     } catch (error) {

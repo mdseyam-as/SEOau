@@ -1,18 +1,38 @@
 import express from 'express';
 import Project from '../models/Project.js';
+import History from '../models/History.js';
+import { validate, validateParams, validateQuery } from '../middleware/validate.js';
+import { createProjectSchema, mongoIdSchema, paginationSchema } from '../schemas/index.js';
 
 const router = express.Router();
 
 /**
  * GET /api/projects
- * Get all projects for current user
+ * Get all projects for current user with pagination
  */
-router.get('/', async (req, res) => {
+router.get('/', validateQuery(paginationSchema), async (req, res) => {
     try {
-        const projects = await Project.find({ userId: req.telegramUser.id })
-            .sort({ createdAt: -1 });
+        const { page, limit } = req.query;
+        const skip = (page - 1) * limit;
 
-        res.json({ projects });
+        const [projects, total] = await Promise.all([
+            Project.find({ userId: req.telegramUser.id })
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            Project.countDocuments({ userId: req.telegramUser.id })
+        ]);
+
+        res.json({
+            projects,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
     } catch (error) {
         console.error('Get projects error:', error);
         res.status(500).json({ error: 'Failed to get projects' });
@@ -23,13 +43,9 @@ router.get('/', async (req, res) => {
  * POST /api/projects
  * Create new project
  */
-router.post('/', async (req, res) => {
+router.post('/', validate(createProjectSchema), async (req, res) => {
     try {
         const { name, description } = req.body;
-
-        if (!name) {
-            return res.status(400).json({ error: 'Project name is required' });
-        }
 
         const project = new Project({
             userId: req.telegramUser.id,
@@ -48,9 +64,9 @@ router.post('/', async (req, res) => {
 
 /**
  * DELETE /api/projects/:id
- * Delete project
+ * Delete project and its history
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', validateParams(mongoIdSchema), async (req, res) => {
     try {
         const project = await Project.findById(req.params.id);
 
@@ -63,9 +79,11 @@ router.delete('/:id', async (req, res) => {
             return res.status(403).json({ error: 'Forbidden' });
         }
 
-        await Project.findByIdAndDelete(req.params.id);
-
-        // Note: History cleanup would be done in a separate route or via cascade
+        // Delete project and associated history (cascade delete)
+        await Promise.all([
+            Project.findByIdAndDelete(req.params.id),
+            History.deleteMany({ projectId: req.params.id })
+        ]);
 
         res.json({ success: true });
     } catch (error) {

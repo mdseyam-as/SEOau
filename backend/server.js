@@ -20,9 +20,13 @@ import generateRoutes from './routes/generate.js';
 // Import utilities
 import { initializeBot } from './utils/subscriptionManager.js';
 import { setupWebAppCommands } from './utils/botCommands.js';
+import { initRedis } from './utils/cache.js';
 
 // Load environment variables
 dotenv.config();
+
+// Initialize Redis cache
+initRedis();
 
 const app = express();
 const PORT = process.env.PORT || 3000;

@@ -2,32 +2,52 @@ import express from 'express';
 import Settings from '../models/Settings.js';
 import User from '../models/User.js';
 import { validateTelegramAuth as auth } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { updateSettingsSchema } from '../schemas/index.js';
+import { cacheGet, cacheSet, cacheDel, CACHE_KEYS } from '../utils/cache.js';
 
 const router = express.Router();
 
 /**
  * @route   GET /api/settings
- * @desc    Get global settings
+ * @desc    Get global settings (public fields only for regular users)
  * @access  Private (all authenticated users)
  */
 router.get('/', auth, async (req, res) => {
     try {
-        let settings = await Settings.findById('global');
+        // Check if user is admin to return full settings
+        const user = await User.findOne({ telegramId: req.telegramUser.id });
+        const isAdmin = user && user.role === 'admin';
 
-        // If settings don't exist, create default ones
+        // Try to get from cache first
+        let settings = await cacheGet(CACHE_KEYS.SETTINGS);
+
         if (!settings) {
-            settings = new Settings({ _id: 'global' });
-            await settings.save();
+            // Fetch from DB
+            let dbSettings = await Settings.findById('global');
+
+            if (!dbSettings) {
+                dbSettings = new Settings({ _id: 'global' });
+                await dbSettings.save();
+            }
+
+            settings = {
+                openRouterApiKey: dbSettings.openRouterApiKey || '',
+                systemPrompt: dbSettings.systemPrompt || '',
+                telegramLink: dbSettings.telegramLink || 'https://t.me/bankkz_admin'
+            };
+
+            // Cache settings for 5 minutes
+            await cacheSet(CACHE_KEYS.SETTINGS, settings);
         }
 
-        // Return settings (API key included for all users - they need it for generation)
-        res.json({
-            settings: {
-                openRouterApiKey: settings.openRouterApiKey || '',
-                systemPrompt: settings.systemPrompt || '',
-                telegramLink: settings.telegramLink || 'https://t.me/bankkz_admin'
-            }
-        });
+        // Regular users only get public settings (NO API key!)
+        if (isAdmin) {
+            res.json({ settings });
+        } else {
+            const { openRouterApiKey, ...publicSettings } = settings;
+            res.json({ settings: publicSettings });
+        }
     } catch (error) {
         console.error('Error fetching settings:', error);
         res.status(500).json({ error: 'Failed to fetch settings' });
@@ -39,10 +59,8 @@ router.get('/', auth, async (req, res) => {
  * @desc    Update global settings
  * @access  Private (admin only)
  */
-router.put('/', auth, async (req, res) => {
+router.put('/', auth, validate(updateSettingsSchema), async (req, res) => {
     try {
-        // Fetch user from DB to check role
-        // req.telegramUser is set by auth middleware
         const user = await User.findOne({ telegramId: req.telegramUser.id });
 
         if (!user || user.role !== 'admin') {
@@ -63,6 +81,9 @@ router.put('/', auth, async (req, res) => {
         if (telegramLink !== undefined) settings.telegramLink = telegramLink;
 
         await settings.save();
+
+        // Invalidate cache
+        await cacheDel(CACHE_KEYS.SETTINGS);
 
         res.json({
             settings: {

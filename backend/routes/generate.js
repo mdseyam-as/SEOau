@@ -2,6 +2,8 @@ import express from 'express';
 import User from '../models/User.js';
 import Plan from '../models/Plan.js';
 import Settings from '../models/Settings.js';
+import { validate } from '../middleware/validate.js';
+import { generateSchema, spamCheckSchema, fixSpamSchema, optimizeRelevanceSchema } from '../schemas/index.js';
 
 const router = express.Router();
 
@@ -160,7 +162,7 @@ async function incrementUsage(user) {
  * POST /api/generate
  * Generate SEO content
  */
-router.post('/', async (req, res) => {
+router.post('/', validate(generateSchema), async (req, res) => {
     try {
         const telegramId = req.telegramUser.id;
 
@@ -171,10 +173,6 @@ router.post('/', async (req, res) => {
         }
 
         const { config, keywords } = req.body;
-
-        if (!config || !keywords) {
-            return res.status(400).json({ error: 'Missing config or keywords' });
-        }
 
         // Validate model is allowed for user's plan
         if (limitCheck.plan && limitCheck.plan.allowedModels && limitCheck.plan.allowedModels.length > 0) {
@@ -363,7 +361,7 @@ ${content.substring(0, 15000)}
  * POST /api/generate/spam-check
  * Check content for spam
  */
-router.post('/spam-check', async (req, res) => {
+router.post('/spam-check', validate(spamCheckSchema), async (req, res) => {
     try {
         const telegramId = req.telegramUser.id;
 
@@ -377,9 +375,6 @@ router.post('/spam-check', async (req, res) => {
         }
 
         const { content } = req.body;
-        if (!content) {
-            return res.status(400).json({ error: 'Missing content' });
-        }
 
         const apiKey = await getApiKey();
         const settings = await Settings.findOne();
@@ -396,7 +391,7 @@ router.post('/spam-check', async (req, res) => {
  * POST /api/generate/fix-spam
  * Fix content spam issues
  */
-router.post('/fix-spam', async (req, res) => {
+router.post('/fix-spam', validate(fixSpamSchema), async (req, res) => {
     try {
         const telegramId = req.telegramUser.id;
 
@@ -410,9 +405,6 @@ router.post('/fix-spam', async (req, res) => {
         }
 
         const { content, analysis, model } = req.body;
-        if (!content || !model) {
-            return res.status(400).json({ error: 'Missing content or model' });
-        }
 
         const apiKey = await getApiKey();
 
@@ -463,7 +455,7 @@ ${content}
  * POST /api/generate/optimize
  * Optimize content relevance
  */
-router.post('/optimize', async (req, res) => {
+router.post('/optimize', validate(optimizeRelevanceSchema), async (req, res) => {
     try {
         const telegramId = req.telegramUser.id;
 
@@ -477,9 +469,6 @@ router.post('/optimize', async (req, res) => {
         }
 
         const { content, missingKeywords, config } = req.body;
-        if (!content || !missingKeywords || !config) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
 
         const apiKey = await getApiKey();
         const missingStr = missingKeywords.join(', ');
