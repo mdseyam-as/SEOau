@@ -77,11 +77,22 @@ router.post('/', async (req, res) => {
 
 /**
  * GET /api/users/:id
- * Get user by Telegram ID
+ * Get user by Telegram ID (only own data or admin can access others)
  */
 router.get('/:id', async (req, res) => {
     try {
-        const user = await User.findOne({ telegramId: parseInt(req.params.id) });
+        const telegramId = parseInt(req.params.id);
+
+        // Check if requester is admin
+        const requester = await User.findOne({ telegramId: req.telegramUser.id });
+        const isAdmin = requester && requester.role === 'admin';
+
+        // Only allow users to get their own data or admins to get anyone's data
+        if (!isAdmin && req.telegramUser.id !== telegramId) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const user = await User.findOne({ telegramId });
 
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
@@ -102,17 +113,35 @@ router.put('/:id', async (req, res) => {
     try {
         const telegramId = parseInt(req.params.id);
 
-        // Only allow users to update themselves or admins to update anyone
-        const adminIds = (process.env.ADMIN_TELEGRAM_IDS || '').split(',').map(id => parseInt(id.trim()));
-        const isAdmin = adminIds.includes(req.telegramUser.id);
+        // Check if requester is admin (from DB, not just env)
+        const requester = await User.findOne({ telegramId: req.telegramUser.id });
+        const isAdmin = requester && requester.role === 'admin';
 
+        // Only allow users to update themselves or admins to update anyone
         if (!isAdmin && req.telegramUser.id !== telegramId) {
             return res.status(403).json({ error: 'Forbidden' });
         }
 
+        // Whitelist allowed fields to prevent mass assignment
+        const allowedFieldsForUser = ['firstName', 'username'];
+        const allowedFieldsForAdmin = ['firstName', 'username', 'role', 'planId', 'subscriptionExpiry', 'generationsUsed', 'generationsUsedToday', 'lastGenerationMonth', 'lastGenerationDate'];
+
+        const allowedFields = isAdmin ? allowedFieldsForAdmin : allowedFieldsForUser;
+
+        const updateData = {};
+        for (const field of allowedFields) {
+            if (req.body[field] !== undefined) {
+                updateData[field] = req.body[field];
+            }
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ error: 'No valid fields to update' });
+        }
+
         const user = await User.findOneAndUpdate(
             { telegramId },
-            req.body,
+            updateData,
             { new: true, runValidators: true }
         );
 
@@ -129,11 +158,21 @@ router.put('/:id', async (req, res) => {
 
 /**
  * POST /api/users/:id/increment-usage
- * Increment generation usage counters
+ * Increment generation usage counters (only own usage or admin)
  */
 router.post('/:id/increment-usage', async (req, res) => {
     try {
         const telegramId = parseInt(req.params.id);
+
+        // Check if requester is admin
+        const requester = await User.findOne({ telegramId: req.telegramUser.id });
+        const isAdmin = requester && requester.role === 'admin';
+
+        // Only allow users to increment their own usage or admins to do it for anyone
+        if (!isAdmin && req.telegramUser.id !== telegramId) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
         const user = await User.findOne({ telegramId });
 
         if (!user) {
@@ -170,11 +209,21 @@ router.post('/:id/increment-usage', async (req, res) => {
 
 /**
  * POST /api/users/:id/check-limits
- * Check if user can generate content
+ * Check if user can generate content (only own limits or admin)
  */
 router.post('/:id/check-limits', async (req, res) => {
     try {
         const telegramId = parseInt(req.params.id);
+
+        // Check if requester is admin
+        const requester = await User.findOne({ telegramId: req.telegramUser.id });
+        const isAdmin = requester && requester.role === 'admin';
+
+        // Only allow users to check their own limits or admins to check anyone's
+        if (!isAdmin && req.telegramUser.id !== telegramId) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
         const user = await User.findOne({ telegramId });
 
         if (!user) {

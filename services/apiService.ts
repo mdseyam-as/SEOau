@@ -167,6 +167,35 @@ class ApiService {
             body: JSON.stringify(settings)
         });
     }
+
+    // Generation
+    async generate(config: GenerationConfig, keywords: { keyword: string; frequency: number }[]): Promise<{ result: SeoResult; user: User }> {
+        return this.request('/generate', {
+            method: 'POST',
+            body: JSON.stringify({ config, keywords })
+        });
+    }
+
+    async checkSpam(content: string): Promise<{ spamScore: number; spamAnalysis: string }> {
+        return this.request('/generate/spam-check', {
+            method: 'POST',
+            body: JSON.stringify({ content })
+        });
+    }
+
+    async fixSpam(content: string, analysis: string, model: string): Promise<{ content: string; user: User }> {
+        return this.request('/generate/fix-spam', {
+            method: 'POST',
+            body: JSON.stringify({ content, analysis, model })
+        });
+    }
+
+    async optimizeRelevance(content: string, missingKeywords: string[], config: GenerationConfig): Promise<{ content: string; user: User }> {
+        return this.request('/generate/optimize', {
+            method: 'POST',
+            body: JSON.stringify({ content, missingKeywords, config })
+        });
+    }
 }
 
 export const apiService = new ApiService();

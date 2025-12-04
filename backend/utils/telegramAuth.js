@@ -1,5 +1,8 @@
 import crypto from 'crypto';
 
+// Maximum age for initData in seconds (default: 1 hour)
+const MAX_AUTH_AGE_SECONDS = parseInt(process.env.TELEGRAM_AUTH_MAX_AGE || '3600', 10);
+
 /**
  * Validates Telegram WebApp initData
  * https://core.telegram.org/bots/webapps#validating-data-received-via-the-web-app
@@ -9,6 +12,25 @@ export function validateTelegramWebAppData(initData, botToken) {
         const urlParams = new URLSearchParams(initData);
         const hash = urlParams.get('hash');
         urlParams.delete('hash');
+
+        // Validate auth_date is not too old
+        const authDate = urlParams.get('auth_date');
+        if (authDate) {
+            const authTimestamp = parseInt(authDate, 10);
+            const currentTimestamp = Math.floor(Date.now() / 1000);
+            const age = currentTimestamp - authTimestamp;
+
+            if (age > MAX_AUTH_AGE_SECONDS) {
+                console.warn(`Telegram auth_date too old: ${age} seconds (max: ${MAX_AUTH_AGE_SECONDS})`);
+                return false;
+            }
+
+            // Reject future timestamps (clock skew protection, allow 5 min)
+            if (authTimestamp > currentTimestamp + 300) {
+                console.warn('Telegram auth_date is in the future');
+                return false;
+            }
+        }
 
         // Sort parameters alphabetically
         const dataCheckString = Array.from(urlParams.entries())

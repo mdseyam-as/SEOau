@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 
 // Import middleware
 import { validateTelegramAuth } from './middleware/auth.js';
@@ -14,6 +15,7 @@ import historyRoutes from './routes/history.js';
 import planRoutes from './routes/plans.js';
 import webhookRoutes from './routes/webhook.js';
 import settingsRoutes from './routes/settings.js';
+import generateRoutes from './routes/generate.js';
 
 // Import utilities
 import { initializeBot } from './utils/subscriptionManager.js';
@@ -26,13 +28,73 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
+const allowedOrigins = (process.env.FRONTEND_URL || '').split(',').map(s => s.trim()).filter(Boolean);
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || '*',
+    origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin) {
+            return callback(null, true);
+        }
+
+        // In development, allow all origins
+        if (process.env.NODE_ENV !== 'production') {
+            return callback(null, true);
+        }
+
+        // In production, check against whitelist
+        if (allowedOrigins.length === 0) {
+            console.warn('CORS: No FRONTEND_URL configured in production, blocking request from:', origin);
+            return callback(new Error('Not allowed by CORS'));
+        }
+
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        console.warn('CORS: Blocked request from unauthorized origin:', origin);
+        return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Rate limiting
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // 100 requests per 15 minutes
+    message: { error: 'Too many requests, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => {
+        // Use Telegram user ID if available, otherwise IP
+        return req.telegramUser?.id?.toString() || req.ip;
+    }
+});
+
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // 20 auth requests per 15 minutes
+    message: { error: 'Too many authentication attempts, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+const generateLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 5, // 5 generation requests per minute
+    message: { error: 'Too many generation requests, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => {
+        return req.telegramUser?.id?.toString() || req.ip;
+    }
+});
+
+// Apply general rate limit to all requests
+app.use(generalLimiter);
 
 // Request logging
 app.use((req, res, next) => {
@@ -73,11 +135,12 @@ app.use('/api/plans', planRoutes); // Plans are public for viewing
 app.use('/api/webhook', webhookRoutes); // Webhook doesn't use Telegram auth
 
 // Protected routes (require Telegram auth)
-app.use('/api/auth', validateTelegramAuth, authRoutes);
+app.use('/api/auth', authLimiter, validateTelegramAuth, authRoutes);
 app.use('/api/users', validateTelegramAuth, userRoutes);
 app.use('/api/projects', validateTelegramAuth, projectRoutes);
 app.use('/api/history', validateTelegramAuth, historyRoutes);
 app.use('/api/settings', validateTelegramAuth, settingsRoutes);
+app.use('/api/generate', generateLimiter, validateTelegramAuth, generateRoutes);
 
 // Serve Vite-built frontend
 import path from 'path';

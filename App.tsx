@@ -8,7 +8,7 @@ import { AuthScreen } from './components/AuthScreen';
 import { AdminPanel } from './components/AdminPanel';
 import { ProjectList } from './components/ProjectList';
 import { HistoryList } from './components/HistoryList';
-import { generateSeoContent, checkContentForSpam, fixContentSpam, optimizeContentRelevance, calculateSeoMetrics } from './services/geminiService';
+import { calculateSeoMetrics } from './services/geminiService';
 import { GenerationConfig, KeywordRow, SeoResult, AIModel, Project, TextTone, TextStyle } from './types';
 import { LayoutDashboard, LogOut, ShieldCheck, Clock, Lock, ExternalLink, ChevronRight, Home, History, Sparkles, Zap } from 'lucide-react';
 import { User, authService, SubscriptionPlan } from './services/authService';
@@ -34,27 +34,6 @@ const DEFAULT_CONFIG: GenerationConfig = {
 };
 
 export default function App() {
-  // Detect if running in Telegram WebApp environment
-  const isTelegramEnv = typeof window !== 'undefined' && !!window.Telegram?.WebApp?.initData;
-
-  // Helper function to check limits (API or localStorage based on environment)
-  const checkLimits = async (user: User) => {
-    if (isTelegramEnv) {
-      return apiService.checkLimits(user.telegramId);
-    }
-    // dev-режим
-    return authService.checkGenerationLimit(user);
-  };
-
-  // Helper function to increment usage (API or localStorage based on environment)
-  const incrementUsage = async (user: User) => {
-    if (isTelegramEnv) {
-      const { user: updatedUser } = await apiService.incrementUsage(user.telegramId);
-      return updatedUser;
-    }
-    // dev-режим
-    return authService.incrementGenerationUsage(user.telegramId);
-  };
   const [user, setUser] = useState<User | null>(null);
   const [userPlan, setUserPlan] = useState<SubscriptionPlan | null>(null);
 
@@ -179,17 +158,6 @@ export default function App() {
   const handleGenerate = async () => {
     if (!user) return;
 
-    // 1. Check Generation Limit
-    const limitCheck = await checkLimits(user);
-    if (!limitCheck.allowed) {
-      if (limitCheck.reason === 'daily_limit') {
-        setError(`Превышен дневной лимит генераций (${userPlan?.maxGenerationsPerDay || 0}). Приходите завтра!`);
-      } else {
-        setError(`Превышен месячный лимит генераций (${userPlan?.maxGenerationsPerMonth || 0}). Обновите подписку.`);
-      }
-      return;
-    }
-
     if (!keywords.length && !config.topic) {
       setError("Пожалуйста, загрузите ключевые слова или укажите тему.");
       return;
@@ -205,35 +173,31 @@ export default function App() {
     setResult(null);
 
     try {
-      const data = await generateSeoContent(config, keywords);
-
-      // -- SPAM CHECK INTEGRATION --
-      if (userPlan?.canCheckSpam) {
-        try {
-          const spamResult = await checkContentForSpam(data.content);
-          data.spamScore = spamResult.spamScore;
-          data.spamAnalysis = spamResult.spamAnalysis;
-        } catch (spamError) {
-          console.error("Auto spam check failed", spamError);
-        }
-      }
+      // Use backend API for generation (API key stays on server)
+      const { result: data, user: updatedUser } = await apiService.generate(config, keywords);
 
       setResult(data);
+      setUser(updatedUser);
 
       // Save to History if in a project
       if (currentProject) {
         await projectService.addToHistory(currentProject.id, config, data);
-        // Refresh history
         const history = await projectService.getHistory(currentProject.id);
         setProjectHistory(history);
       }
 
-      // 2. Increment usage
-      const updatedUser = await incrementUsage(user);
-      setUser(updatedUser); // Update local state to reflect count change
-
     } catch (err: any) {
-      setError(err.message || "Ошибка генерации. Проверьте настройки API ключа.");
+      if (err.message?.includes('Limit exceeded')) {
+        if (err.message.includes('daily_limit')) {
+          setError(`Превышен дневной лимит генераций (${userPlan?.maxGenerationsPerDay || 0}). Приходите завтра!`);
+        } else if (err.message.includes('monthly_limit')) {
+          setError(`Превышен месячный лимит генераций (${userPlan?.maxGenerationsPerMonth || 0}). Обновите подписку.`);
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError(err.message || "Ошибка генерации. Проверьте настройки API ключа.");
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -242,27 +206,17 @@ export default function App() {
   const handleFixSpam = async (content: string, analysis: string, model: string) => {
     if (!userPlan?.canCheckSpam || !result || !user) return;
 
-    // 1. Check Limits (Fixing counts as a generation)
-    const limitCheck = await checkLimits(user);
-    if (!limitCheck.allowed) {
-      const msg = limitCheck.reason === 'daily_limit'
-        ? `Превышен дневной лимит (${userPlan?.maxGenerationsPerDay}). Исправление недоступно.`
-        : `Превышен месячный лимит (${userPlan?.maxGenerationsPerMonth}). Исправление недоступно.`;
-      alert(msg);
-      return;
-    }
-
     setIsFixingSpam(true);
     try {
-      // 2. Rewriting text using the User-Selected Model
-      const newContent = await fixContentSpam(content, analysis, model);
+      // Use backend API for spam fix
+      const { content: newContent, user: updatedUser } = await apiService.fixSpam(content, analysis, model);
 
       // Update result with new content
       const updatedResult = { ...result, content: newContent };
 
-      // 3. Re-check spam on new content using Grok (Standard Procedure)
+      // Re-check spam on new content
       try {
-        const reCheck = await checkContentForSpam(newContent);
+        const reCheck = await apiService.checkSpam(newContent);
         updatedResult.spamScore = reCheck.spamScore;
         updatedResult.spamAnalysis = reCheck.spamAnalysis;
       } catch (e) {
@@ -276,21 +230,21 @@ export default function App() {
       } catch (e) { console.error("Metrics recalc failed", e); }
 
       setResult(updatedResult);
-
-      // 4. Increment usage
-      const updatedUser = await incrementUsage(user);
       setUser(updatedUser);
 
-      // Optionally update history if needed, but complex to find/replace
+      // Save to history
       if (currentProject) {
-        // Just add as a new history item for now to preserve original
         await projectService.addToHistory(currentProject.id, { ...config, topic: config.topic + " (Fix Spam)" }, updatedResult);
         const history = await projectService.getHistory(currentProject.id);
         setProjectHistory(history);
       }
 
     } catch (err: any) {
-      alert("Не удалось исправить текст: " + err.message);
+      if (err.message?.includes('Limit exceeded')) {
+        alert("Лимит генераций исчерпан. Исправление недоступно.");
+      } else {
+        alert("Не удалось исправить текст: " + err.message);
+      }
     } finally {
       setIsFixingSpam(false);
     }
@@ -299,15 +253,10 @@ export default function App() {
   const handleOptimizeRelevance = async (missingKeywords: string[]) => {
     if (!userPlan?.canOptimizeRelevance || !result || !user) return;
 
-    const limitCheck = await checkLimits(user);
-    if (!limitCheck.allowed) {
-      alert("Лимит генераций исчерпан. Функция недоступна.");
-      return;
-    }
-
     setIsOptimizingRelevance(true);
     try {
-      const newContent = await optimizeContentRelevance(result.content, missingKeywords, config);
+      // Use backend API for optimization
+      const { content: newContent, user: updatedUser } = await apiService.optimizeRelevance(result.content, missingKeywords, config);
 
       const updatedResult = { ...result, content: newContent };
 
@@ -319,15 +268,13 @@ export default function App() {
       // Re-check spam
       if (userPlan.canCheckSpam) {
         try {
-          const spam = await checkContentForSpam(newContent);
+          const spam = await apiService.checkSpam(newContent);
           updatedResult.spamScore = spam.spamScore;
           updatedResult.spamAnalysis = spam.spamAnalysis;
         } catch (e) { }
       }
 
       setResult(updatedResult);
-
-      const updatedUser = await incrementUsage(user);
       setUser(updatedUser);
 
       if (currentProject) {
@@ -336,7 +283,11 @@ export default function App() {
         setProjectHistory(history);
       }
     } catch (err: any) {
-      alert("Ошибка оптимизации: " + err.message);
+      if (err.message?.includes('Limit exceeded')) {
+        alert("Лимит генераций исчерпан. Функция недоступна.");
+      } else {
+        alert("Ошибка оптимизации: " + err.message);
+      }
     } finally {
       setIsOptimizingRelevance(false);
     }

@@ -14,7 +14,8 @@
         "cors": "^2.8.5",
         "dotenv": "^16.4.7",
         "node-telegram-bot-api": "^0.66.0",
-        "crypto": "^1.0.1"
+        "crypto": "^1.0.1",
+        "express-rate-limit": "^7.5.0"
     },
     "devDependencies": {
         "@types/node": "^22.14.0"
