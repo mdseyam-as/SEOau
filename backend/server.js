@@ -27,12 +27,24 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-const allowedOrigins = (process.env.FRONTEND_URL || '').split(',').map(s => s.trim()).filter(Boolean);
+// Trust proxy (needed for rate limiting behind reverse proxy)
+app.set('trust proxy', 1);
+
+// Middleware - CORS configuration
+const configuredOrigins = (process.env.FRONTEND_URL || '').split(',').map(s => s.trim()).filter(Boolean);
+
+// Default origins for Telegram WebApp
+const defaultOrigins = [
+    'https://web.telegram.org',
+    'https://webk.telegram.org',
+    'https://webz.telegram.org'
+];
+
+const allowedOrigins = [...new Set([...configuredOrigins, ...defaultOrigins])];
 
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, curl, etc.)
+        // Allow requests with no origin (mobile apps, curl, Telegram desktop)
         if (!origin) {
             return callback(null, true);
         }
@@ -42,24 +54,24 @@ app.use(cors({
             return callback(null, true);
         }
 
-        // In production, check against whitelist
-        if (allowedOrigins.length === 0) {
-            console.warn('CORS: No FRONTEND_URL configured in production, blocking request from:', origin);
-            return callback(new Error('Not allowed by CORS'));
-        }
-
+        // Check whitelist
         if (allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
 
-        console.warn('CORS: Blocked request from unauthorized origin:', origin);
+        // Allow known hosting platforms (same-origin when serving frontend)
+        if (origin.includes('.twc1.net') || origin.includes('.amvera.io')) {
+            return callback(null, true);
+        }
+
+        console.warn('CORS: Blocked request from:', origin);
         return callback(new Error('Not allowed by CORS'));
     },
     credentials: true
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Rate limiting
 const generalLimiter = rateLimit({
