@@ -509,7 +509,7 @@ export default function App() {
     <div className="min-h-screen bg-mesh-animated text-slate-100 font-sans pb-10 md:pb-20 animate-in fade-in duration-700">
       {/* Header */}
       <header className="glass-panel-dark sticky top-0 z-50 border-b border-white/5 shadow-glass">
-        <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 md:py-4 flex items-center justify-between xl:max-w-7xl">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 md:py-4 flex items-center justify-between lg:max-w-[50vw]">
           <div className="flex items-center gap-3 sm:gap-4 cursor-pointer min-w-0 group" onClick={() => { setCurrentProject(null); setShowAdminPanel(false); }}>
             <div className="w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-br from-brand-green to-emerald-600 rounded-xl flex items-center justify-center shadow-glow-sm shrink-0 group-hover:scale-105 transition-transform duration-300">
               <LayoutDashboard className="text-white w-5 h-5 sm:w-6 sm:h-6" />
@@ -594,7 +594,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 xl:max-w-7xl">
+      <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 lg:max-w-[50vw]">
         {renderContent()}
       </main>
     </div>
