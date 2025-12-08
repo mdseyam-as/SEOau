@@ -15,6 +15,8 @@ export const validate = (schema) => {
                     message: err.message || 'Invalid value'
                 }));
 
+                console.error('Body validation failed:', JSON.stringify(errors, null, 2));
+
                 return res.status(400).json({
                     error: 'Validation failed',
                     details: errors
