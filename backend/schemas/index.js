@@ -78,8 +78,8 @@ export const generateSchema = z.object({
         maxParas: z.number().int().min(1).max(100).optional().default(12),
         model: z.string().min(1).max(100).optional().default('google/gemini-2.0-flash-001')
     }),
-    // Allow up to 2000 keywords for comprehensive TF-IDF analysis
-    keywords: z.array(keywordSchema).max(2000, 'Too many keywords').optional().default([])
+    // No hard limit here - limit is checked per-plan in generate route
+    keywords: z.array(keywordSchema).optional().default([])
 });
 
 export const spamCheckSchema = z.object({

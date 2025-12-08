@@ -174,6 +174,15 @@ router.post('/', validate(generateSchema), async (req, res) => {
 
         const { config, keywords } = req.body;
 
+        // Check keywords limit per plan (0 means unlimited)
+        if (limitCheck.plan && limitCheck.plan.maxKeywords > 0) {
+            if (keywords.length > limitCheck.plan.maxKeywords) {
+                return res.status(403).json({
+                    error: `Too many keywords. Your plan allows max ${limitCheck.plan.maxKeywords} keywords.`
+                });
+            }
+        }
+
         // Validate model is allowed for user's plan
         if (limitCheck.plan && limitCheck.plan.allowedModels && limitCheck.plan.allowedModels.length > 0) {
             if (!limitCheck.plan.allowedModels.includes(config.model)) {
