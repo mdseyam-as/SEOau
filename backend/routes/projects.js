@@ -15,7 +15,7 @@ router.get('/', validateQuery(paginationSchema), async (req, res) => {
         const { page, limit } = req.validatedQuery;
         const skip = (page - 1) * limit;
 
-        const [projects, total] = await Promise.all([
+        const [projectsDocs, total] = await Promise.all([
             Project.find({ userId: req.telegramUser.id })
                 .sort({ createdAt: -1 })
                 .skip(skip)
@@ -23,6 +23,13 @@ router.get('/', validateQuery(paginationSchema), async (req, res) => {
                 .lean(),
             Project.countDocuments({ userId: req.telegramUser.id })
         ]);
+
+        // Transform _id to id since .lean() bypasses toJSON transform
+        const projects = projectsDocs.map(p => ({
+            ...p,
+            id: p._id.toString(),
+            _id: undefined
+        }));
 
         res.json({
             projects,

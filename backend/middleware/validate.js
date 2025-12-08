@@ -10,9 +10,9 @@ export const validate = (schema) => {
             const result = schema.safeParse(req.body);
 
             if (!result.success) {
-                const errors = result.error.errors.map(err => ({
-                    field: err.path.join('.'),
-                    message: err.message
+                const errors = (result.error?.errors || result.error?.issues || []).map(err => ({
+                    field: err.path?.join('.') || 'unknown',
+                    message: err.message || 'Invalid value'
                 }));
 
                 return res.status(400).json({
@@ -42,9 +42,9 @@ export const validateQuery = (schema) => {
             const result = schema.safeParse(req.query);
 
             if (!result.success) {
-                const errors = result.error.errors.map(err => ({
-                    field: err.path.join('.'),
-                    message: err.message
+                const errors = (result.error?.errors || result.error?.issues || []).map(err => ({
+                    field: err.path?.join('.') || 'unknown',
+                    message: err.message || 'Invalid value'
                 }));
 
                 return res.status(400).json({
@@ -74,9 +74,9 @@ export const validateParams = (schema) => {
             const result = schema.safeParse(req.params);
 
             if (!result.success) {
-                const errors = result.error.errors.map(err => ({
-                    field: err.path.join('.'),
-                    message: err.message
+                const errors = (result.error?.errors || result.error?.issues || []).map(err => ({
+                    field: err.path?.join('.') || 'unknown',
+                    message: err.message || 'Invalid value'
                 }));
 
                 return res.status(400).json({

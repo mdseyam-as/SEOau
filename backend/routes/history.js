@@ -40,7 +40,7 @@ router.get('/:projectId', validateParams(projectIdParamSchema), validateQuery(hi
         const { page, limit } = req.validatedQuery;
         const skip = (page - 1) * limit;
 
-        const [history, total] = await Promise.all([
+        const [historyDocs, total] = await Promise.all([
             History.find({ projectId })
                 .sort({ timestamp: -1 })
                 .skip(skip)
@@ -48,6 +48,13 @@ router.get('/:projectId', validateParams(projectIdParamSchema), validateQuery(hi
                 .lean(),
             History.countDocuments({ projectId })
         ]);
+
+        // Transform _id to id since .lean() bypasses toJSON transform
+        const history = historyDocs.map(h => ({
+            ...h,
+            id: h._id.toString(),
+            _id: undefined
+        }));
 
         res.json({
             history,
