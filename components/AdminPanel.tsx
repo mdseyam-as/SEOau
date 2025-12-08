@@ -896,7 +896,7 @@ export const AdminPanel: React.FC = () => {
                     type="text"
                     value={editingPlan.name}
                     onChange={(e) => setEditingPlan({ ...editingPlan, name: e.target.value })}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none text-black"
                   />
                 </div>
                 <div>
@@ -904,18 +904,18 @@ export const AdminPanel: React.FC = () => {
                   <input
                     type="number"
                     value={editingPlan.maxChars}
-                    onChange={(e) => setEditingPlan({ ...editingPlan, maxChars: parseInt(e.target.value) })}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none"
+                    onChange={(e) => setEditingPlan({ ...editingPlan, maxChars: parseInt(e.target.value) || 0 })}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none text-black"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">Генераций в месяц</label>
                   <input
                     type="number"
-                    value={editingPlan.maxGenerationsPerMonth || 0}
-                    onChange={(e) => setEditingPlan({ ...editingPlan, maxGenerationsPerMonth: parseInt(e.target.value) })}
+                    value={editingPlan.maxGenerationsPerMonth || ''}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, maxGenerationsPerMonth: parseInt(e.target.value) || 0 })}
                     placeholder="0 = Безлимит"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none text-black placeholder-gray-400"
                   />
                   <p className="text-xs text-gray-600 mt-1">0 или пустое поле = Безлимит</p>
                 </div>
@@ -923,10 +923,10 @@ export const AdminPanel: React.FC = () => {
                   <label className="block text-sm font-bold text-slate-700 mb-2">Генераций в сутки</label>
                   <input
                     type="number"
-                    value={editingPlan.maxGenerationsPerDay || 0}
-                    onChange={(e) => setEditingPlan({ ...editingPlan, maxGenerationsPerDay: parseInt(e.target.value) })}
+                    value={editingPlan.maxGenerationsPerDay || ''}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, maxGenerationsPerDay: parseInt(e.target.value) || 0 })}
                     placeholder="0 = Безлимит"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none text-black placeholder-gray-400"
                   />
                   <p className="text-xs text-gray-600 mt-1">0 или пустое поле = Безлимит</p>
                 </div>
@@ -936,10 +936,10 @@ export const AdminPanel: React.FC = () => {
                   </label>
                   <input
                     type="number"
-                    value={editingPlan.maxKeywords || 0}
-                    onChange={(e) => setEditingPlan({ ...editingPlan, maxKeywords: parseInt(e.target.value) })}
+                    value={editingPlan.maxKeywords || ''}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, maxKeywords: parseInt(e.target.value) || 0 })}
                     placeholder="0 = Безлимит"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none text-black placeholder-gray-400"
                   />
                   <p className="text-xs text-gray-600 mt-1">0 = Безлимит (Загрузка всех строк)</p>
                 </div>
