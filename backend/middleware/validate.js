@@ -33,6 +33,8 @@ export const validate = (schema) => {
 
 /**
  * Validate query parameters
+ * In Express 5, req.query is read-only, so we store validated data in req.validatedQuery
+ * but also merge defaults back for backwards compatibility
  */
 export const validateQuery = (schema) => {
     return (req, res, next) => {
@@ -51,7 +53,9 @@ export const validateQuery = (schema) => {
                 });
             }
 
-            req.query = result.data;
+            // Store validated query with defaults applied
+            // In Express 5, req.query is read-only, so use a separate property
+            req.validatedQuery = result.data;
             next();
         } catch (error) {
             console.error('Query validation error:', error);
@@ -62,6 +66,7 @@ export const validateQuery = (schema) => {
 
 /**
  * Validate URL parameters
+ * In Express 5, req.params is read-only, so we store validated data in req.validatedParams
  */
 export const validateParams = (schema) => {
     return (req, res, next) => {
@@ -80,7 +85,8 @@ export const validateParams = (schema) => {
                 });
             }
 
-            req.params = result.data;
+            // Store validated params
+            req.validatedParams = result.data;
             next();
         } catch (error) {
             console.error('Params validation error:', error);

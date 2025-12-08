@@ -24,8 +24,10 @@ const historyPaginationSchema = z.object({
  */
 router.get('/:projectId', validateParams(projectIdParamSchema), validateQuery(historyPaginationSchema), async (req, res) => {
     try {
+        const { projectId } = req.validatedParams || req.params;
+
         // Verify project ownership
-        const project = await Project.findById(req.params.projectId);
+        const project = await Project.findById(projectId);
 
         if (!project) {
             return res.status(404).json({ error: 'Project not found' });
@@ -35,16 +37,16 @@ router.get('/:projectId', validateParams(projectIdParamSchema), validateQuery(hi
             return res.status(403).json({ error: 'Forbidden' });
         }
 
-        const { page, limit } = req.query;
+        const { page, limit } = req.validatedQuery;
         const skip = (page - 1) * limit;
 
         const [history, total] = await Promise.all([
-            History.find({ projectId: req.params.projectId })
+            History.find({ projectId })
                 .sort({ timestamp: -1 })
                 .skip(skip)
                 .limit(limit)
                 .lean(),
-            History.countDocuments({ projectId: req.params.projectId })
+            History.countDocuments({ projectId })
         ]);
 
         res.json({

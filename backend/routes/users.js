@@ -42,7 +42,7 @@ router.get('/', validateQuery(paginationSchema), async (req, res) => {
         const adminUser = await ensureAdmin(req, res);
         if (!adminUser) return;
 
-        const { page, limit } = req.query;
+        const { page, limit } = req.validatedQuery;
         const skip = (page - 1) * limit;
 
         const [users, total] = await Promise.all([

@@ -12,7 +12,7 @@ const router = express.Router();
  */
 router.get('/', validateQuery(paginationSchema), async (req, res) => {
     try {
-        const { page, limit } = req.query;
+        const { page, limit } = req.validatedQuery;
         const skip = (page - 1) * limit;
 
         const [projects, total] = await Promise.all([
