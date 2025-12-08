@@ -122,8 +122,13 @@ export default function App() {
 
   const handleCreateProject = async (name: string, description: string) => {
     if (user) {
-      await projectService.createProject(user.telegramId, name, description);
-      await loadProjects();
+      try {
+        await projectService.createProject(user.telegramId, name, description);
+        await loadProjects();
+      } catch (err: any) {
+        console.error('Failed to create project:', err);
+        setError(err.message || 'Не удалось создать проект');
+      }
     }
   };
 

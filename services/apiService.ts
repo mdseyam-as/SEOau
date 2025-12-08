@@ -91,7 +91,7 @@ class ApiService {
     }
 
     // Projects
-    async getProjects(): Promise<{ projects: Project[] }> {
+    async getProjects(): Promise<{ projects: Project[]; pagination?: { page: number; limit: number; total: number; totalPages: number } }> {
         return this.request('/projects');
     }
 
@@ -109,7 +109,7 @@ class ApiService {
     }
 
     // History
-    async getHistory(projectId: string): Promise<{ history: HistoryItem[] }> {
+    async getHistory(projectId: string): Promise<{ history: HistoryItem[]; pagination?: { page: number; limit: number; total: number; totalPages: number } }> {
         return this.request(`/history/${projectId}`);
     }
 
