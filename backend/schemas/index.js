@@ -68,8 +68,9 @@ export const generateSchema = z.object({
         lsiKeywords: z.string().max(5000).optional().default(''),
         competitorUrls: z.string().max(5000).optional().default(''),
         exampleContent: z.string().max(50000).optional().default(''),
-        tone: z.enum(['professional', 'friendly', 'formal', 'casual', 'enthusiastic']).optional().default('professional'),
-        style: z.enum(['informative', 'persuasive', 'narrative', 'descriptive', 'analytical']).optional().default('informative'),
+        // Accept any string for tone/style - frontend uses localized display values
+        tone: z.string().max(100).optional().default('Professional & Trustworthy'),
+        style: z.string().max(100).optional().default('Informative & Educational'),
         minChars: z.number().int().min(100).max(100000).optional().default(2500),
         maxChars: z.number().int().min(100).max(100000).optional().default(5000),
         minParas: z.number().int().min(1).max(100).optional().default(3),
