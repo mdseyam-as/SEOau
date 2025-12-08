@@ -56,7 +56,8 @@ export const updateProjectSchema = z.object({
 
 const keywordSchema = z.object({
     keyword: z.string().min(1).max(500),
-    frequency: z.number().int().min(0).max(1000).default(1)
+    // TF-IDF frequencies can be large numbers (document frequency counts)
+    frequency: z.number().min(0).default(1)
 });
 
 export const generateSchema = z.object({
@@ -77,7 +78,8 @@ export const generateSchema = z.object({
         maxParas: z.number().int().min(1).max(100).optional().default(12),
         model: z.string().min(1).max(100).optional().default('google/gemini-2.0-flash-001')
     }),
-    keywords: z.array(keywordSchema).max(500, 'Too many keywords').optional().default([])
+    // Allow up to 2000 keywords for comprehensive TF-IDF analysis
+    keywords: z.array(keywordSchema).max(2000, 'Too many keywords').optional().default([])
 });
 
 export const spamCheckSchema = z.object({
