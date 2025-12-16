@@ -9,7 +9,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { ProjectList } from './components/ProjectList';
 import { HistoryList } from './components/HistoryList';
 import { calculateSeoMetrics } from './services/geminiService';
-import { GenerationConfig, KeywordRow, SeoResult, AIModel, Project, TextTone, TextStyle } from './types';
+import { GenerationConfig, KeywordRow, SeoResult, AIModel, Project, TextTone, TextStyle, GenerationMode } from './types';
 import { LayoutDashboard, LogOut, ShieldCheck, Clock, Lock, ExternalLink, ChevronRight, Home, History, Sparkles, Zap } from 'lucide-react';
 import { User, authService, SubscriptionPlan } from './services/authService';
 import { projectService } from './services/projectService';
@@ -31,6 +31,7 @@ const DEFAULT_CONFIG: GenerationConfig = {
   minParas: 3,
   maxParas: 12,
   model: AIModel.GEMINI_2_0_FLASH,
+  generationMode: 'seo' as GenerationMode,
 };
 
 export default function App() {

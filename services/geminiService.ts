@@ -57,6 +57,77 @@ You MUST return a valid JSON object with the following structure (do not wrap in
   "usedKeywords": ["list", "of", "main", "keywords", "used"]
 }`;
 
+// GEO (Generative Engine Optimization) prompt for AI search engines
+export const GEO_PROMPT_TEMPLATE = `You are a **Generative Engine Optimization (GEO) Specialist** writing content for **{{websiteName}}**.
+
+### ROLE & GOAL
+Your goal is to write content specifically designed to be **cited and surfaced by AI Search Engines** (ChatGPT, Perplexity, Google SGE/AI Overviews, Bing Copilot).
+
+### INPUT DATA
+- **Target URL:** {{targetUrl}}
+- **Main Topic:** {{topic}}
+- **Target Country/Region:** {{targetCountry}}
+- **Website/Brand:** {{websiteName}}
+- **Target Length:** {{minChars}} - {{maxChars}} characters.
+- **Paragraphs:** {{minParas}} to {{maxParas}}.
+
+### TONE & STYLE
+- **Tone:** {{tone}}
+- **Style:** {{style}}
+
+### GEO STRUCTURE RULES (CRITICAL)
+1. **Direct Answers First:** Start each major section with a clear, dictionary-style definition or direct answer (e.g., "{{topic}} is..."). AI models extract these as snippets.
+
+2. **Rich Structured Data:** You MUST use:
+   - **Markdown tables** to compare features, pros/cons, prices, or specifications
+   - **Numbered lists** for step-by-step processes
+   - **Bullet points** for key features or benefits
+   AI models prefer structured data over plain paragraphs.
+
+3. **Key Takeaways Section:** End the article with a "## Key Takeaways" section containing 5-7 bullet points summarizing the main insights.
+
+4. **FAQ Section:** Include a "## FAQ" section with 3-5 common questions and concise answers. Use this format:
+   **Q: Question here?**
+   A: Direct answer here.
+
+5. **Objective & Data-Driven Tone:**
+   - AVOID marketing fluff ("best", "amazing", "incredible", "revolutionary")
+   - USE data-driven language ("9 out of 10 users...", "Studies show...", "Efficiency increased by 20%")
+   - Cite statistics, percentages, and specific metrics when possible
+
+6. **Entity Density:** Explicitly mention:
+   - Related technical terms and industry jargon
+   - Specific product names, brands, or tools
+   - Measurable metrics and specifications
+   - Geographic or regulatory context for {{targetCountry}}
+
+### KEYWORD STRATEGY
+1. **High Priority Keys:** {{mainKeywords}} (Use naturally in H1, H2, and the opening definition).
+2. **LSI & Context:** {{lsiKeywords}} (For semantic depth).
+3. **Semantics:** {{topKeywords}} (Only where contextually appropriate).
+
+### COMPETITOR CONTEXT
+Reference structure from:
+{{competitors}}
+
+**Create content that is MORE comprehensive, MORE structured, and MORE citation-worthy.**
+
+{{exampleInstruction}}
+
+### ANTI-SPAM RULES
+1. NO keyword stuffing - every keyword must add value
+2. Natural language flow - must read as expert-written content
+3. Varied phrasing - use synonyms and semantic variations
+
+### OUTPUT FORMAT
+Return a valid JSON object:
+{
+  "content": "The full markdown article with tables, lists, FAQ, and Key Takeaways...",
+  "metaTitle": "SEO title (max 60 chars)",
+  "metaDescription": "Meta description (max 160 chars)",
+  "usedKeywords": ["list", "of", "keywords", "used"]
+}`;
+
 const getApiKey = () => {
   const globalSettings = authService.getGlobalSettings();
   const key = globalSettings.openRouterApiKey || process.env.API_KEY;
@@ -346,8 +417,17 @@ export const generateSeoContent = async (
     `
     : "";
 
-  // Use global system prompt from settings, or default if not set
-  let prompt = globalSettings.systemPrompt || DEFAULT_PROMPT_TEMPLATE;
+  // Select prompt template based on generation mode
+  const isGeoMode = config.generationMode === 'geo';
+  const defaultTemplate = isGeoMode ? GEO_PROMPT_TEMPLATE : DEFAULT_PROMPT_TEMPLATE;
+
+  // Use global system prompt from settings, or default based on mode
+  let prompt = globalSettings.systemPrompt || defaultTemplate;
+
+  // If GEO mode is selected and using default prompt, force GEO template
+  if (isGeoMode && !globalSettings.systemPrompt) {
+    prompt = GEO_PROMPT_TEMPLATE;
+  }
 
   // Replace placeholders
   const replacements: Record<string, string | number> = {
@@ -381,7 +461,9 @@ export const generateSeoContent = async (
         "messages": [
           {
             "role": "system",
-            "content": `You are an advanced SEO AI. You write content for ${config.targetCountry}. You always output strictly valid JSON.`
+            "content": isGeoMode
+              ? `You are a Generative Engine Optimization (GEO) specialist. You write content optimized for AI search engines (ChatGPT, Perplexity, Google SGE) in ${config.targetCountry}. You always output strictly valid JSON.`
+              : `You are an advanced SEO AI. You write content for ${config.targetCountry}. You always output strictly valid JSON.`
           },
           {
             "role": "user",

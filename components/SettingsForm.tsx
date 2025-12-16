@@ -1,7 +1,7 @@
 
 import React, { useRef, useState, useEffect, useMemo } from 'react';
-import { GenerationConfig, ModelConfig, TextTone, TextStyle } from '../types';
-import { Settings2, Type, AlignLeft, Cpu, Link as LinkIcon, FileText, Upload, X, Lock, Globe, Feather, Mic, Plus, Trash2, FileSpreadsheet } from 'lucide-react';
+import { GenerationConfig, ModelConfig, TextTone, TextStyle, GenerationMode } from '../types';
+import { Settings2, Type, AlignLeft, Cpu, Link as LinkIcon, FileText, Upload, X, Lock, Globe, Feather, Mic, Plus, Trash2, FileSpreadsheet, Sparkles, Search } from 'lucide-react';
 import { parseDocxFile } from '../services/docxParser';
 import { parseExcelToRawText } from '../services/excelParser';
 import { SubscriptionPlan, authService } from '../services/authService';
@@ -303,6 +303,92 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               </select>
             </div>
           </div>
+        </div>
+
+        {/* Generation Mode Toggle */}
+        <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 p-4 sm:p-5 rounded-xl border border-purple-500/20">
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-300 border-b border-white/10 pb-3 mb-4">
+            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-purple-400" />
+            Режим генерации
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Classic SEO Option */}
+            <button
+              type="button"
+              onClick={() => handleChange('generationMode', 'seo' as GenerationMode)}
+              disabled={isDisabled}
+              className={`
+                relative p-4 rounded-xl border-2 transition-all text-left
+                ${config.generationMode === 'seo'
+                  ? 'border-brand-green bg-brand-green/10 shadow-lg shadow-brand-green/20'
+                  : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'}
+                ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+              `}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-lg ${config.generationMode === 'seo' ? 'bg-brand-green/20' : 'bg-white/10'}`}>
+                  <Search className={`w-5 h-5 ${config.generationMode === 'seo' ? 'text-brand-green' : 'text-slate-400'}`} />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🍏</span>
+                    <span className={`font-bold ${config.generationMode === 'seo' ? 'text-white' : 'text-slate-300'}`}>
+                      Классическое SEO
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Для Google, Яндекс и традиционных поисковиков
+                  </p>
+                </div>
+              </div>
+              {config.generationMode === 'seo' && (
+                <div className="absolute top-2 right-2 w-2 h-2 bg-brand-green rounded-full animate-pulse" />
+              )}
+            </button>
+
+            {/* GEO Mode Option */}
+            <button
+              type="button"
+              onClick={() => handleChange('generationMode', 'geo' as GenerationMode)}
+              disabled={isDisabled}
+              className={`
+                relative p-4 rounded-xl border-2 transition-all text-left
+                ${config.generationMode === 'geo'
+                  ? 'border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20'
+                  : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'}
+                ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+              `}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-lg ${config.generationMode === 'geo' ? 'bg-purple-500/20' : 'bg-white/10'}`}>
+                  <Sparkles className={`w-5 h-5 ${config.generationMode === 'geo' ? 'text-purple-400' : 'text-slate-400'}`} />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🤖</span>
+                    <span className={`font-bold ${config.generationMode === 'geo' ? 'text-white' : 'text-slate-300'}`}>
+                      GEO / AI Search
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Для ChatGPT, Perplexity, Google SGE
+                  </p>
+                </div>
+              </div>
+              {config.generationMode === 'geo' && (
+                <div className="absolute top-2 right-2 w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+              )}
+            </button>
+          </div>
+
+          {config.generationMode === 'geo' && (
+            <div className="mt-4 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
+              <p className="text-xs text-purple-300">
+                <strong>GEO-режим</strong> создаёт контент с таблицами, FAQ и Key Takeaways для цитирования AI-поисковиками.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Topic & URL */}

@@ -74,6 +74,8 @@ export enum TextStyle {
   INSTRUCTIONAL = 'Instructional (How-to guides)'
 }
 
+export type GenerationMode = 'seo' | 'geo';
+
 export interface GenerationConfig {
   // Brand Context
   websiteName: string;
@@ -97,6 +99,9 @@ export interface GenerationConfig {
   minParas: number;
   maxParas: number;
   model: string;
+
+  // Generation Mode
+  generationMode: GenerationMode;
 }
 
 export interface SeoMetrics {
