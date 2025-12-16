@@ -135,6 +135,97 @@ Return a valid JSON object:
   "usedKeywords": ["list", "of", "keywords", "used"]
 }`;
 
+// ==================== SAFE JSON PARSER ====================
+
+/**
+ * Надёжный парсер ответа от AI с очисткой markdown и fallback
+ * @param {string} rawText - Сырой текст от AI
+ * @param {object} fallbackData - Данные для fallback (topic, isGeoMode и т.д.)
+ * @returns {object} - Распарсенный объект или fallback структура
+ */
+function safeParseAIResponse(rawText, fallbackData = {}) {
+    if (!rawText || typeof rawText !== 'string') {
+        console.warn('safeParseAIResponse: Empty or invalid input');
+        return createFallbackResponse(rawText, fallbackData);
+    }
+
+    // Шаг 1: Очистка Markdown обёрток
+    let cleanText = rawText.trim();
+    
+    // Удаляем ```json или ``` в начале (с возможными пробелами/переносами)
+    cleanText = cleanText
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        // Удаляем ``` в конце
+        .replace(/\s*```$/g, '')
+        // Удаляем возможные BOM и невидимые символы в начале
+        .replace(/^\uFEFF/, '')
+        .trim();
+
+    // Дополнительная очистка: если текст начинается не с { или [, пробуем найти JSON
+    if (!cleanText.startsWith('{') && !cleanText.startsWith('[')) {
+        // Пробуем найти JSON объект в тексте
+        const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            cleanText = jsonMatch[0];
+        }
+    }
+
+    // Шаг 2: Попытка парсинга
+    try {
+        const parsed = JSON.parse(cleanText);
+        
+        // Валидация: проверяем что есть хотя бы content
+        if (parsed && typeof parsed === 'object') {
+            // Нормализуем структуру
+            return {
+                content: parsed.content || parsed.text || '',
+                metaTitle: parsed.metaTitle || parsed.title || fallbackData.topic || 'Generated Content',
+                metaDescription: parsed.metaDescription || parsed.description || '',
+                usedKeywords: Array.isArray(parsed.usedKeywords) ? parsed.usedKeywords : 
+                              Array.isArray(parsed.keywords) ? parsed.keywords : []
+            };
+        }
+    } catch (parseError) {
+        console.warn('safeParseAIResponse: JSON parsing failed:', parseError.message);
+        console.warn('safeParseAIResponse: First 200 chars of cleaned text:', cleanText.substring(0, 200));
+    }
+
+    // Шаг 3: Fallback - возвращаем валидную структуру с сырым контентом
+    return createFallbackResponse(rawText, fallbackData);
+}
+
+/**
+ * Создаёт fallback объект когда парсинг не удался
+ */
+function createFallbackResponse(rawText, fallbackData = {}) {
+    const { topic, isGeoMode } = fallbackData;
+    
+    // Пытаемся извлечь заголовок из первой строки текста
+    let extractedTitle = '';
+    if (rawText) {
+        const firstLine = rawText.split('\n')[0]?.trim() || '';
+        // Убираем markdown заголовки (#) если есть
+        extractedTitle = firstLine.replace(/^#+\s*/, '').substring(0, 60);
+    }
+
+    const timestamp = new Date().toISOString();
+    const modePrefix = isGeoMode ? 'GEO' : 'SEO';
+
+    console.warn(`safeParseAIResponse: Using fallback for ${modePrefix} mode`);
+
+    return {
+        content: rawText || '',
+        metaTitle: extractedTitle || `${modePrefix} Draft: ${topic || 'Content'} - ${timestamp.slice(0, 10)}`,
+        metaDescription: isGeoMode 
+            ? 'Generated via GEO mode - AI search optimized content' 
+            : 'Generated via SEO mode',
+        usedKeywords: [],
+        _fallback: true, // Маркер что это fallback
+        _parseError: true
+    };
+}
+
 // Helper to get API key from settings
 async function getApiKey() {
     const settings = await Settings.findOne();
@@ -411,20 +502,15 @@ ${config.exampleContent}
 
         if (!rawContent) throw new Error("No content received from AI");
 
-        const jsonString = rawContent.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+        // Используем надёжный парсер с очисткой и fallback
+        const parsedResult = safeParseAIResponse(rawContent, {
+            topic: config.topic,
+            isGeoMode: isGeoMode
+        });
 
-        let parsedResult;
-        try {
-            parsedResult = JSON.parse(jsonString);
-        } catch (e) {
-            console.warn('JSON parse failed, using raw text as content:', e.message);
-            // Фоллбэк: заворачиваем сырой ответ в объект
-            parsedResult = {
-                content: rawContent,
-                metaTitle: config.topic || 'Generated Content',
-                metaDescription: '',
-                usedKeywords: []
-            };
+        // Логируем если был использован fallback
+        if (parsedResult._fallback) {
+            console.warn('>>> GENERATION: Used fallback parsing for', isGeoMode ? 'GEO' : 'SEO', 'mode');
         }
 
         // Calculate metrics
@@ -498,13 +584,34 @@ ${content.substring(0, 15000)}
         return { spamScore: -1, spamAnalysis: "Empty response from API" };
     }
 
-    const jsonString = rawContent.replace(/^```json\s*/, "").replace(/\s*```$/, "");
-    const result = JSON.parse(jsonString);
+    // Используем надёжную очистку markdown
+    let cleanText = rawContent.trim()
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/\s*```$/g, '')
+        .trim();
 
-    return {
-        spamScore: typeof result.spamPercentage === 'number' ? result.spamPercentage : -1,
-        spamAnalysis: result.reason || "No analysis provided"
-    };
+    // Пробуем найти JSON если текст не начинается с {
+    if (!cleanText.startsWith('{')) {
+        const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            cleanText = jsonMatch[0];
+        }
+    }
+
+    try {
+        const result = JSON.parse(cleanText);
+        return {
+            spamScore: typeof result.spamPercentage === 'number' ? result.spamPercentage : -1,
+            spamAnalysis: result.reason || "No analysis provided"
+        };
+    } catch (e) {
+        console.warn('Spam check JSON parse failed:', e.message);
+        return { 
+            spamScore: -1, 
+            spamAnalysis: "Failed to parse spam analysis response" 
+        };
+    }
 }
 
 /**
