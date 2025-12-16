@@ -1,11 +1,36 @@
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { SeoResult, AIModel } from '../types';
-import { Copy, Check, FileText, Globe, AlertOctagon, Sparkles, RefreshCw, ChevronDown, AlertCircle } from 'lucide-react';
+import { Copy, Check, FileText, Globe, AlertOctagon, Sparkles, RefreshCw, ChevronDown, AlertCircle, Code } from 'lucide-react';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { SubscriptionPlan, authService } from '../services/authService';
+
+// Utility to sanitize content for safe rendering
+// Extracts JSON-LD scripts and removes them from visible content
+function sanitizeContent(content: string): { cleanContent: string; jsonLd: string | null } {
+  if (!content) return { cleanContent: '', jsonLd: null };
+
+  // Extract JSON-LD script blocks
+  const scriptRegex = /<script\s+type=["']application\/ld\+json["'][\s\S]*?>([\s\S]*?)<\/script>/gi;
+  let jsonLd: string | null = null;
+
+  const matches = content.match(scriptRegex);
+  if (matches && matches.length > 0) {
+    // Extract the JSON content from the first match
+    const jsonMatch = matches[0].match(/<script[\s\S]*?>([\s\S]*?)<\/script>/i);
+    if (jsonMatch && jsonMatch[1]) {
+      jsonLd = jsonMatch[1].trim();
+    }
+  }
+
+  // Remove ALL script tags from content (safety measure)
+  const cleanContent = content.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '').trim();
+
+  return { cleanContent, jsonLd };
+}
 
 interface ResultViewProps {
   result: SeoResult;
@@ -18,12 +43,19 @@ interface ResultViewProps {
 
 export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFixingSpam, userPlan, onOptimizeRelevance, isOptimizingRelevance }) => {
   const [copied, setCopied] = useState(false);
+  const [copiedJsonLd, setCopiedJsonLd] = useState(false);
   const [selectedFixModel, setSelectedFixModel] = useState<string>(
     userPlan?.allowedModels?.[0] || AIModel.GROK_CODE_FAST
   );
 
   // Need to know model names to display nicely
   const [modelNames, setModelNames] = useState<Record<string, string>>({});
+
+  // Sanitize content: remove script tags, extract JSON-LD
+  const { cleanContent, jsonLd } = useMemo(() => {
+    if (!result?.content) return { cleanContent: '', jsonLd: null };
+    return sanitizeContent(result.content);
+  }, [result?.content]);
 
   useEffect(() => {
     const models = authService.getModels();
@@ -208,10 +240,42 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFix
             {copied ? 'Скопировано!' : 'Копировать'}
           </button>
         </div>
-        <div className="p-4 sm:p-6 lg:p-8 prose prose-invert prose-sm sm:prose-base lg:prose-lg max-w-none prose-headings:font-bold prose-headings:text-white prose-p:text-slate-300 prose-a:text-brand-green prose-strong:text-white prose-code:text-brand-purple prose-code:bg-white/10 prose-code:px-1 prose-code:rounded">
-          <ReactMarkdown>{result.content}</ReactMarkdown>
+        <div className="p-4 sm:p-6 lg:p-8 prose prose-invert prose-sm sm:prose-base lg:prose-lg max-w-none prose-headings:font-bold prose-headings:text-white prose-p:text-slate-300 prose-a:text-brand-green prose-strong:text-white prose-code:text-brand-purple prose-code:bg-white/10 prose-code:px-1 prose-code:rounded prose-table:border-collapse prose-th:bg-white/10 prose-th:border prose-th:border-white/20 prose-th:px-3 prose-th:py-2 prose-td:border prose-td:border-white/10 prose-td:px-3 prose-td:py-2">
+          {cleanContent ? (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{cleanContent}</ReactMarkdown>
+          ) : (
+            <p className="text-slate-400 italic">Контент недоступен</p>
+          )}
         </div>
       </div>
+
+      {/* JSON-LD Schema Block (for GEO mode) */}
+      {jsonLd && (
+        <div className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
+          <div className="bg-purple-500/10 px-4 sm:px-6 py-3 sm:py-4 border-b border-purple-500/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 backdrop-blur-sm">
+            <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white flex items-center gap-1.5 sm:gap-2">
+              <Code className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+              JSON-LD Schema (SEO)
+            </h3>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`<script type="application/ld+json">\n${jsonLd}\n</script>`);
+                setCopiedJsonLd(true);
+                setTimeout(() => setCopiedJsonLd(false), 2000);
+              }}
+              className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-400 hover:text-purple-400 transition-colors bg-white/5 hover:bg-white/10 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-white/5"
+            >
+              {copiedJsonLd ? <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+              {copiedJsonLd ? 'Скопировано!' : 'Копировать код'}
+            </button>
+          </div>
+          <div className="p-4 sm:p-6 bg-slate-900/50">
+            <pre className="text-xs sm:text-sm text-purple-300 font-mono overflow-x-auto whitespace-pre-wrap break-words">
+              <code>{`<script type="application/ld+json">\n${jsonLd}\n</script>`}</code>
+            </pre>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
