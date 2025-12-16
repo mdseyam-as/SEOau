@@ -417,8 +417,14 @@ ${config.exampleContent}
         try {
             parsedResult = JSON.parse(jsonString);
         } catch (e) {
-            console.error("JSON Parse Error", e);
-            throw new Error("Не удалось обработать ответ AI. Возможно, модель вернула простой текст вместо JSON.");
+            console.warn('JSON parse failed, using raw text as content:', e.message);
+            // Фоллбэк: заворачиваем сырой ответ в объект
+            parsedResult = {
+                content: rawContent,
+                metaTitle: config.topic || 'Generated Content',
+                metaDescription: '',
+                usedKeywords: []
+            };
         }
 
         // Calculate metrics
