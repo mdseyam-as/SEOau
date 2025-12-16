@@ -9,7 +9,19 @@ const settingsSchema = new mongoose.Schema({
         default: ''
     },
 
+    // Legacy field - kept for backward compatibility
     systemPrompt: {
+        type: String,
+        default: ''
+    },
+
+    // Separate prompts for SEO and GEO modes
+    seoPrompt: {
+        type: String,
+        default: ''
+    },
+
+    geoPrompt: {
         type: String,
         default: ''
     },

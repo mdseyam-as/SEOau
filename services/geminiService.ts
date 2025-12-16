@@ -419,14 +419,15 @@ export const generateSeoContent = async (
 
   // Select prompt template based on generation mode
   const isGeoMode = config.generationMode === 'geo';
-  const defaultTemplate = isGeoMode ? GEO_PROMPT_TEMPLATE : DEFAULT_PROMPT_TEMPLATE;
 
-  // Use global system prompt from settings, or default based on mode
-  let prompt = globalSettings.systemPrompt || defaultTemplate;
-
-  // If GEO mode is selected and using default prompt, force GEO template
-  if (isGeoMode && !globalSettings.systemPrompt) {
-    prompt = GEO_PROMPT_TEMPLATE;
+  // Use the appropriate prompt from settings, or fallback to defaults
+  let prompt: string;
+  if (isGeoMode) {
+    // GEO mode: use geoPrompt from settings, or default GEO template
+    prompt = globalSettings.geoPrompt || GEO_PROMPT_TEMPLATE;
+  } else {
+    // SEO mode: use seoPrompt from settings, or default SEO template
+    prompt = globalSettings.seoPrompt || DEFAULT_PROMPT_TEMPLATE;
   }
 
   // Replace placeholders

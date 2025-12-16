@@ -106,8 +106,11 @@ export const optimizeRelevanceSchema = z.object({
 
 export const updateSettingsSchema = z.object({
     openRouterApiKey: z.string().max(500).optional(),
-    systemPrompt: z.string().max(50000).optional(),
-    telegramLink: z.string().url().max(500).optional()
+    systemPrompt: z.string().max(50000).optional(), // Legacy
+    seoPrompt: z.string().max(50000).optional(),
+    geoPrompt: z.string().max(50000).optional(),
+    telegramLink: z.string().url().max(500).optional(),
+    spamCheckModel: z.string().max(100).optional()
 });
 
 // ==================== Plan Schemas ====================

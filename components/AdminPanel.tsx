@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Plus, Check, Clock, User as UserIcon, Calendar, Settings, Save, Key, FileText, RotateCcw, Users, Edit2, X, Search, Layers, Trash2, UserPlus, CreditCard, Zap, Database, AlertOctagon, Cpu, Box, TrendingUp } from 'lucide-react';
 import { authService, User, SubscriptionPlan } from '../services/authService';
-import { DEFAULT_PROMPT_TEMPLATE } from '../services/geminiService';
+import { DEFAULT_PROMPT_TEMPLATE, GEO_PROMPT_TEMPLATE } from '../services/geminiService';
 import { AIModel, ModelConfig } from '../types';
 import { apiService } from '../services/apiService';
 
@@ -38,7 +38,8 @@ export const AdminPanel: React.FC = () => {
   // Settings State
   const [telegramLink, setTelegramLink] = useState('');
   const [apiKey, setApiKey] = useState('');
-  const [systemPrompt, setSystemPrompt] = useState('');
+  const [seoPrompt, setSeoPrompt] = useState('');
+  const [geoPrompt, setGeoPrompt] = useState('');
   const [spamCheckModel, setSpamCheckModel] = useState('x-ai/grok-4.1-fast');
   const [settingsSaved, setSettingsSaved] = useState(false);
 
@@ -47,7 +48,8 @@ export const AdminPanel: React.FC = () => {
     const settings = authService.getGlobalSettings();
     setTelegramLink(settings.telegramLink);
     setApiKey(settings.openRouterApiKey || '');
-    setSystemPrompt(settings.systemPrompt || DEFAULT_PROMPT_TEMPLATE);
+    setSeoPrompt(settings.seoPrompt || DEFAULT_PROMPT_TEMPLATE);
+    setGeoPrompt(settings.geoPrompt || GEO_PROMPT_TEMPLATE);
     setSpamCheckModel(settings.spamCheckModel || 'x-ai/grok-4.1-fast');
   }, []);
 
@@ -118,7 +120,8 @@ export const AdminPanel: React.FC = () => {
       await authService.saveGlobalSettings({
         telegramLink,
         openRouterApiKey: apiKey,
-        systemPrompt: systemPrompt,
+        seoPrompt: seoPrompt,
+        geoPrompt: geoPrompt,
         spamCheckModel: spamCheckModel
       });
       setSettingsSaved(true);
@@ -129,9 +132,15 @@ export const AdminPanel: React.FC = () => {
     }
   };
 
-  const handleResetPrompt = () => {
-    if (confirm('Сбросить промпт к стандартному значению?')) {
-      setSystemPrompt(DEFAULT_PROMPT_TEMPLATE);
+  const handleResetSeoPrompt = () => {
+    if (confirm('Сбросить SEO промпт к стандартному значению?')) {
+      setSeoPrompt(DEFAULT_PROMPT_TEMPLATE);
+    }
+  };
+
+  const handleResetGeoPrompt = () => {
+    if (confirm('Сбросить GEO промпт к стандартному значению?')) {
+      setGeoPrompt(GEO_PROMPT_TEMPLATE);
     }
   };
 
@@ -779,24 +788,50 @@ export const AdminPanel: React.FC = () => {
               </p>
             </div>
 
-            {/* System Prompt */}
+            {/* SEO Prompt */}
             <div className="border-t border-gray-200 pt-6">
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                  <FileText className="w-4 h-4" /> Системный Промпт (Global)
+                  <FileText className="w-4 h-4 text-green-600" /> 🍏 SEO Промпт (Классическое SEO)
                 </label>
                 <button
-                  onClick={handleResetPrompt}
+                  onClick={handleResetSeoPrompt}
                   className="text-xs flex items-center gap-1 text-slate-500 hover:text-red-600 transition-colors"
                 >
                   <RotateCcw className="w-3 h-3" /> Сбросить
                 </button>
               </div>
-
+              <p className="text-xs text-gray-500 mb-2">
+                Используется для генерации контента, оптимизированного под Google/Яндекс.
+              </p>
               <textarea
-                value={systemPrompt}
-                onChange={(e) => setSystemPrompt(e.target.value)}
-                className="w-full p-4 bg-slate-50 border border-gray-300 rounded-lg text-slate-900 font-mono text-xs md:text-sm focus:ring-2 focus:ring-brand-green outline-none shadow-inner leading-relaxed h-[400px]"
+                value={seoPrompt}
+                onChange={(e) => setSeoPrompt(e.target.value)}
+                className="w-full p-4 bg-slate-50 border border-gray-300 rounded-lg text-slate-900 font-mono text-xs md:text-sm focus:ring-2 focus:ring-brand-green outline-none shadow-inner leading-relaxed h-[300px]"
+                spellCheck={false}
+              />
+            </div>
+
+            {/* GEO Prompt */}
+            <div className="border-t border-gray-200 pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-purple-600" /> 🤖 GEO Промпт (AI Search)
+                </label>
+                <button
+                  onClick={handleResetGeoPrompt}
+                  className="text-xs flex items-center gap-1 text-slate-500 hover:text-red-600 transition-colors"
+                >
+                  <RotateCcw className="w-3 h-3" /> Сбросить
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mb-2">
+                Используется для генерации контента под AI-поисковики (ChatGPT, Perplexity, Google SGE).
+              </p>
+              <textarea
+                value={geoPrompt}
+                onChange={(e) => setGeoPrompt(e.target.value)}
+                className="w-full p-4 bg-purple-50 border border-purple-200 rounded-lg text-slate-900 font-mono text-xs md:text-sm focus:ring-2 focus:ring-purple-400 outline-none shadow-inner leading-relaxed h-[300px]"
                 spellCheck={false}
               />
             </div>

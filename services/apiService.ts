@@ -157,11 +157,11 @@ class ApiService {
     }
 
     // Settings
-    async getSettings(): Promise<{ settings: { openRouterApiKey: string; systemPrompt: string; telegramLink: string } }> {
+    async getSettings(): Promise<{ settings: { openRouterApiKey: string; systemPrompt: string; seoPrompt: string; geoPrompt: string; telegramLink: string; spamCheckModel: string } }> {
         return this.request('/settings');
     }
 
-    async updateSettings(settings: { openRouterApiKey?: string; systemPrompt?: string; telegramLink?: string }): Promise<{ settings: { openRouterApiKey: string; systemPrompt: string; telegramLink: string } }> {
+    async updateSettings(settings: { openRouterApiKey?: string; systemPrompt?: string; seoPrompt?: string; geoPrompt?: string; telegramLink?: string; spamCheckModel?: string }): Promise<{ settings: { openRouterApiKey: string; systemPrompt: string; seoPrompt: string; geoPrompt: string; telegramLink: string; spamCheckModel: string } }> {
         return this.request('/settings', {
             method: 'PUT',
             body: JSON.stringify(settings)

@@ -33,8 +33,11 @@ router.get('/', auth, async (req, res) => {
 
             settings = {
                 openRouterApiKey: dbSettings.openRouterApiKey || '',
-                systemPrompt: dbSettings.systemPrompt || '',
-                telegramLink: dbSettings.telegramLink || 'https://t.me/bankkz_admin'
+                systemPrompt: dbSettings.systemPrompt || '', // Legacy
+                seoPrompt: dbSettings.seoPrompt || '',
+                geoPrompt: dbSettings.geoPrompt || '',
+                telegramLink: dbSettings.telegramLink || 'https://t.me/bankkz_admin',
+                spamCheckModel: dbSettings.spamCheckModel || 'x-ai/grok-4.1-fast'
             };
 
             // Cache settings for 5 minutes
@@ -67,7 +70,7 @@ router.put('/', auth, validate(updateSettingsSchema), async (req, res) => {
             return res.status(403).json({ error: 'Access denied. Admin only.' });
         }
 
-        const { openRouterApiKey, systemPrompt, telegramLink } = req.body;
+        const { openRouterApiKey, systemPrompt, seoPrompt, geoPrompt, telegramLink, spamCheckModel } = req.body;
 
         let settings = await Settings.findById('global');
 
@@ -78,7 +81,10 @@ router.put('/', auth, validate(updateSettingsSchema), async (req, res) => {
         // Update only provided fields
         if (openRouterApiKey !== undefined) settings.openRouterApiKey = openRouterApiKey;
         if (systemPrompt !== undefined) settings.systemPrompt = systemPrompt;
+        if (seoPrompt !== undefined) settings.seoPrompt = seoPrompt;
+        if (geoPrompt !== undefined) settings.geoPrompt = geoPrompt;
         if (telegramLink !== undefined) settings.telegramLink = telegramLink;
+        if (spamCheckModel !== undefined) settings.spamCheckModel = spamCheckModel;
 
         await settings.save();
 
@@ -89,7 +95,10 @@ router.put('/', auth, validate(updateSettingsSchema), async (req, res) => {
             settings: {
                 openRouterApiKey: settings.openRouterApiKey,
                 systemPrompt: settings.systemPrompt,
-                telegramLink: settings.telegramLink
+                seoPrompt: settings.seoPrompt,
+                geoPrompt: settings.geoPrompt,
+                telegramLink: settings.telegramLink,
+                spamCheckModel: settings.spamCheckModel
             }
         });
     } catch (error) {

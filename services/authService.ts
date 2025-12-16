@@ -34,7 +34,9 @@ export interface User {
 export interface GlobalSettings {
   telegramLink: string;
   openRouterApiKey?: string;
-  systemPrompt?: string;
+  systemPrompt?: string; // Legacy - kept for backward compatibility
+  seoPrompt?: string;
+  geoPrompt?: string;
   spamCheckModel?: string;
 }
 
@@ -133,7 +135,9 @@ const DEFAULT_PLANS: SubscriptionPlan[] = [
 let cachedGlobalSettings: GlobalSettings = {
   telegramLink: 'https://t.me/bankkz_admin',
   openRouterApiKey: '',
-  systemPrompt: '',
+  systemPrompt: '', // Legacy
+  seoPrompt: '',
+  geoPrompt: '',
   spamCheckModel: 'x-ai/grok-4.1-fast'
 };
 
