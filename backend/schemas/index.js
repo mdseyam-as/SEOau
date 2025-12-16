@@ -76,7 +76,9 @@ export const generateSchema = z.object({
         maxChars: z.number().int().min(100).max(100000).optional().default(5000),
         minParas: z.number().int().min(1).max(100).optional().default(3),
         maxParas: z.number().int().min(1).max(100).optional().default(12),
-        model: z.string().min(1).max(100).optional().default('google/gemini-2.0-flash-001')
+        model: z.string().min(1).max(100).optional().default('google/gemini-2.0-flash-001'),
+        // Generation mode: 'seo' for classic SEO, 'geo' for AI search engines
+        generationMode: z.enum(['seo', 'geo']).optional().default('seo')
     }),
     // No hard limit here - limit is checked per-plan in generate route
     keywords: z.array(keywordSchema).optional().default([])
