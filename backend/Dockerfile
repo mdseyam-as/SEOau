@@ -5,8 +5,8 @@ WORKDIR /app
 # Копируем файлы зависимостей
 COPY package*.json ./
 
-# Устанавливаем зависимости
-RUN npm install --production
+# Устанавливаем зависимости с verbose логами
+RUN npm ci --only=production --loglevel verbose
 
 # Копируем исходный код
 COPY . .
@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 3000
 
 # Запускаем сервер
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
