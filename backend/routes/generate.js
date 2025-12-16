@@ -10,6 +10,8 @@ const router = express.Router();
 const DEFAULT_SITE_URL = 'https://example.com';
 const DEFAULT_SITE_NAME = 'SeoGenerator';
 
+// ==================== PROMPT TEMPLATES ====================
+
 const DEFAULT_PROMPT_TEMPLATE = `You are a Senior SEO Copywriter and Content Strategist for **{{websiteName}}**.
 
 ### OBJECTIVE
@@ -60,6 +62,77 @@ You MUST return a valid JSON object with the following structure (do not wrap in
   "metaTitle": "SEO optimized title tag (max 60 chars)",
   "metaDescription": "SEO optimized meta description (max 160 chars)",
   "usedKeywords": ["list", "of", "main", "keywords", "used"]
+}`;
+
+// GEO (Generative Engine Optimization) prompt for AI search engines
+const GEO_PROMPT_TEMPLATE = `You are a **Generative Engine Optimization (GEO) Specialist** writing content for **{{websiteName}}**.
+
+### ROLE & GOAL
+Your goal is to write content specifically designed to be **cited and surfaced by AI Search Engines** (ChatGPT, Perplexity, Google SGE/AI Overviews, Bing Copilot).
+
+### INPUT DATA
+- **Target URL:** {{targetUrl}}
+- **Main Topic:** {{topic}}
+- **Target Country/Region:** {{targetCountry}}
+- **Website/Brand:** {{websiteName}}
+- **Target Length:** {{minChars}} - {{maxChars}} characters.
+- **Paragraphs:** {{minParas}} to {{maxParas}}.
+
+### TONE & STYLE
+- **Tone:** {{tone}}
+- **Style:** {{style}}
+
+### GEO STRUCTURE RULES (CRITICAL)
+1. **Direct Answers First:** Start each major section with a clear, dictionary-style definition or direct answer (e.g., "{{topic}} is..."). AI models extract these as snippets.
+
+2. **Rich Structured Data:** You MUST use:
+   - **Markdown tables** to compare features, pros/cons, prices, or specifications
+   - **Numbered lists** for step-by-step processes
+   - **Bullet points** for key features or benefits
+   AI models prefer structured data over plain paragraphs.
+
+3. **Key Takeaways Section:** End the article with a "## Key Takeaways" section containing 5-7 bullet points summarizing the main insights.
+
+4. **FAQ Section:** Include a "## FAQ" section with 3-5 common questions and concise answers. Use this format:
+   **Q: Question here?**
+   A: Direct answer here.
+
+5. **Objective & Data-Driven Tone:**
+   - AVOID marketing fluff ("best", "amazing", "incredible", "revolutionary")
+   - USE data-driven language ("9 out of 10 users...", "Studies show...", "Efficiency increased by 20%")
+   - Cite statistics, percentages, and specific metrics when possible
+
+6. **Entity Density:** Explicitly mention:
+   - Related technical terms and industry jargon
+   - Specific product names, brands, or tools
+   - Measurable metrics and specifications
+   - Geographic or regulatory context for {{targetCountry}}
+
+### KEYWORD STRATEGY
+1. **High Priority Keys:** {{mainKeywords}} (Use naturally in H1, H2, and the opening definition).
+2. **LSI & Context:** {{lsiKeywords}} (For semantic depth).
+3. **Semantics:** {{topKeywords}} (Only where contextually appropriate).
+
+### COMPETITOR CONTEXT
+Reference structure from:
+{{competitors}}
+
+**Create content that is MORE comprehensive, MORE structured, and MORE citation-worthy.**
+
+{{exampleInstruction}}
+
+### ANTI-SPAM RULES
+1. NO keyword stuffing - every keyword must add value
+2. Natural language flow - must read as expert-written content
+3. Varied phrasing - use synonyms and semantic variations
+
+### OUTPUT FORMAT
+Return a valid JSON object:
+{
+  "content": "The full markdown article with tables, lists, FAQ, and Key Takeaways...",
+  "metaTitle": "SEO title (max 60 chars)",
+  "metaDescription": "Meta description (max 160 chars)",
+  "usedKeywords": ["list", "of", "keywords", "used"]
 }`;
 
 // Helper to get API key from settings
@@ -193,6 +266,15 @@ router.post('/', validate(generateSchema), async (req, res) => {
         const apiKey = await getApiKey();
         const settings = await Settings.findOne();
 
+        // ==================== DEBUG LOG ====================
+        const isGeoMode = config.generationMode === 'geo';
+        console.log('>>> GENERATION REQUEST:', {
+            topic: config.topic,
+            mode: config.generationMode,
+            isGeoMode,
+            model: config.model
+        });
+
         // Prepare prompt
         const topKeywords = keywords
             .slice(0, 50)
@@ -222,7 +304,15 @@ ${config.exampleContent}
 """`
             : "";
 
-        let prompt = settings?.systemPrompt || DEFAULT_PROMPT_TEMPLATE;
+        // ==================== SELECT PROMPT BY MODE ====================
+        let prompt;
+        if (isGeoMode) {
+            // GEO mode: use geoPrompt from settings, or default GEO template
+            prompt = settings?.geoPrompt || GEO_PROMPT_TEMPLATE;
+        } else {
+            // SEO mode: use seoPrompt from settings, or default SEO template
+            prompt = settings?.seoPrompt || DEFAULT_PROMPT_TEMPLATE;
+        }
 
         const replacements = {
             '{{targetUrl}}': config.targetUrl || '',
@@ -246,6 +336,51 @@ ${config.exampleContent}
             prompt = prompt.split(key).join(String(value));
         }
 
+        // ==================== HARD CONSTRAINT INJECTION FOR GEO ====================
+        let userMessageContent = prompt;
+        let temperature = 0.7; // Default for SEO (creative)
+
+        if (isGeoMode) {
+            temperature = 0.2; // Lower for GEO (strict compliance)
+
+            // HARD INJECTION: Append strict instructions to force compliance
+            userMessageContent = `${prompt}
+
+---
+🔥🔥 CRITICAL TECHNICAL INSTRUCTIONS (DO NOT IGNORE - YOUR OUTPUT WILL BE REJECTED IF MISSING):
+
+1. **DIRECT DEFINITION FIRST:** Your content MUST start with a dictionary-style definition in the first 40 words (e.g., "{Topic} is a...").
+
+2. **MANDATORY MARKDOWN TABLE:** You MUST include at least ONE comparison table using this exact format:
+   | Column 1 | Column 2 | Column 3 |
+   |----------|----------|----------|
+   | Data 1   | Data 2   | Data 3   |
+
+3. **STATISTICAL DATA REQUIRED:** Include specific numbers, percentages, or metrics (e.g., "78% of users...", "saves up to 45 minutes", "ranked #3 in 2024").
+
+4. **FAQ SECTION:** Include a "## FAQ" section with at least 3 Q&A pairs.
+
+5. **JSON-LD SCHEMA:** End your content with a valid JSON-LD script block:
+   <script type="application/ld+json">
+   {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[...]}
+   </script>
+
+⚠️ VALIDATION: Your JSON response's "content" field MUST contain ALL of the above elements or the output is invalid.
+---`;
+        }
+
+        // System message also depends on mode
+        const systemMessage = isGeoMode
+            ? `You are a Generative Engine Optimization (GEO) specialist. You write content optimized for AI search engines (ChatGPT, Perplexity, Google SGE) in ${config.targetCountry || 'Global'}. You MUST follow ALL formatting instructions in the user message. You always output strictly valid JSON.`
+            : `You are an advanced SEO AI. You write content for ${config.targetCountry || 'Global'}. You always output strictly valid JSON.`;
+
+        console.log('>>> SENDING TO LLM:', {
+            mode: isGeoMode ? 'GEO' : 'SEO',
+            temperature,
+            systemMessageLength: systemMessage.length,
+            userMessageLength: userMessageContent.length
+        });
+
         // Call OpenRouter API
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
@@ -255,14 +390,14 @@ ${config.exampleContent}
                 messages: [
                     {
                         role: "system",
-                        content: `You are an advanced SEO AI. You write content for ${config.targetCountry || 'Global'}. You always output strictly valid JSON.`
+                        content: systemMessage
                     },
                     {
                         role: "user",
-                        content: prompt
+                        content: userMessageContent
                     }
                 ],
-                temperature: 0.7
+                temperature: temperature
             })
         });
 
