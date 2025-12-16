@@ -453,6 +453,37 @@ export const generateSeoContent = async (
     prompt = prompt.split(key).join(String(value));
   }
 
+  // GEO Mode: Hard Constraint Injection Strategy
+  // Inject critical instructions directly into user message to force compliance
+  const userMessageContent = isGeoMode
+    ? `${prompt}
+
+---
+🔥🔥 CRITICAL TECHNICAL INSTRUCTIONS (DO NOT IGNORE - YOUR OUTPUT WILL BE REJECTED IF MISSING):
+
+1. **DIRECT DEFINITION FIRST:** Your content MUST start with a dictionary-style definition in the first 40 words (e.g., "{Topic} is a...").
+
+2. **MANDATORY MARKDOWN TABLE:** You MUST include at least ONE comparison table using this exact format:
+   | Column 1 | Column 2 | Column 3 |
+   |----------|----------|----------|
+   | Data 1   | Data 2   | Data 3   |
+
+3. **STATISTICAL DATA REQUIRED:** Include specific numbers, percentages, or metrics (e.g., "78% of users...", "saves up to 45 minutes", "ranked #3 in 2024").
+
+4. **FAQ SECTION:** Include a "## FAQ" section with at least 3 Q&A pairs.
+
+5. **JSON-LD SCHEMA:** End your content with a valid JSON-LD script block:
+   <script type="application/ld+json">
+   {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[...]}
+   </script>
+
+⚠️ VALIDATION: Your JSON response's "content" field MUST contain ALL of the above elements or the output is invalid.
+---`
+    : prompt;
+
+  // Temperature: Lower for GEO (strict compliance) vs SEO (creative)
+  const temperature = isGeoMode ? 0.2 : 0.7;
+
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -463,15 +494,15 @@ export const generateSeoContent = async (
           {
             "role": "system",
             "content": isGeoMode
-              ? `You are a Generative Engine Optimization (GEO) specialist. You write content optimized for AI search engines (ChatGPT, Perplexity, Google SGE) in ${config.targetCountry}. You always output strictly valid JSON.`
+              ? `You are a Generative Engine Optimization (GEO) specialist. You write content optimized for AI search engines (ChatGPT, Perplexity, Google SGE) in ${config.targetCountry}. You MUST follow ALL formatting instructions in the user message. You always output strictly valid JSON.`
               : `You are an advanced SEO AI. You write content for ${config.targetCountry}. You always output strictly valid JSON.`
           },
           {
             "role": "user",
-            "content": prompt
+            "content": userMessageContent
           }
         ],
-        "temperature": 0.7,
+        "temperature": temperature,
       })
     });
 
