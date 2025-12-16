@@ -372,9 +372,9 @@ export default function App() {
 
     // --- Project Detail View ---
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-5 lg:space-y-6">
         {/* Project Header & Breadcrumbs */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4 bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-gray-200">
           <div>
             <div className="flex items-center text-sm text-slate-500 mb-1">
               <button onClick={() => setCurrentProject(null)} className="hover:text-brand-green flex items-center gap-1">
@@ -383,7 +383,7 @@ export default function App() {
               <ChevronRight className="w-4 h-4 mx-1" />
               <span className="font-bold text-slate-800">{currentProject.name}</span>
             </div>
-            <h2 className="text-xl font-bold text-slate-900">{currentProject.name}</h2>
+            <h2 className="text-base sm:text-lg md:text-xl font-bold text-slate-900">{currentProject.name}</h2>
           </div>
 
           <div className="flex p-1 bg-gray-100 rounded-lg w-full md:w-auto">
@@ -405,9 +405,9 @@ export default function App() {
         {projectTab === 'history' ? (
           <HistoryList history={projectHistory} onDelete={handleDeleteHistoryItem} />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 animate-in fade-in slide-in-from-bottom-2">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 lg:gap-6 animate-in fade-in slide-in-from-bottom-2">
             {/* Left Sidebar: Inputs */}
-            <div className="lg:col-span-4 space-y-6 order-1">
+            <div className="lg:col-span-4 space-y-4 sm:space-y-5 lg:space-y-6 order-1">
 
               {/* Subscription Alert */}
               {isLocked && (
@@ -442,8 +442,8 @@ export default function App() {
                 </div>
               )}
 
-              <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-200">
-                <h2 className="font-bold text-lg mb-4 text-slate-900">1. Источник данных</h2>
+              <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 className="font-bold text-base sm:text-lg mb-3 sm:mb-4 text-slate-900">1. Источник данных</h2>
                 <FileUpload
                   onKeywordsLoaded={setKeywords}
                   disabled={isLocked}
@@ -542,9 +542,31 @@ export default function App() {
               </button>
             )}
 
-            {/* Subscription Counter (For Users) */}
+            {/* Subscription Counter (For Users) - Mobile compact version */}
             {user.role !== 'admin' && (
-              <div className="hidden sm:flex items-center gap-3">
+              <div className="flex sm:hidden items-center gap-1.5">
+                <div className="flex items-center gap-1 bg-white/5 px-2 py-1 rounded-full border border-white/10">
+                  <Zap className="w-3 h-3 text-yellow-400" />
+                  <span className="text-[10px] font-bold text-white">{dailyRemaining}/{monthlyRemaining}</span>
+                </div>
+                {isSubscriptionActive ? (
+                  <div className="flex items-center gap-1 bg-brand-green/10 px-2 py-1 rounded-full border border-brand-green/30">
+                    <Clock className="w-3 h-3 text-brand-green" />
+                    <span className="text-[10px] font-bold text-brand-green">
+                      {user.planId === 'free' ? '∞' : `${daysRemaining}д`}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 bg-red-500/10 px-2 py-1 rounded-full border border-red-500/30">
+                    <Lock className="w-3 h-3 text-red-400" />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Subscription Counter (For Users) - Desktop version */}
+            {user.role !== 'admin' && (
+              <div className="hidden sm:flex items-center gap-2 md:gap-3">
                 {/* Generation Usage Counter - REMAINING */}
                 <div className="flex items-center gap-2 sm:gap-3 bg-white/5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/10 backdrop-blur-sm" title="Осталось генераций">
                   <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 shrink-0 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]" />

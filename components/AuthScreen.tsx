@@ -77,26 +77,26 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen bg-mesh-animated flex items-center justify-center p-3 sm:p-4 relative overflow-hidden">
-      {/* Decorative Elements */}
-      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-brand-green/20 rounded-full blur-3xl animate-pulse-slow"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-brand-purple/20 rounded-full blur-3xl animate-pulse-slow delay-1000"></div>
+      {/* Decorative Elements - Responsive */}
+      <div className="absolute top-1/4 left-1/4 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-brand-green/20 rounded-full blur-3xl animate-pulse-slow"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-brand-purple/20 rounded-full blur-3xl animate-pulse-slow delay-1000"></div>
 
-      <div className="w-full max-w-md glass-card rounded-2xl shadow-glass overflow-hidden animate-in fade-in zoom-in duration-700 relative z-10">
+      <div className="w-full max-w-[calc(100vw-24px)] sm:max-w-md glass-card rounded-xl sm:rounded-2xl shadow-glass overflow-hidden animate-in fade-in zoom-in duration-700 relative z-10">
 
         {/* Header Area */}
-        <div className="bg-gradient-to-br from-brand-green/90 to-emerald-600/90 p-6 sm:p-8 text-center relative overflow-hidden backdrop-blur-sm">
+        <div className="bg-gradient-to-br from-brand-green/90 to-emerald-600/90 p-4 sm:p-6 lg:p-8 text-center relative overflow-hidden backdrop-blur-sm">
           <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 animate-gradient-x"></div>
           <div className="relative z-10 flex flex-col items-center">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 shadow-glow border border-white/20 animate-float">
-              <LayoutDashboard className="w-8 h-8 sm:w-10 sm:h-10 text-white drop-shadow-md" />
+            <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-glow border border-white/20 animate-float">
+              <LayoutDashboard className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white drop-shadow-md" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-sm">SEO Generator</h1>
-            <p className="text-green-50 text-xs sm:text-sm mt-2 font-medium bg-white/10 px-3 py-1 rounded-full border border-white/10">Telegram Mini App v2.1</p>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight drop-shadow-sm">SEO Generator</h1>
+            <p className="text-green-50 text-[10px] sm:text-xs lg:text-sm mt-1.5 sm:mt-2 font-medium bg-white/10 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-white/10">Telegram Mini App v2.1</p>
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="p-6 sm:p-8 bg-white/60 backdrop-blur-md">
+        <div className="p-4 sm:p-6 lg:p-8 bg-white/60 backdrop-blur-md">
 
           {error && (
             <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center animate-in fade-in">

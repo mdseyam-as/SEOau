@@ -53,7 +53,7 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFix
   const isSpamError = result.spamScore === -1;
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-4 sm:space-y-5 lg:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
       {/* Analytics Dashboard */}
       <AnalyticsDashboard
@@ -63,15 +63,14 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFix
         userPlan={userPlan}
       />
 
-      {/* Spam Score Card (New) */}
-      {/* Spam Score Card (New) */}
+      {/* Spam Score Card */}
       {result.spamScore !== undefined && (
-        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden">
-          <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center relative z-10">
+        <div className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 lg:gap-6 items-start sm:items-center relative z-10">
 
             {/* Gauge */}
             <div className="relative flex-shrink-0 mx-auto sm:mx-0">
-              <svg className="w-24 h-24 transform -rotate-90 drop-shadow-glow">
+              <svg className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 transform -rotate-90 drop-shadow-glow">
                 <circle
                   cx="48"
                   cy="48"
@@ -113,13 +112,13 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFix
             </div>
 
             <div className="flex-1 w-full">
-              <h3 className="font-bold text-lg mb-2 text-white flex items-center gap-2">
-                <AlertOctagon className={`w-5 h-5 ${isSpamError ? 'text-slate-400' : getSpamColor(result.spamScore!)}`} />
-                Анализ переспама (Grok)
+              <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-1.5 sm:mb-2 text-white flex items-center gap-1.5 sm:gap-2">
+                <AlertOctagon className={`w-4 h-4 sm:w-5 sm:h-5 ${isSpamError ? 'text-slate-400' : getSpamColor(result.spamScore!)}`} />
+                Анализ переспама
               </h3>
-              <p className={`text-sm mb-4 leading-relaxed ${isSpamError ? 'text-red-400 bg-red-500/10 p-4 rounded-xl border border-red-500/20 font-medium' : 'text-slate-300'}`}>
+              <p className={`text-xs sm:text-sm mb-3 sm:mb-4 leading-relaxed ${isSpamError ? 'text-red-400 bg-red-500/10 p-3 sm:p-4 rounded-xl border border-red-500/20 font-medium' : 'text-slate-300'}`}>
                 {isSpamError
-                  ? `⚠️ ${result.spamAnalysis || 'Не удалось выполнить анализ переспама. Попробуйте снова или обратитесь к администратору.'}`
+                  ? `⚠️ ${result.spamAnalysis || 'Не удалось выполнить анализ переспама.'}`
                   : (result.spamAnalysis || 'Анализ не предоставлен.')
                 }
               </p>
@@ -173,21 +172,21 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFix
       )}
 
       {/* Meta Info Card */}
-      <div className="glass-panel p-6 rounded-2xl">
-        <h3 className="font-bold text-lg mb-4 text-white flex items-center gap-2">
-          <Globe className="w-5 h-5 text-brand-green" />
+      <div className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl">
+        <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-3 sm:mb-4 text-white flex items-center gap-1.5 sm:gap-2">
+          <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-brand-green" />
           Мета-данные
         </h3>
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Title Tag ({result.metaTitle.length} симв.)</span>
-            <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-white font-medium mt-2 text-base shadow-inner">
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Title Tag ({result.metaTitle.length} симв.)</span>
+            <div className="p-3 sm:p-4 bg-white/5 border border-white/10 rounded-xl text-white font-medium mt-1.5 sm:mt-2 text-xs sm:text-sm lg:text-base shadow-inner">
               {result.metaTitle}
             </div>
           </div>
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Meta Description ({result.metaDescription.length} симв.)</span>
-            <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-slate-300 mt-2 text-base shadow-inner leading-relaxed">
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Meta Description ({result.metaDescription.length} симв.)</span>
+            <div className="p-3 sm:p-4 bg-white/5 border border-white/10 rounded-xl text-slate-300 mt-1.5 sm:mt-2 text-xs sm:text-sm lg:text-base shadow-inner leading-relaxed">
               {result.metaDescription}
             </div>
           </div>
@@ -195,21 +194,21 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFix
       </div>
 
       {/* Main Content */}
-      <div className="glass-panel rounded-2xl overflow-hidden">
-        <div className="bg-white/5 px-6 py-4 border-b border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 backdrop-blur-sm">
-          <h3 className="font-bold text-lg text-white flex items-center gap-2">
-            <FileText className="w-5 h-5 text-brand-green" />
+      <div className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
+        <div className="bg-white/5 px-4 sm:px-6 py-3 sm:py-4 border-b border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 backdrop-blur-sm">
+          <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white flex items-center gap-1.5 sm:gap-2">
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-brand-green" />
             Готовый текст
           </h3>
           <button
             onClick={handleCopy}
-            className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-brand-green transition-colors bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg border border-white/5"
+            className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-400 hover:text-brand-green transition-colors bg-white/5 hover:bg-white/10 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-white/5"
           >
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            {copied ? 'Скопировано!' : 'Копировать Markdown'}
+            {copied ? <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+            {copied ? 'Скопировано!' : 'Копировать'}
           </button>
         </div>
-        <div className="p-6 sm:p-8 prose prose-invert prose-lg max-w-none prose-headings:font-bold prose-headings:text-white prose-p:text-slate-300 prose-a:text-brand-green prose-strong:text-white prose-code:text-brand-purple prose-code:bg-white/10 prose-code:px-1 prose-code:rounded">
+        <div className="p-4 sm:p-6 lg:p-8 prose prose-invert prose-sm sm:prose-base lg:prose-lg max-w-none prose-headings:font-bold prose-headings:text-white prose-p:text-slate-300 prose-a:text-brand-green prose-strong:text-white prose-code:text-brand-purple prose-code:bg-white/10 prose-code:px-1 prose-code:rounded">
           <ReactMarkdown>{result.content}</ReactMarkdown>
         </div>
       </div>
