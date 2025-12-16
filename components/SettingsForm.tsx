@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useEffect, useMemo } from 'react';
-import { GenerationConfig, ModelConfig, TextTone, TextStyle, GenerationMode } from '../types';
+import { GenerationConfig, ModelConfig, TextTone, TextStyle, GenerationMode, ContentLanguage } from '../types';
 import { Settings2, Type, AlignLeft, Cpu, Link as LinkIcon, FileText, Upload, X, Lock, Globe, Feather, Mic, Plus, Trash2, FileSpreadsheet, Sparkles, Search } from 'lucide-react';
 import { parseDocxFile } from '../services/docxParser';
 import { parseExcelToRawText } from '../services/excelParser';
@@ -271,7 +271,22 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1">
+                <Globe className="w-3 h-3" /> Язык текста
+              </label>
+              <select
+                value={config.language}
+                onChange={(e) => handleChange('language', e.target.value)}
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none text-sm [&>option]:text-slate-900 transition-all"
+                disabled={isDisabled}
+              >
+                {Object.values(ContentLanguage).map(lang => (
+                  <option key={lang} value={lang}>{lang}</option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1">
                 <Mic className="w-3 h-3" /> Тон голоса (Tone of Voice)

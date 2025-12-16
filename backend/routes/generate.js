@@ -24,6 +24,7 @@ Write a high-ranking, authoritative, and useful SEO article for the following pa
 - **Website/Brand:** {{websiteName}}
 - **Target Length:** {{minChars}} - {{maxChars}} characters.
 - **Paragraphs:** {{minParas}} to {{maxParas}}.
+- **Content Language:** {{language}} (CRITICAL: Write the ENTIRE article in this language!)
 
 ### TONE & STYLE
 - **Tone:** {{tone}}
@@ -77,6 +78,7 @@ Your goal is to write content specifically designed to be **cited and surfaced b
 - **Website/Brand:** {{websiteName}}
 - **Target Length:** {{minChars}} - {{maxChars}} characters.
 - **Paragraphs:** {{minParas}} to {{maxParas}}.
+- **Content Language:** {{language}} (CRITICAL: Write the ENTIRE article in this language!)
 
 ### TONE & STYLE
 - **Tone:** {{tone}}
@@ -405,11 +407,15 @@ ${config.exampleContent}
             prompt = settings?.seoPrompt || DEFAULT_PROMPT_TEMPLATE;
         }
 
+        // Language for content generation
+        const contentLanguage = config.language || 'Русский';
+
         const replacements = {
             '{{targetUrl}}': config.targetUrl || '',
             '{{topic}}': config.topic || '',
             '{{websiteName}}': config.websiteName || DEFAULT_SITE_NAME,
             '{{targetCountry}}': config.targetCountry || 'Global',
+            '{{language}}': contentLanguage,
             '{{tone}}': config.tone || 'Professional',
             '{{style}}': config.style || 'Informative',
             '{{minChars}}': config.minChars || 2500,
@@ -441,6 +447,7 @@ ${config.exampleContent}
             userMessageContent = `🔴 MAIN TASK: Write a detailed article about the following topic.
 
 👉 TOPIC: "${topic}"
+🌐 LANGUAGE: Write the ENTIRE article in ${contentLanguage}. All text, headings, FAQ questions and answers must be in ${contentLanguage}.
 
 ---
 
@@ -448,12 +455,13 @@ ${config.exampleContent}
 You act as a Content Engine. You must structure the response about the TOPIC above using GEO (Generative Engine Optimization) standards.
 
 ⚠️ CRITICAL: Write about "${topic}", NOT about "what is GEO" or "how GEO works". GEO is your METHOD, not your SUBJECT.
+⚠️ LANGUAGE REQUIREMENT: The entire article MUST be written in ${contentLanguage}. Do not mix languages.
 
 MANDATORY FORMATTING FOR "${topic}":
-1. **DIRECT DEFINITION FIRST:** START with a specific definition of "${topic}" in the first 40 words (e.g., "${topic} — это..."). DO NOT define what "GEO" is.
+1. **DIRECT DEFINITION FIRST:** START with a specific definition of "${topic}" in the first 40 words (in ${contentLanguage}). DO NOT define what "GEO" is.
 2. **MARKDOWN TABLE:** CREATE a comparison table with options/features related to "${topic}".
 3. **STATISTICS:** INSERT specific numbers, percentages, or metrics relevant to "${topic}".
-4. **FAQ SECTION:** Include "## FAQ" with 3-5 questions about "${topic}".
+4. **FAQ SECTION:** Include "## FAQ" with 3-5 questions about "${topic}" (questions and answers in ${contentLanguage}).
 5. **JSON-LD SCHEMA:** End with a valid JSON-LD script block for "${topic}".
 
 ---
@@ -475,8 +483,8 @@ Return a valid JSON object:
 
         // System message also depends on mode
         const systemMessage = isGeoMode
-            ? `You are a professional content writer. Your task is to write an article about the USER'S TOPIC using structured formatting. You are NOT writing about GEO methodology - GEO is just your writing style. Focus 100% on the user's topic. Output strictly valid JSON.`
-            : `You are an advanced SEO AI. You write content for ${config.targetCountry || 'Global'}. You always output strictly valid JSON.`;
+            ? `You are a professional content writer. Your task is to write an article about the USER'S TOPIC using structured formatting. You are NOT writing about GEO methodology - GEO is just your writing style. Focus 100% on the user's topic. IMPORTANT: Write the entire article in ${contentLanguage}. Output strictly valid JSON.`
+            : `You are an advanced SEO AI. You write content for ${config.targetCountry || 'Global'}. IMPORTANT: Write the entire article in ${contentLanguage}. You always output strictly valid JSON.`;
 
         console.log('>>> SENDING TO LLM:', {
             mode: isGeoMode ? 'GEO' : 'SEO',

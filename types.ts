@@ -76,6 +76,24 @@ export enum TextStyle {
 
 export type GenerationMode = 'seo' | 'geo';
 
+export enum ContentLanguage {
+  RUSSIAN = 'Русский',
+  ENGLISH = 'English',
+  KAZAKH = 'Қазақша',
+  UKRAINIAN = 'Українська',
+  GERMAN = 'Deutsch',
+  FRENCH = 'Français',
+  SPANISH = 'Español',
+  PORTUGUESE = 'Português',
+  ITALIAN = 'Italiano',
+  POLISH = 'Polski',
+  TURKISH = 'Türkçe',
+  CHINESE = '中文',
+  JAPANESE = '日本語',
+  KOREAN = '한국어',
+  ARABIC = 'العربية'
+}
+
 export interface GenerationConfig {
   // Brand Context
   websiteName: string;
@@ -102,6 +120,9 @@ export interface GenerationConfig {
 
   // Generation Mode
   generationMode: GenerationMode;
+
+  // Content Language
+  language: ContentLanguage;
 }
 
 export interface SeoMetrics {
