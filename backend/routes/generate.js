@@ -427,42 +427,55 @@ ${config.exampleContent}
             prompt = prompt.split(key).join(String(value));
         }
 
-        // ==================== HARD CONSTRAINT INJECTION FOR GEO ====================
+        // ==================== BUILD USER MESSAGE CONTENT ====================
         let userMessageContent = prompt;
         let temperature = 0.7; // Default for SEO (creative)
 
         if (isGeoMode) {
             temperature = 0.2; // Lower for GEO (strict compliance)
 
-            // HARD INJECTION: Append strict instructions to force compliance
-            userMessageContent = `${prompt}
+            // CRITICAL FIX: Чётко отделяем ТЕМУ от ИНСТРУКЦИЙ
+            // Модель должна писать о теме пользователя, а не о GEO как концепции
+            const topic = config.topic || 'the requested topic';
+            
+            userMessageContent = `🔴 MAIN TASK: Write a detailed article about the following topic.
+
+👉 TOPIC: "${topic}"
 
 ---
-🔥🔥 CRITICAL TECHNICAL INSTRUCTIONS (DO NOT IGNORE - YOUR OUTPUT WILL BE REJECTED IF MISSING):
 
-1. **DIRECT DEFINITION FIRST:** Your content MUST start with a dictionary-style definition in the first 40 words (e.g., "{Topic} is a...").
+🛠 SYSTEM INSTRUCTIONS (HOW TO WRITE):
+You act as a Content Engine. You must structure the response about the TOPIC above using GEO (Generative Engine Optimization) standards.
 
-2. **MANDATORY MARKDOWN TABLE:** You MUST include at least ONE comparison table using this exact format:
-   | Column 1 | Column 2 | Column 3 |
-   |----------|----------|----------|
-   | Data 1   | Data 2   | Data 3   |
+⚠️ CRITICAL: Write about "${topic}", NOT about "what is GEO" or "how GEO works". GEO is your METHOD, not your SUBJECT.
 
-3. **STATISTICAL DATA REQUIRED:** Include specific numbers, percentages, or metrics (e.g., "78% of users...", "saves up to 45 minutes", "ranked #3 in 2024").
+MANDATORY FORMATTING FOR "${topic}":
+1. **DIRECT DEFINITION FIRST:** START with a specific definition of "${topic}" in the first 40 words (e.g., "${topic} — это..."). DO NOT define what "GEO" is.
+2. **MARKDOWN TABLE:** CREATE a comparison table with options/features related to "${topic}".
+3. **STATISTICS:** INSERT specific numbers, percentages, or metrics relevant to "${topic}".
+4. **FAQ SECTION:** Include "## FAQ" with 3-5 questions about "${topic}".
+5. **JSON-LD SCHEMA:** End with a valid JSON-LD script block for "${topic}".
 
-4. **FAQ SECTION:** Include a "## FAQ" section with at least 3 Q&A pairs.
+---
 
-5. **JSON-LD SCHEMA:** End your content with a valid JSON-LD script block:
-   <script type="application/ld+json">
-   {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[...]}
-   </script>
+ADDITIONAL CONTEXT FROM TEMPLATE:
+${prompt}
 
-⚠️ VALIDATION: Your JSON response's "content" field MUST contain ALL of the above elements or the output is invalid.
----`;
+---
+
+### OUTPUT FORMAT
+Return a valid JSON object:
+{
+  "content": "The full markdown article about ${topic}...",
+  "metaTitle": "SEO title for ${topic} (max 60 chars)",
+  "metaDescription": "Meta description for ${topic} (max 160 chars)",
+  "usedKeywords": ["list", "of", "keywords", "used"]
+}`;
         }
 
         // System message also depends on mode
         const systemMessage = isGeoMode
-            ? `You are a Generative Engine Optimization (GEO) specialist. You write content optimized for AI search engines (ChatGPT, Perplexity, Google SGE) in ${config.targetCountry || 'Global'}. You MUST follow ALL formatting instructions in the user message. You always output strictly valid JSON.`
+            ? `You are a professional content writer. Your task is to write an article about the USER'S TOPIC using structured formatting. You are NOT writing about GEO methodology - GEO is just your writing style. Focus 100% on the user's topic. Output strictly valid JSON.`
             : `You are an advanced SEO AI. You write content for ${config.targetCountry || 'Global'}. You always output strictly valid JSON.`;
 
         console.log('>>> SENDING TO LLM:', {
