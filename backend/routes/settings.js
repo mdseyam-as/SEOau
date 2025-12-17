@@ -33,6 +33,7 @@ router.get('/', auth, async (req, res) => {
 
             settings = {
                 openRouterApiKey: dbSettings.openRouterApiKey || '',
+                googleAiApiKey: dbSettings.googleAiApiKey || '',
                 systemPrompt: dbSettings.systemPrompt || '', // Legacy
                 seoPrompt: dbSettings.seoPrompt || '',
                 geoPrompt: dbSettings.geoPrompt || '',
@@ -44,11 +45,11 @@ router.get('/', auth, async (req, res) => {
             await cacheSet(CACHE_KEYS.SETTINGS, settings);
         }
 
-        // Regular users only get public settings (NO API key!)
+        // Regular users only get public settings (NO API keys!)
         if (isAdmin) {
             res.json({ settings });
         } else {
-            const { openRouterApiKey, ...publicSettings } = settings;
+            const { openRouterApiKey, googleAiApiKey, ...publicSettings } = settings;
             res.json({ settings: publicSettings });
         }
     } catch (error) {
@@ -70,7 +71,7 @@ router.put('/', auth, validate(updateSettingsSchema), async (req, res) => {
             return res.status(403).json({ error: 'Access denied. Admin only.' });
         }
 
-        const { openRouterApiKey, systemPrompt, seoPrompt, geoPrompt, telegramLink, spamCheckModel } = req.body;
+        const { openRouterApiKey, googleAiApiKey, systemPrompt, seoPrompt, geoPrompt, telegramLink, spamCheckModel } = req.body;
 
         let settings = await Settings.findById('global');
 
@@ -80,6 +81,7 @@ router.put('/', auth, validate(updateSettingsSchema), async (req, res) => {
 
         // Update only provided fields
         if (openRouterApiKey !== undefined) settings.openRouterApiKey = openRouterApiKey;
+        if (googleAiApiKey !== undefined) settings.googleAiApiKey = googleAiApiKey;
         if (systemPrompt !== undefined) settings.systemPrompt = systemPrompt;
         if (seoPrompt !== undefined) settings.seoPrompt = seoPrompt;
         if (geoPrompt !== undefined) settings.geoPrompt = geoPrompt;
@@ -94,6 +96,7 @@ router.put('/', auth, validate(updateSettingsSchema), async (req, res) => {
         res.json({
             settings: {
                 openRouterApiKey: settings.openRouterApiKey,
+                googleAiApiKey: settings.googleAiApiKey,
                 systemPrompt: settings.systemPrompt,
                 seoPrompt: settings.seoPrompt,
                 geoPrompt: settings.geoPrompt,
