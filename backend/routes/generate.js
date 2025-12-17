@@ -228,6 +228,79 @@ function createFallbackResponse(rawText, fallbackData = {}) {
     };
 }
 
+/**
+ * Sanitize Mermaid code to fix common LLM issues
+ * - Replaces non-Latin node IDs with Latin equivalents
+ * - Preserves text labels inside brackets
+ */
+function sanitizeMermaidCode(code) {
+    if (!code || typeof code !== 'string') return code;
+
+    // Split into lines for processing
+    const lines = code.split('\n');
+    const nodeIdMap = new Map();
+    let nodeCounter = 1;
+
+    // Function to get or create a Latin ID for a non-Latin node name
+    const getLatinId = (nonLatinId) => {
+        if (!nodeIdMap.has(nonLatinId)) {
+            nodeIdMap.set(nonLatinId, `N${nodeCounter++}`);
+        }
+        return nodeIdMap.get(nonLatinId);
+    };
+
+    // Check if string contains non-Latin characters (excluding common symbols)
+    const hasNonLatin = (str) => /[^\x00-\x7F]/.test(str);
+
+    const sanitizedLines = lines.map(line => {
+        // Skip diagram type declarations and empty lines
+        if (/^\s*(flowchart|sequenceDiagram|mindmap|timeline|pie|graph|subgraph|end)/.test(line) || !line.trim()) {
+            return line;
+        }
+
+        // Pattern to match node definitions and connections
+        // Matches: NodeID, NodeID[Label], NodeID{Label}, NodeID(Label), etc.
+        // Also matches arrows: -->, --->, -.->, ==>, etc.
+
+        // Replace standalone non-Latin node IDs (not inside brackets)
+        // This regex finds potential node IDs that are not inside [] {} () 
+        let result = line;
+
+        // Find all potential node IDs (words before arrows or brackets)
+        const nodePattern = /(?:^|\s|-->|--\>|==>|-.->|---|\|[^|]*\|)\s*([^\s\[\]\{\}\(\)\-\=\>\<\|]+)(?=\s*(?:\[|\{|\(|-->|--\>|==>|-.->|---|$|\s))/g;
+        
+        let match;
+        const replacements = [];
+        
+        while ((match = nodePattern.exec(line)) !== null) {
+            const potentialId = match[1];
+            if (potentialId && hasNonLatin(potentialId) && potentialId.length > 0) {
+                replacements.push({
+                    original: potentialId,
+                    replacement: getLatinId(potentialId)
+                });
+            }
+        }
+
+        // Apply replacements (from longest to shortest to avoid partial replacements)
+        replacements.sort((a, b) => b.original.length - a.original.length);
+        for (const { original, replacement } of replacements) {
+            // Only replace when it's a standalone ID, not inside brackets
+            const safePattern = new RegExp(`(?<![\\[\\{\\(])${escapeRegex(original)}(?![\\]\\}\\)])`, 'g');
+            result = result.replace(safePattern, replacement);
+        }
+
+        return result;
+    });
+
+    return sanitizedLines.join('\n');
+}
+
+// Helper to escape regex special characters
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // Helper to get API key from settings
 async function getApiKey() {
     const settings = await Settings.findOne();
@@ -1040,12 +1113,23 @@ ${diagramInstruction}
 
 Create a Mermaid diagram that clearly visualizes the key concepts, process, or structure related to the topic.
 
-Rules:
-1. Use clear, concise labels (max 30 chars per node)
-2. Keep the diagram readable (max 15 nodes for flowcharts)
-3. Use meaningful connections and groupings
-4. The diagram must be valid Mermaid syntax
-5. Labels should be in the same language as the topic
+CRITICAL SYNTAX RULES:
+1. Node IDs MUST be simple Latin letters/numbers only (A, B, C, node1, step2, etc.)
+2. Text labels can be in any language but MUST be inside brackets: A[Текст на русском]
+3. Use clear, concise labels (max 30 chars per node)
+4. Keep the diagram readable (max 15 nodes for flowcharts)
+5. Use meaningful connections and groupings
+6. The diagram must be valid Mermaid syntax
+
+CORRECT EXAMPLE:
+flowchart TD
+    A[Начало процесса] --> B{Проверка}
+    B -->|Да| C[Действие 1]
+    B -->|Нет| D[Действие 2]
+
+WRONG (will cause syntax error):
+flowchart TD
+    Начало --> Проверка
 
 Return a JSON object:
 {
@@ -1107,6 +1191,9 @@ Return a JSON object:
                 }
             }
         }
+
+        // Sanitize Mermaid code: fix common issues with non-Latin node IDs
+        mermaidCode = sanitizeMermaidCode(mermaidCode);
 
         // Don't increment usage for infographics (it's a lightweight operation)
 
