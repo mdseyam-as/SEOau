@@ -7,8 +7,6 @@ import { SeoResult, AIModel } from '../types';
 import { Copy, Check, FileText, Globe, AlertOctagon, Sparkles, RefreshCw, ChevronDown, AlertCircle, Code } from 'lucide-react';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { SubscriptionPlan, authService } from '../services/authService';
-import { CoverGenerator } from './CoverGenerator';
-import { InfographicGenerator } from './InfographicGenerator';
 
 // Utility to sanitize content for safe rendering
 // Extracts JSON-LD scripts and removes them from visible content
@@ -282,24 +280,6 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFix
         </div>
       )}
 
-      {/* AI Image & Infographic Generators */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
-        {/* Cover Image Generator */}
-        <CoverGenerator
-          title={result.metaTitle || topic}
-          topic={topic}
-          keywords={keywords}
-          userPlan={userPlan}
-          onUserUpdate={onUserUpdate}
-        />
-
-        {/* Infographic Generator (Mermaid) */}
-        <InfographicGenerator
-          topic={topic || result.metaTitle}
-          content={cleanContent}
-          userPlan={userPlan}
-        />
-      </div>
     </div>
   );
 };
