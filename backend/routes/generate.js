@@ -513,20 +513,22 @@ DO NOT default to FAQPage. Choose the BEST FIT based on topic type:
 The diagram should visualize the main process, steps, or decision flow related to "${topic}".
 
 STRICT SYNTAX RULES:
-1. Use ONLY: \`[]\` for rectangles, \`()\` for rounded, \`{}\` for diamonds
-2. Node IDs must be Latin only: A, B, C, step1, etc.
-3. Labels can be in ${contentLanguage}: A[Текст на русском]
-4. Use \`graph TD\` for top-down flow
+1. Start with \`flowchart TD\` (NOT "graph TD" - it's deprecated!)
+2. Use ONLY: \`[]\` for rectangles, \`(())\` for circles, \`{}\` for diamonds
+3. Node IDs must be Latin only: A, B, C, step1, etc.
+4. Labels can be in ${contentLanguage}: A[Текст на русском]
+5. Use \`-->\` for arrows, \`-- text -->\` for labeled arrows
 
-REQUIRED FORMAT - Include this exact structure:
+REQUIRED FORMAT - Use exactly this structure:
 \`\`\`mermaid
-graph TD
+flowchart TD
     A[First Step] --> B[Second Step]
     B --> C{Decision}
-    C -- Yes --> D[Result 1]
-    C -- No --> E[Result 2]
+    C -->|Yes| D[Result 1]
+    C -->|No| E[Result 2]
 \`\`\`
 
+⚠️ CRITICAL: Use "flowchart TD" not "graph TD"!
 ⚠️ PLACEMENT: The Mermaid diagram MUST be placed AFTER the FAQ section, BEFORE the JSON-LD schema.
 
 ---

@@ -75,22 +75,7 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFix
     return sanitizeContent(result.content);
   }, [result?.content]);
 
-  // Generate Mermaid Live Editor URL
-  const mermaidLiveUrl = useMemo(() => {
-    if (!mermaidCode) return null;
-    try {
-      const state = {
-        code: mermaidCode,
-        mermaid: { theme: 'default' },
-        autoSync: true,
-        updateDiagram: true
-      };
-      const encoded = btoa(JSON.stringify(state));
-      return `https://mermaid.live/edit#base64:${encoded}`;
-    } catch {
-      return 'https://mermaid.live';
-    }
-  }, [mermaidCode]);
+
 
   useEffect(() => {
     const models = authService.getModels();
@@ -312,53 +297,40 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFix
         </div>
       )}
 
-      {/* Mermaid Diagram Block (for GEO mode) */}
+      {/* Mermaid Diagram Link (for GEO mode) */}
       {isGeoMode && mermaidCode && (
-        <div className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
-          <div className="bg-cyan-500/10 px-4 sm:px-6 py-3 sm:py-4 border-b border-cyan-500/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 backdrop-blur-sm">
-            <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white flex items-center gap-1.5 sm:gap-2">
-              <GitBranch className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
-              Mermaid-диаграмма (GEO)
-            </h3>
+        <div className="glass-panel p-4 sm:p-5 rounded-xl sm:rounded-2xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <GitBranch className="w-5 h-5 text-cyan-400" />
+              <span className="font-bold text-white text-sm sm:text-base">Mermaid-диаграмма</span>
+            </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(`\`\`\`mermaid\n${mermaidCode}\n\`\`\``);
+                  navigator.clipboard.writeText(mermaidCode);
                   setCopiedMermaid(true);
                   setTimeout(() => setCopiedMermaid(false), 2000);
                 }}
-                className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-400 hover:text-cyan-400 transition-colors bg-white/5 hover:bg-white/10 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-white/5"
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-cyan-400 transition-colors bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg"
               >
-                {copiedMermaid ? <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-                {copiedMermaid ? 'Скопировано!' : 'Копировать'}
+                {copiedMermaid ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedMermaid ? 'Скопировано' : 'Копировать код'}
               </button>
-              {mermaidLiveUrl && (
-                <a
-                  href={mermaidLiveUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-cyan-400 hover:text-cyan-300 transition-colors bg-cyan-500/10 hover:bg-cyan-500/20 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-cyan-500/20"
-                >
-                  <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  Открыть в Mermaid Live
-                </a>
-              )}
+              <a
+                href="https://mermaid.live"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-colors bg-cyan-500/10 hover:bg-cyan-500/20 px-3 py-1.5 rounded-lg"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Открыть Mermaid Live
+              </a>
             </div>
           </div>
-          <div className="p-4 sm:p-6 bg-slate-900/50">
-            <pre className="text-xs sm:text-sm text-cyan-300 font-mono overflow-x-auto whitespace-pre-wrap break-words">
-              <code>{mermaidCode}</code>
-            </pre>
-          </div>
-          <div className="px-4 sm:px-6 py-3 bg-cyan-500/5 border-t border-cyan-500/10">
-            <p className="text-xs text-slate-400">
-              💡 Вставьте этот код в любой Markdown-редактор с поддержкой Mermaid или используйте{' '}
-              <a href="https://mermaid.live" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
-                mermaid.live
-              </a>
-              {' '}для визуализации и экспорта в PNG/SVG.
-            </p>
-          </div>
+          <p className="text-xs text-slate-500 mt-2">
+            Скопируйте код и вставьте в Mermaid Live для визуализации диаграммы
+          </p>
         </div>
       )}
 
