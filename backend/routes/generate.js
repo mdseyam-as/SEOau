@@ -883,6 +883,115 @@ ${content}
 });
 
 /**
+ * Helper: Call Gemini API with retry logic for rate limits
+ * @param {string} googleApiKey - Google AI API key
+ * @param {string} imagePrompt - Prompt for image generation
+ * @param {number} maxRetries - Maximum number of retries (default: 3)
+ * @returns {Promise<{imageBase64: string|null, error: string|null}>}
+ */
+async function callGeminiWithRetry(googleApiKey, imagePrompt, maxRetries = 3) {
+    let lastError = null;
+    let imageBase64 = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`>>> Gemini attempt ${attempt}/${maxRetries}...`);
+
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${googleApiKey}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: imagePrompt }]
+                        }],
+                        generationConfig: {
+                            responseModalities: ["TEXT", "IMAGE"]
+                        }
+                    })
+                }
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('>>> Google AI response received');
+
+                // Extract image from response
+                const candidates = data.candidates || [];
+                for (const candidate of candidates) {
+                    const parts = candidate.content?.parts || [];
+                    for (const part of parts) {
+                        if (part.inlineData?.mimeType?.startsWith('image/')) {
+                            imageBase64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                            console.log('>>> Image generated successfully with Gemini');
+                            return { imageBase64, error: null };
+                        }
+                    }
+                }
+
+                // No image in response
+                lastError = 'Gemini не вернул изображение. Попробуйте ещё раз.';
+                console.warn('>>> Gemini response did not contain image:', JSON.stringify(data).substring(0, 500));
+                // Don't retry for this case - it's not a rate limit
+                break;
+            } else {
+                const errData = await response.json().catch(() => ({}));
+                const errorMessage = errData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+                console.warn(`>>> Google AI error (attempt ${attempt}):`, errorMessage);
+
+                // Check if it's a rate limit error (429 or quota exceeded)
+                const isRateLimit = response.status === 429 || 
+                    errorMessage.toLowerCase().includes('quota') ||
+                    errorMessage.toLowerCase().includes('rate') ||
+                    errorMessage.toLowerCase().includes('resource_exhausted');
+
+                if (isRateLimit && attempt < maxRetries) {
+                    // Try to extract retry delay from error message
+                    // Example: "Please retry in 12.562397264s"
+                    const retryMatch = errorMessage.match(/retry\s+in\s+([\d.]+)s/i);
+                    let waitTime = retryMatch ? Math.ceil(parseFloat(retryMatch[1]) * 1000) : (attempt * 5000);
+                    
+                    // Cap wait time at 30 seconds
+                    waitTime = Math.min(waitTime, 30000);
+                    
+                    console.log(`>>> Rate limited. Waiting ${waitTime}ms before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                    continue;
+                }
+
+                // Format user-friendly error message
+                if (isRateLimit) {
+                    const retryMatch = errorMessage.match(/retry\s+in\s+([\d.]+)s/i);
+                    if (retryMatch) {
+                        const seconds = Math.ceil(parseFloat(retryMatch[1]));
+                        lastError = `Превышен лимит запросов. Попробуйте через ${seconds} сек.`;
+                    } else {
+                        lastError = 'Превышен лимит запросов Google AI. Попробуйте позже.';
+                    }
+                } else {
+                    lastError = errorMessage;
+                }
+                break;
+            }
+        } catch (googleError) {
+            lastError = googleError.message;
+            console.warn(`>>> Google AI exception (attempt ${attempt}):`, googleError.message);
+            
+            // Retry on network errors
+            if (attempt < maxRetries) {
+                const waitTime = attempt * 2000;
+                console.log(`>>> Network error. Waiting ${waitTime}ms before retry...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                continue;
+            }
+        }
+    }
+
+    return { imageBase64: null, error: lastError };
+}
+
+/**
  * POST /api/generate/cover
  * Generate cover image using Google AI Studio (Gemini 2.0 Flash with image generation)
  * Requires Google AI API key to be configured in admin settings
@@ -953,60 +1062,8 @@ router.post('/cover', validate(generateCoverSchema), async (req, res) => {
 
         console.log('>>> COVER GENERATION (Gemini):', { title, style });
 
-        let imageBase64 = null;
-        let lastError = null;
-
-        try {
-            console.log('>>> Calling Google AI Studio (Gemini 2.0 Flash)...');
-            
-            // Google AI Studio API endpoint for Gemini with image generation
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${googleApiKey}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{ text: imagePrompt }]
-                        }],
-                        generationConfig: {
-                            responseModalities: ["TEXT", "IMAGE"]
-                        }
-                    })
-                }
-            );
-
-            if (response.ok) {
-                const data = await response.json();
-                console.log('>>> Google AI response received');
-
-                // Extract image from response
-                const candidates = data.candidates || [];
-                for (const candidate of candidates) {
-                    const parts = candidate.content?.parts || [];
-                    for (const part of parts) {
-                        if (part.inlineData?.mimeType?.startsWith('image/')) {
-                            imageBase64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-                            console.log('>>> Image generated successfully with Gemini');
-                            break;
-                        }
-                    }
-                    if (imageBase64) break;
-                }
-
-                if (!imageBase64) {
-                    lastError = 'Gemini не вернул изображение. Попробуйте ещё раз.';
-                    console.warn('>>> Gemini response did not contain image:', JSON.stringify(data).substring(0, 500));
-                }
-            } else {
-                const errData = await response.json().catch(() => ({}));
-                lastError = errData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
-                console.warn('>>> Google AI error:', lastError);
-            }
-        } catch (googleError) {
-            lastError = googleError.message;
-            console.warn('>>> Google AI exception:', googleError.message);
-        }
+        // Call Gemini with retry logic
+        const { imageBase64, error: geminiError } = await callGeminiWithRetry(googleApiKey, imagePrompt, 3);
 
         // Generate SEO alt text
         const altText = await generateAltText(openRouterKey, title, keywords || []);
@@ -1025,7 +1082,7 @@ router.post('/cover', validate(generateCoverSchema), async (req, res) => {
                 style,
                 prompt: imagePrompt,
                 prompts,
-                error: imageBase64 ? null : lastError
+                error: imageBase64 ? null : geminiError
             }
         });
     } catch (error) {
