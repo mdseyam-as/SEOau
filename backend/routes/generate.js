@@ -501,26 +501,27 @@ DO NOT default to FAQPage. Choose the BEST FIT based on topic type:
 
 ---
 
-8. 📊 VISUAL DIAGRAMS (Mermaid.js Strategy):
-Detect if the user's topic involves a **process**, **hierarchy**, **timeline**, or **decision logic**.
-If yes, YOU MUST generate a Mermaid.js diagram code block.
+8. 📊 VISUAL DIAGRAMS (Mermaid.js) - MANDATORY:
+🔴 YOU MUST ALWAYS include a Mermaid.js diagram at the end of the article. This is NOT optional.
 
-STRICT SYNTAX RULES (To prevent rendering errors):
-1. Use ONLY standard node shapes: \`[]\` (rect), \`()\` (round), \`{}\` (rhombus).
-2. Do NOT use special characters (quotes, parens) INSIDE node labels unless escaped.
-3. Flowchart direction: \`graph TD\` (Top-Down) is preferred for mobile readability.
-4. Use ONLY Latin characters for node IDs (A, B, C, step1, etc.). Labels can be in any language.
+The diagram should visualize the main process, steps, or decision flow related to "${topic}".
 
-Template:
+STRICT SYNTAX RULES:
+1. Use ONLY: \`[]\` for rectangles, \`()\` for rounded, \`{}\` for diamonds
+2. Node IDs must be Latin only: A, B, C, step1, etc.
+3. Labels can be in ${contentLanguage}: A[Текст на русском]
+4. Use \`graph TD\` for top-down flow
+
+REQUIRED FORMAT - Include this exact structure:
 \`\`\`mermaid
 graph TD
-    Start[Start] --> Action1[Step 1]
-    Action1 --> Decision{Check?}
-    Decision -- Yes --> ResultA[Good Outcome]
-    Decision -- No --> ResultB[Bad Outcome]
+    A[First Step] --> B[Second Step]
+    B --> C{Decision}
+    C -- Yes --> D[Result 1]
+    C -- No --> E[Result 2]
 \`\`\`
 
-PLACEMENT: Insert the diagram right after the "Key Takeaways" section or before the "Conclusion".
+⚠️ PLACEMENT: The Mermaid diagram MUST be placed AFTER the FAQ section, BEFORE the JSON-LD schema.
 
 ---
 
