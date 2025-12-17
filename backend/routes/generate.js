@@ -885,7 +885,7 @@ ${content}
 /**
  * POST /api/generate/cover
  * Generate cover image using Google AI Studio (Gemini 2.0 Flash with image generation)
- * Falls back to Pollinations.ai if Google AI key not configured
+ * Requires Google AI API key to be configured in admin settings
  */
 router.post('/cover', validate(generateCoverSchema), async (req, res) => {
     try {
@@ -905,6 +905,37 @@ router.post('/cover', validate(generateCoverSchema), async (req, res) => {
         const settings = await Settings.findOne();
         const openRouterKey = await getApiKey();
 
+        // Check if Google AI API key is configured
+        const googleApiKey = settings?.googleAiApiKey;
+        if (!googleApiKey) {
+            // Generate SEO alt text anyway
+            const altText = await generateAltText(openRouterKey, title, keywords || []);
+            
+            const styleDescriptions = {
+                modern: 'modern clean design with gradient backgrounds, bold geometric shapes',
+                minimalist: 'minimalist design with white space, simple geometric shapes',
+                corporate: 'professional corporate style with blue and gray tones',
+                creative: 'creative artistic style with vibrant colors',
+                tech: 'futuristic tech style with dark background, neon accents'
+            };
+            const styleDesc = styleDescriptions[style] || styleDescriptions.modern;
+
+            return res.json({
+                cover: {
+                    imageUrl: null,
+                    model: null,
+                    alt: altText,
+                    style,
+                    prompt: `Professional blog cover image about "${title}". ${styleDesc}. High quality, 16:9 aspect ratio, no text on image.`,
+                    prompts: {
+                        dallePrompt: `Professional blog cover image about "${title}". ${styleDesc}. High quality, 16:9 aspect ratio, no text on image.`,
+                        midjourneyPrompt: `Professional blog cover, ${title}, ${styleDesc}, high quality, photorealistic --ar 16:9 --v 6 --style raw`,
+                    },
+                    error: 'Google AI API ключ не настроен. Настройте его в админ-панели для генерации изображений.'
+                }
+            });
+        }
+
         // Style descriptions for image generation
         const styleDescriptions = {
             modern: 'modern clean design with gradient backgrounds, bold geometric shapes, professional photography aesthetic, vibrant colors',
@@ -917,82 +948,64 @@ router.post('/cover', validate(generateCoverSchema), async (req, res) => {
         const styleDesc = styleDescriptions[style] || styleDescriptions.modern;
         const keywordList = keywords && keywords.length > 0 ? keywords.slice(0, 3).join(', ') : '';
 
-        // Build optimized prompt for image generation
+        // Build optimized prompt for Gemini image generation
         const imagePrompt = `Create a professional blog article cover image about "${title}". ${keywordList ? `Related to: ${keywordList}.` : ''} Style: ${styleDesc}. Requirements: high quality, 16:9 aspect ratio, NO TEXT or words on the image, suitable for web article header, visually appealing.`;
 
-        console.log('>>> COVER GENERATION:', { title, style });
+        console.log('>>> COVER GENERATION (Gemini):', { title, style });
 
         let imageBase64 = null;
-        let imageUrl = null;
-        let usedModel = null;
         let lastError = null;
 
-        // Try Google AI Studio first (if API key is configured)
-        const googleApiKey = settings?.googleAiApiKey;
-        
-        if (googleApiKey) {
-            try {
-                console.log('>>> Trying Google AI Studio (Gemini)...');
-                
-                // Google AI Studio API endpoint for Gemini
-                const response = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${googleApiKey}`,
-                    {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{
-                                parts: [{ text: imagePrompt }]
-                            }],
-                            generationConfig: {
-                                responseModalities: ["TEXT", "IMAGE"]
-                            }
-                        })
-                    }
-                );
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('>>> Google AI response received');
-
-                    // Extract image from response
-                    const candidates = data.candidates || [];
-                    for (const candidate of candidates) {
-                        const parts = candidate.content?.parts || [];
-                        for (const part of parts) {
-                            if (part.inlineData?.mimeType?.startsWith('image/')) {
-                                imageBase64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-                                usedModel = 'gemini-2.0-flash-exp';
-                                console.log('>>> Image generated successfully with Gemini');
-                                break;
-                            }
+        try {
+            console.log('>>> Calling Google AI Studio (Gemini 2.0 Flash)...');
+            
+            // Google AI Studio API endpoint for Gemini with image generation
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${googleApiKey}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: imagePrompt }]
+                        }],
+                        generationConfig: {
+                            responseModalities: ["TEXT", "IMAGE"]
                         }
-                        if (imageBase64) break;
-                    }
-
-                    if (!imageBase64) {
-                        lastError = 'Gemini did not return an image';
-                        console.warn('>>> Gemini response did not contain image');
-                    }
-                } else {
-                    const errData = await response.json().catch(() => ({}));
-                    lastError = errData.error?.message || response.statusText;
-                    console.warn('>>> Google AI error:', lastError);
+                    })
                 }
-            } catch (googleError) {
-                lastError = googleError.message;
-                console.warn('>>> Google AI exception:', googleError.message);
-            }
-        } else {
-            console.log('>>> Google AI API key not configured, using fallback');
-        }
+            );
 
-        // Fallback to Pollinations.ai if Gemini failed
-        if (!imageBase64) {
-            console.log('>>> Falling back to Pollinations.ai...');
-            const encodedPrompt = encodeURIComponent(imagePrompt);
-            imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1792&height=1024&model=flux-realism&nologo=true&seed=${Date.now()}`;
-            usedModel = 'pollinations/flux-realism';
+            if (response.ok) {
+                const data = await response.json();
+                console.log('>>> Google AI response received');
+
+                // Extract image from response
+                const candidates = data.candidates || [];
+                for (const candidate of candidates) {
+                    const parts = candidate.content?.parts || [];
+                    for (const part of parts) {
+                        if (part.inlineData?.mimeType?.startsWith('image/')) {
+                            imageBase64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                            console.log('>>> Image generated successfully with Gemini');
+                            break;
+                        }
+                    }
+                    if (imageBase64) break;
+                }
+
+                if (!imageBase64) {
+                    lastError = 'Gemini не вернул изображение. Попробуйте ещё раз.';
+                    console.warn('>>> Gemini response did not contain image:', JSON.stringify(data).substring(0, 500));
+                }
+            } else {
+                const errData = await response.json().catch(() => ({}));
+                lastError = errData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+                console.warn('>>> Google AI error:', lastError);
+            }
+        } catch (googleError) {
+            lastError = googleError.message;
+            console.warn('>>> Google AI exception:', googleError.message);
         }
 
         // Generate SEO alt text
@@ -1006,14 +1019,13 @@ router.post('/cover', validate(generateCoverSchema), async (req, res) => {
 
         return res.json({
             cover: {
-                imageUrl: imageBase64 || imageUrl,
-                model: usedModel,
+                imageUrl: imageBase64,
+                model: imageBase64 ? 'gemini-2.0-flash-exp' : null,
                 alt: altText,
                 style,
                 prompt: imagePrompt,
                 prompts,
-                isBase64: !!imageBase64,
-                error: (!imageBase64 && !googleApiKey) ? 'Google AI API key not configured. Using Pollinations fallback.' : null
+                error: imageBase64 ? null : lastError
             }
         });
     } catch (error) {

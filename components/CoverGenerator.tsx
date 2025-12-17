@@ -246,15 +246,11 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
                   </div>
                 </div>
               </div>
-              {coverResult.model?.includes('gemini') ? (
+              {coverResult.model?.includes('gemini') && (
                 <p className="text-[10px] text-green-500 text-center">
                   ✓ Изображение сгенерировано через Google Gemini AI
                 </p>
-              ) : coverResult.model?.includes('pollinations') ? (
-                <p className="text-[10px] text-slate-500 text-center">
-                  Изображение генерируется через Pollinations.ai. Загрузка может занять 10-30 секунд.
-                </p>
-              ) : null}
+              )}
             </div>
           ) : coverResult.error ? (
             /* Fallback: Show prompts if image generation failed */
