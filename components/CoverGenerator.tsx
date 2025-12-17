@@ -85,16 +85,23 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
     if (!coverResult?.imageUrl) return;
     
     try {
-      const response = await fetch(coverResult.imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `cover-${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      // Handle both base64 and URL images
+      if (coverResult.imageUrl.startsWith('data:')) {
+        // Base64 image - convert to blob
+        const response = await fetch(coverResult.imageUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cover-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      } else {
+        // External URL - open in new tab for download
+        window.open(coverResult.imageUrl, '_blank');
+      }
     } catch (err) {
       console.error('Download failed:', err);
     }
@@ -190,47 +197,28 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
           {/* Image Preview */}
           {coverResult.imageUrl ? (
             <div className="space-y-3">
-              <div className="relative rounded-xl overflow-hidden border border-white/10">
+              <div className="relative rounded-xl overflow-hidden border border-white/10 bg-slate-800">
                 <img
                   src={coverResult.imageUrl}
                   alt={coverResult.alt}
-                  className="w-full h-auto bg-slate-800"
+                  className="w-full h-auto"
                   style={{ aspectRatio: '16/9', objectFit: 'cover' }}
-                  loading="lazy"
-                  onError={(e) => {
-                    // If image fails to load, show placeholder
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
                 />
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-slate-400">
-                      {coverResult.model || 'Pollinations AI'}
+                      {coverResult.model || 'Gemini AI'}
                     </span>
-                    <div className="flex gap-2">
-                      <a
-                        href={coverResult.imageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-bold text-white transition-colors"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        Открыть
-                      </a>
-                      <button
-                        onClick={handleDownload}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-pink-500 hover:bg-pink-400 rounded-lg text-xs font-bold text-white transition-colors"
-                      >
-                        <Download className="w-3 h-3" />
-                        Скачать
-                      </button>
-                    </div>
+                    <button
+                      onClick={handleDownload}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-pink-500 hover:bg-pink-400 rounded-lg text-xs font-bold text-white transition-colors"
+                    >
+                      <Download className="w-3 h-3" />
+                      Скачать
+                    </button>
                   </div>
                 </div>
               </div>
-              <p className="text-[10px] text-slate-500 text-center">
-                Изображение генерируется через Pollinations.ai (бесплатно). Загрузка может занять несколько секунд.
-              </p>
             </div>
           ) : coverResult.error ? (
             /* Fallback: Show prompts if image generation failed */
