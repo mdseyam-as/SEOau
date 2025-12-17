@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Check, Clock, User as UserIcon, Calendar, Settings, Save, Key, FileText, RotateCcw, Users, Edit2, X, Search, Layers, Trash2, UserPlus, CreditCard, Zap, Database, AlertOctagon, Cpu, Box, TrendingUp } from 'lucide-react';
+import { Shield, Plus, Check, Clock, User as UserIcon, Calendar, Settings, Save, Key, FileText, RotateCcw, Users, Edit2, X, Search, Layers, Trash2, UserPlus, CreditCard, Zap, Database, AlertOctagon, Cpu, Box, TrendingUp, Globe } from 'lucide-react';
 import { authService, User, SubscriptionPlan } from '../services/authService';
 import { DEFAULT_PROMPT_TEMPLATE, GEO_PROMPT_TEMPLATE } from '../services/geminiService';
 import { AIModel, ModelConfig } from '../types';
@@ -195,7 +195,8 @@ export const AdminPanel: React.FC = () => {
       maxGenerationsPerDay: 0, // 0 = Unlimited
       maxKeywords: 0, // 0 = Unlimited
       canCheckSpam: false,
-      canOptimizeRelevance: false
+      canOptimizeRelevance: false,
+      canUseGeoMode: false
     };
     setEditingPlan(newPlan);
   };
@@ -691,6 +692,12 @@ export const AdminPanel: React.FC = () => {
                       {plan.canOptimizeRelevance ? 'Включено' : 'Выключено'}
                     </span>
                   </p>
+                  <p className="flex justify-between items-center">
+                    <span>GEO режим:</span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${plan.canUseGeoMode ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {plan.canUseGeoMode ? 'Включено' : 'Выключено'}
+                    </span>
+                  </p>
                   <p className="flex justify-between">
                     <span>Доступно моделей:</span>
                     <span className="font-mono font-bold">{plan.allowedModels.length}</span>
@@ -1012,6 +1019,23 @@ export const AdminPanel: React.FC = () => {
                     </span>
                     <p className="text-xs text-slate-500">
                       Разрешить функцию автоматического добавления недостающих ключей
+                    </p>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={editingPlan.canUseGeoMode || false}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, canUseGeoMode: e.target.checked })}
+                    className="rounded text-brand-green focus:ring-brand-green w-5 h-5"
+                  />
+                  <div>
+                    <span className="text-sm font-bold text-slate-700 flex items-center gap-1">
+                      <Globe className="w-4 h-4 text-purple-500" /> GEO Режим
+                    </span>
+                    <p className="text-xs text-slate-500">
+                      Разрешить генерацию контента для AI-поисковиков (ChatGPT, Perplexity, Google SGE)
                     </p>
                   </div>
                 </label>

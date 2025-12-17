@@ -42,6 +42,10 @@ const planSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    canUseGeoMode: {
+        type: Boolean,
+        default: false
+    },
     // Pricing for ЮKassa
     priceRub: {
         type: Number,

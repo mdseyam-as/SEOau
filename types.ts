@@ -190,6 +190,7 @@ export interface SubscriptionPlan {
   maxKeywords: number;
   canCheckSpam: boolean;
   canOptimizeRelevance: boolean;
+  canUseGeoMode: boolean;
   priceRub: number;
   durationDays: number;
 }

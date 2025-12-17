@@ -361,6 +361,12 @@ router.post('/', validate(generateSchema), async (req, res) => {
 
         // ==================== DEBUG LOG ====================
         const isGeoMode = config.generationMode === 'geo';
+
+        // Check GEO mode permission
+        if (isGeoMode && !limitCheck.plan?.canUseGeoMode && limitCheck.user.role !== 'admin') {
+            return res.status(403).json({ error: 'GEO режим недоступен для вашего тарифа' });
+        }
+
         console.log('>>> GENERATION REQUEST:', {
             topic: config.topic,
             mode: config.generationMode,

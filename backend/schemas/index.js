@@ -130,6 +130,7 @@ export const createPlanSchema = z.object({
     allowedModels: z.array(z.string().max(100)).min(1),
     canCheckSpam: z.boolean().default(false),
     canOptimizeRelevance: z.boolean().default(false),
+    canUseGeoMode: z.boolean().default(false),
     features: z.array(z.string().max(200)).optional().default([])
 });
 
