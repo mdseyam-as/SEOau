@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Image, Copy, Check, Palette, RefreshCw, Sparkles, ExternalLink } from 'lucide-react';
+import { Image, Copy, Check, Palette, RefreshCw, Sparkles, ExternalLink, Download, AlertCircle } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { SubscriptionPlan } from '../types';
 
@@ -14,18 +14,19 @@ interface CoverGeneratorProps {
 type CoverStyle = 'modern' | 'minimalist' | 'corporate' | 'creative' | 'tech';
 
 interface CoverPrompts {
-  dallePrompt: string;
-  midjourneyPrompt: string;
-  stableDiffusionPrompt: string;
-  negativePrompt: string;
-  description: string;
+  dallePrompt?: string;
+  midjourneyPrompt?: string;
+  altText?: string;
 }
 
 interface CoverResult {
-  prompts: CoverPrompts;
+  imageUrl?: string | null;
+  prompts?: CoverPrompts;
   alt: string;
   style: string;
-  message: string;
+  model?: string;
+  prompt?: string;
+  error?: string;
 }
 
 const styleOptions: { value: CoverStyle; label: string; description: string }[] = [
@@ -34,13 +35,6 @@ const styleOptions: { value: CoverStyle; label: string; description: string }[] 
   { value: 'corporate', label: 'Корпоративный', description: 'Бизнес-стиль' },
   { value: 'creative', label: 'Креативный', description: 'Яркие цвета' },
   { value: 'tech', label: 'Технологичный', description: 'Неон и футуризм' },
-];
-
-const aiServices = [
-  { name: 'DALL-E 3', url: 'https://openai.com/dall-e-3', promptKey: 'dallePrompt' as const },
-  { name: 'Midjourney', url: 'https://midjourney.com', promptKey: 'midjourneyPrompt' as const },
-  { name: 'Leonardo AI', url: 'https://leonardo.ai', promptKey: 'stableDiffusionPrompt' as const },
-  { name: 'Stable Diffusion', url: 'https://stability.ai', promptKey: 'stableDiffusionPrompt' as const },
 ];
 
 export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
@@ -53,8 +47,8 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
   const [coverResult, setCoverResult] = useState<CoverResult | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<CoverStyle>('modern');
   const [error, setError] = useState<string | null>(null);
-  const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);
   const [copiedAlt, setCopiedAlt] = useState(false);
+  const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);
 
   const canGenerate = userPlan?.canGenerateCover;
 
@@ -68,17 +62,10 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
       const { cover } = await apiService.generateCover(title, topic, keywords, selectedStyle);
       setCoverResult(cover);
     } catch (err: any) {
-      setError(err.message || 'Не удалось сгенерировать промпты');
+      setError(err.message || 'Не удалось сгенерировать обложку');
     } finally {
       setIsGenerating(false);
     }
-  };
-
-  const handleCopyPrompt = (promptKey: keyof CoverPrompts, promptName: string) => {
-    if (!coverResult?.prompts) return;
-    navigator.clipboard.writeText(coverResult.prompts[promptKey]);
-    setCopiedPrompt(promptKey);
-    setTimeout(() => setCopiedPrompt(null), 2000);
   };
 
   const handleCopyAlt = () => {
@@ -86,6 +73,31 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
     navigator.clipboard.writeText(coverResult.alt);
     setCopiedAlt(true);
     setTimeout(() => setCopiedAlt(false), 2000);
+  };
+
+  const handleCopyPrompt = (key: string, value: string) => {
+    navigator.clipboard.writeText(value);
+    setCopiedPrompt(key);
+    setTimeout(() => setCopiedPrompt(null), 2000);
+  };
+
+  const handleDownload = async () => {
+    if (!coverResult?.imageUrl) return;
+    
+    try {
+      const response = await fetch(coverResult.imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cover-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download failed:', err);
+    }
   };
 
   if (!canGenerate) {
@@ -106,7 +118,7 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
     <div className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl">
       <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-4 text-white flex items-center gap-2">
         <Image className="w-4 h-4 sm:w-5 sm:h-5 text-pink-400" />
-        Генератор обложки (AI Prompts)
+        Генератор обложки (AI)
       </h3>
 
       {/* Style Selection */}
@@ -150,7 +162,7 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
         {isGenerating ? (
           <>
             <RefreshCw className="w-4 h-4 animate-spin" />
-            Генерация промптов...
+            Генерация изображения...
           </>
         ) : coverResult ? (
           <>
@@ -160,7 +172,7 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
         ) : (
           <>
             <Sparkles className="w-4 h-4" />
-            Сгенерировать промпты для обложки
+            Сгенерировать обложку
           </>
         )}
       </button>
@@ -172,80 +184,119 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
         </div>
       )}
 
-      {/* Generated Prompts Display */}
+      {/* Generated Image Display */}
       {coverResult && (
         <div className="mt-4 space-y-3">
-          {/* Description */}
-          <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-            <p className="text-xs text-slate-300 leading-relaxed">
-              <Sparkles className="w-3 h-3 inline mr-1 text-pink-400" />
-              {coverResult.prompts.description}
-            </p>
-          </div>
-
-          {/* AI Services with Prompts */}
-          <div className="space-y-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Промпты для AI-генераторов
-            </span>
-
-            {aiServices.map((service) => (
-              <div key={service.name} className="bg-slate-900/50 rounded-lg p-3 border border-white/10">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-white">{service.name}</span>
-                    <a
-                      href={service.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-pink-400 hover:text-pink-300"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
+          {/* Image Preview */}
+          {coverResult.imageUrl ? (
+            <div className="space-y-3">
+              <div className="relative rounded-xl overflow-hidden border border-white/10">
+                <img
+                  src={coverResult.imageUrl}
+                  alt={coverResult.alt}
+                  className="w-full h-auto bg-slate-800"
+                  style={{ aspectRatio: '16/9', objectFit: 'cover' }}
+                  loading="lazy"
+                  onError={(e) => {
+                    // If image fails to load, show placeholder
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-slate-400">
+                      {coverResult.model || 'Pollinations AI'}
+                    </span>
+                    <div className="flex gap-2">
+                      <a
+                        href={coverResult.imageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-bold text-white transition-colors"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Открыть
+                      </a>
+                      <button
+                        onClick={handleDownload}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-pink-500 hover:bg-pink-400 rounded-lg text-xs font-bold text-white transition-colors"
+                      >
+                        <Download className="w-3 h-3" />
+                        Скачать
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => handleCopyPrompt(service.promptKey, service.name)}
-                    className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-pink-400 transition-colors"
-                  >
-                    {copiedPrompt === service.promptKey ? (
-                      <><Check className="w-3 h-3" /> Скопировано</>
-                    ) : (
-                      <><Copy className="w-3 h-3" /> Копировать</>
-                    )}
-                  </button>
                 </div>
-                <p className="text-xs text-slate-400 font-mono leading-relaxed break-words">
-                  {coverResult.prompts[service.promptKey]}
-                </p>
               </div>
-            ))}
-
-            {/* Negative Prompt (for Stable Diffusion) */}
-            <div className="bg-slate-900/50 rounded-lg p-3 border border-orange-500/20">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-orange-400">Negative Prompt (SD)</span>
-                <button
-                  onClick={() => handleCopyPrompt('negativePrompt', 'Negative')}
-                  className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-orange-400 transition-colors"
-                >
-                  {copiedPrompt === 'negativePrompt' ? (
-                    <><Check className="w-3 h-3" /> Скопировано</>
-                  ) : (
-                    <><Copy className="w-3 h-3" /> Копировать</>
-                  )}
-                </button>
-              </div>
-              <p className="text-xs text-slate-500 font-mono leading-relaxed">
-                {coverResult.prompts.negativePrompt}
+              <p className="text-[10px] text-slate-500 text-center">
+                Изображение генерируется через Pollinations.ai (бесплатно). Загрузка может занять несколько секунд.
               </p>
             </div>
-          </div>
+          ) : coverResult.error ? (
+            /* Fallback: Show prompts if image generation failed */
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                <AlertCircle className="w-4 h-4 text-orange-400 flex-shrink-0" />
+                <p className="text-xs text-orange-300">{coverResult.error}</p>
+              </div>
+
+              {coverResult.prompts && (
+                <div className="space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Используйте эти промпты в AI-генераторах:
+                  </span>
+
+                  {coverResult.prompts.dallePrompt && (
+                    <div className="bg-slate-900/50 rounded-lg p-3 border border-white/10">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-white">DALL-E / Leonardo AI</span>
+                        <button
+                          onClick={() => handleCopyPrompt('dalle', coverResult.prompts!.dallePrompt!)}
+                          className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-pink-400"
+                        >
+                          {copiedPrompt === 'dalle' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                          {copiedPrompt === 'dalle' ? 'Скопировано' : 'Копировать'}
+                        </button>
+                      </div>
+                      <p className="text-xs text-slate-400 font-mono break-words">
+                        {coverResult.prompts.dallePrompt}
+                      </p>
+                    </div>
+                  )}
+
+                  {coverResult.prompts.midjourneyPrompt && (
+                    <div className="bg-slate-900/50 rounded-lg p-3 border border-white/10">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-white">Midjourney</span>
+                        <button
+                          onClick={() => handleCopyPrompt('mj', coverResult.prompts!.midjourneyPrompt!)}
+                          className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-pink-400"
+                        >
+                          {copiedPrompt === 'mj' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                          {copiedPrompt === 'mj' ? 'Скопировано' : 'Копировать'}
+                        </button>
+                      </div>
+                      <p className="text-xs text-slate-400 font-mono break-words">
+                        {coverResult.prompts.midjourneyPrompt}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="text-[10px] text-slate-500 p-2">
+                    <a href="https://leonardo.ai" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline">
+                      Leonardo AI
+                    </a> — бесплатный генератор изображений
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
 
           {/* Alt Text */}
           <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg p-3 border border-green-500/20">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-green-400">
-                SEO Alt-текст для изображения
+                SEO Alt-текст
               </span>
               <button
                 onClick={handleCopyAlt}
@@ -256,20 +307,6 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
               </button>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">{coverResult.alt}</p>
-            <p className="text-[10px] text-slate-500 mt-2">
-              Используйте этот alt-текст при вставке изображения в статью для SEO
-            </p>
-          </div>
-
-          {/* Usage Tip */}
-          <div className="text-[10px] text-slate-500 leading-relaxed bg-white/5 rounded-lg p-3">
-            <strong>Как использовать:</strong>
-            <ol className="list-decimal list-inside mt-1 space-y-1">
-              <li>Скопируйте промпт для нужного AI-генератора</li>
-              <li>Перейдите на сайт генератора (например, <a href="https://leonardo.ai" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline">Leonardo AI</a> - бесплатный)</li>
-              <li>Вставьте промпт и сгенерируйте изображение</li>
-              <li>Скачайте и добавьте в статью с SEO alt-текстом</li>
-            </ol>
           </div>
         </div>
       )}

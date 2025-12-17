@@ -884,8 +884,8 @@ ${content}
 
 /**
  * POST /api/generate/cover
- * Generate AI image prompt and SEO alt text for article cover
- * Returns optimized prompts for use with external image generators (DALL-E, Midjourney, Stable Diffusion)
+ * Generate cover image using Pollinations.ai (FREE) + SEO alt text
+ * Pollinations.ai is a free AI image generation service
  */
 router.post('/cover', validate(generateCoverSchema), async (req, res) => {
     try {
@@ -907,92 +907,62 @@ router.post('/cover', validate(generateCoverSchema), async (req, res) => {
         // Style descriptions for image generation
         const styleDescriptions = {
             modern: 'modern clean design, gradient backgrounds, bold geometric shapes, professional',
-            minimalist: 'minimalist, lots of white space, simple geometric shapes, elegant, subtle colors',
-            corporate: 'professional corporate style, blue and gray tones, business-oriented, trustworthy',
-            creative: 'creative artistic style, vibrant colors, unique composition, dynamic',
-            tech: 'futuristic tech style, dark background, neon accents, digital elements, cyber aesthetic'
+            minimalist: 'minimalist, white space, simple geometric shapes, elegant, pastel colors',
+            corporate: 'professional corporate, blue gray tones, business, trustworthy, clean',
+            creative: 'creative artistic, vibrant colors, unique composition, dynamic',
+            tech: 'futuristic tech, dark background, neon cyan purple, digital, cyber'
         };
 
         const styleDesc = styleDescriptions[style] || styleDescriptions.modern;
-        const keywordList = keywords && keywords.length > 0 ? keywords.slice(0, 5).join(', ') : topic;
+        const keywordList = keywords && keywords.length > 0 ? keywords.slice(0, 3).join(', ') : '';
 
-        // Use LLM to generate optimized image prompts
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: getHeaders(apiKey, DEFAULT_SITE_NAME),
-            body: JSON.stringify({
-                model: "google/gemini-2.0-flash-001",
-                messages: [
-                    {
-                        role: "system",
-                        content: "You are an expert at creating image generation prompts for AI art tools like DALL-E, Midjourney, and Stable Diffusion. Create detailed, effective prompts that produce professional blog cover images."
-                    },
-                    {
-                        role: "user",
-                        content: `Create image generation prompts for a blog article cover.
+        // Build optimized prompt for Pollinations
+        const imagePrompt = `Professional blog cover, ${title}, ${keywordList ? keywordList + ', ' : ''}${styleDesc}, high quality, 16:9, no text, web header, abstract conceptual`;
 
-ARTICLE DETAILS:
-- Title: "${title}"
-- Topic: "${topic || title}"
-- Keywords: ${keywordList}
-- Requested Style: ${styleDesc}
+        console.log('>>> COVER GENERATION (Pollinations):', { title, style });
 
-REQUIREMENTS:
-1. No text/words in the image
-2. 16:9 aspect ratio composition
-3. Professional, high-quality look
-4. Relevant visual metaphors for the topic
+        // Pollinations.ai - FREE image generation API
+        // URL format: https://image.pollinations.ai/prompt/{prompt}?width=1792&height=1024&model=flux
+        const encodedPrompt = encodeURIComponent(imagePrompt);
+        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1792&height=1024&model=flux&nologo=true&seed=${Date.now()}`;
 
-Return a JSON object with these prompts:
-{
-    "dallePrompt": "Optimized prompt for DALL-E 3 (detailed, descriptive)",
-    "midjourneyPrompt": "Optimized prompt for Midjourney v6 (include --ar 16:9 --v 6)",
-    "stableDiffusionPrompt": "Optimized prompt for Stable Diffusion XL",
-    "negativePrompt": "Negative prompt for SD (things to avoid)",
-    "altText": "SEO-optimized alt text for the image (max 125 chars, include main keyword)",
-    "description": "Brief description of what the image should show"
-}`
-                    }
-                ],
-                temperature: 0.7
-            })
-        });
+        // Verify the image is accessible (Pollinations generates on-demand)
+        let imageUrl = null;
+        let usedModel = 'pollinations/flux';
 
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(`Prompt generation failed: ${errData.error?.message || response.statusText}`);
+        try {
+            // Make a HEAD request to trigger generation and verify it works
+            const checkResponse = await fetch(pollinationsUrl, { method: 'HEAD', timeout: 30000 });
+            if (checkResponse.ok) {
+                imageUrl = pollinationsUrl;
+                console.log('>>> Pollinations image URL generated successfully');
+            } else {
+                console.warn('>>> Pollinations check failed:', checkResponse.status);
+            }
+        } catch (pollError) {
+            console.warn('>>> Pollinations error:', pollError.message);
+            // Still return the URL - it might work when loaded in browser
+            imageUrl = pollinationsUrl;
         }
 
-        const data = await response.json();
-        const rawContent = data.choices?.[0]?.message?.content;
+        // Generate SEO alt text using LLM
+        const altText = await generateAltText(apiKey, title, keywords || []);
 
-        if (!rawContent) {
-            throw new Error("No content received from AI");
-        }
-
-        // Parse the response
-        const parsed = safeParseAIResponse(rawContent, { topic: title });
-
-        // Extract prompts
+        // Also generate prompts for manual use (as backup)
         const prompts = {
-            dallePrompt: parsed.dallePrompt || `Professional blog cover image about "${title}", ${styleDesc}, no text, 16:9 aspect ratio, high quality`,
-            midjourneyPrompt: parsed.midjourneyPrompt || `Professional blog cover for "${title}", ${styleDesc}, no text --ar 16:9 --v 6`,
-            stableDiffusionPrompt: parsed.stableDiffusionPrompt || `Professional blog header image, ${topic || title}, ${styleDesc}, high quality, detailed`,
-            negativePrompt: parsed.negativePrompt || 'text, words, letters, watermark, signature, blurry, low quality, distorted',
-            description: parsed.description || `Cover image for article about ${title}`
+            dallePrompt: imagePrompt,
+            midjourneyPrompt: `${imagePrompt} --ar 16:9 --v 6 --style raw`,
+            pollinationsUrl: pollinationsUrl
         };
 
-        // Generate SEO alt text (use from response or generate separately)
-        const altText = parsed.altText || await generateAltText(apiKey, title, keywords || []);
-
-        res.json({
+        return res.json({
             cover: {
-                prompts,
+                imageUrl,
+                model: usedModel,
                 alt: altText,
-                style: style,
-                // No actual image URL - user needs to use prompts with external service
-                imageUrl: null,
-                message: 'Use these prompts with DALL-E, Midjourney, or Stable Diffusion to generate your cover image'
+                style,
+                prompt: imagePrompt,
+                prompts
             }
         });
     } catch (error) {

@@ -197,7 +197,7 @@ class ApiService {
         });
     }
 
-    // Cover Generation (returns prompts for external AI image generators)
+    // Cover Generation (generates image via FLUX or returns prompts as fallback)
     async generateCover(
         title: string,
         topic: string,
@@ -205,17 +205,17 @@ class ApiService {
         style: 'modern' | 'minimalist' | 'corporate' | 'creative' | 'tech' = 'modern'
     ): Promise<{
         cover: {
-            prompts: {
-                dallePrompt: string;
-                midjourneyPrompt: string;
-                stableDiffusionPrompt: string;
-                negativePrompt: string;
-                description: string;
+            imageUrl?: string | null;
+            prompts?: {
+                dallePrompt?: string;
+                midjourneyPrompt?: string;
+                altText?: string;
             };
             alt: string;
             style: string;
-            imageUrl: string | null;
-            message: string;
+            model?: string;
+            prompt?: string;
+            error?: string;
         }
     }> {
         return this.request('/generate/cover', {
