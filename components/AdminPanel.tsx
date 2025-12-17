@@ -38,6 +38,7 @@ export const AdminPanel: React.FC = () => {
   // Settings State
   const [telegramLink, setTelegramLink] = useState('');
   const [apiKey, setApiKey] = useState('');
+  const [googleAiApiKey, setGoogleAiApiKey] = useState('');
   const [seoPrompt, setSeoPrompt] = useState('');
   const [geoPrompt, setGeoPrompt] = useState('');
   const [spamCheckModel, setSpamCheckModel] = useState('x-ai/grok-4.1-fast');
@@ -48,6 +49,7 @@ export const AdminPanel: React.FC = () => {
     const settings = authService.getGlobalSettings();
     setTelegramLink(settings.telegramLink);
     setApiKey(settings.openRouterApiKey || '');
+    setGoogleAiApiKey(settings.googleAiApiKey || '');
     setSeoPrompt(settings.seoPrompt || DEFAULT_PROMPT_TEMPLATE);
     setGeoPrompt(settings.geoPrompt || GEO_PROMPT_TEMPLATE);
     setSpamCheckModel(settings.spamCheckModel || 'x-ai/grok-4.1-fast');
@@ -120,6 +122,7 @@ export const AdminPanel: React.FC = () => {
       await authService.saveGlobalSettings({
         telegramLink,
         openRouterApiKey: apiKey,
+        googleAiApiKey: googleAiApiKey,
         seoPrompt: seoPrompt,
         geoPrompt: geoPrompt,
         spamCheckModel: spamCheckModel
@@ -775,6 +778,23 @@ export const AdminPanel: React.FC = () => {
                   placeholder="sk-or-..."
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none font-mono text-sm"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                  <Key className="w-4 h-4 text-blue-500" /> Google AI Studio API Key (для генерации изображений)
+                </label>
+                <input
+                  type="password"
+                  value={googleAiApiKey}
+                  onChange={(e) => setGoogleAiApiKey(e.target.value)}
+                  placeholder="AIza..."
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Получить ключ: <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">aistudio.google.com/apikey</a>
+                  {' '}• Используется для генерации обложек через Gemini 2.0 Flash
+                </p>
               </div>
             </div>
 

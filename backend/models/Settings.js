@@ -36,6 +36,12 @@ const settingsSchema = new mongoose.Schema({
         default: 'x-ai/grok-4.1-fast'
     },
 
+    // Google AI Studio API key for image generation (Gemini)
+    googleAiApiKey: {
+        type: String,
+        default: ''
+    },
+
     updatedAt: {
         type: Date,
         default: Date.now
