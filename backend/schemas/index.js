@@ -107,7 +107,7 @@ export const optimizeRelevanceSchema = z.object({
 export const generateCoverSchema = z.object({
     title: z.string().min(1, 'Title is required').max(500),
     topic: z.string().max(1000).optional().default(''),
-    keywords: z.array(z.string().max(200)).max(100).optional().default([]), // Increased limit
+    keywords: z.array(z.string().max(200)).optional().default([]), // No limit - will be trimmed in handler
     style: z.enum(['modern', 'minimalist', 'corporate', 'creative', 'tech']).optional().default('modern')
 });
 
