@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Image, Download, RefreshCw, Copy, Check, Palette } from 'lucide-react';
+import React, { useState } from 'react';
+import { Image, Copy, Check, Palette, RefreshCw, Sparkles, ExternalLink } from 'lucide-react';
 import { apiService } from '../services/apiService';
-import { CoverImage, SubscriptionPlan } from '../types';
+import { SubscriptionPlan } from '../types';
 
 interface CoverGeneratorProps {
   title: string;
@@ -13,12 +13,34 @@ interface CoverGeneratorProps {
 
 type CoverStyle = 'modern' | 'minimalist' | 'corporate' | 'creative' | 'tech';
 
+interface CoverPrompts {
+  dallePrompt: string;
+  midjourneyPrompt: string;
+  stableDiffusionPrompt: string;
+  negativePrompt: string;
+  description: string;
+}
+
+interface CoverResult {
+  prompts: CoverPrompts;
+  alt: string;
+  style: string;
+  message: string;
+}
+
 const styleOptions: { value: CoverStyle; label: string; description: string }[] = [
-  { value: 'modern', label: 'Современный', description: 'Градиенты и жирная типографика' },
-  { value: 'minimalist', label: 'Минимализм', description: 'Чистый дизайн с пустым пространством' },
-  { value: 'corporate', label: 'Корпоративный', description: 'Профессиональный бизнес-стиль' },
-  { value: 'creative', label: 'Креативный', description: 'Яркие цвета и уникальная композиция' },
-  { value: 'tech', label: 'Технологичный', description: 'Футуристичный стиль с неоновыми акцентами' },
+  { value: 'modern', label: 'Современный', description: 'Градиенты и геометрия' },
+  { value: 'minimalist', label: 'Минимализм', description: 'Чистый дизайн' },
+  { value: 'corporate', label: 'Корпоративный', description: 'Бизнес-стиль' },
+  { value: 'creative', label: 'Креативный', description: 'Яркие цвета' },
+  { value: 'tech', label: 'Технологичный', description: 'Неон и футуризм' },
+];
+
+const aiServices = [
+  { name: 'DALL-E 3', url: 'https://openai.com/dall-e-3', promptKey: 'dallePrompt' as const },
+  { name: 'Midjourney', url: 'https://midjourney.com', promptKey: 'midjourneyPrompt' as const },
+  { name: 'Leonardo AI', url: 'https://leonardo.ai', promptKey: 'stableDiffusionPrompt' as const },
+  { name: 'Stable Diffusion', url: 'https://stability.ai', promptKey: 'stableDiffusionPrompt' as const },
 ];
 
 export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
@@ -26,12 +48,12 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
   topic,
   keywords,
   userPlan,
-  onUserUpdate
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [coverImage, setCoverImage] = useState<CoverImage | null>(null);
+  const [coverResult, setCoverResult] = useState<CoverResult | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<CoverStyle>('modern');
   const [error, setError] = useState<string | null>(null);
+  const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);
   const [copiedAlt, setCopiedAlt] = useState(false);
 
   const canGenerate = userPlan?.canGenerateCover;
@@ -43,42 +65,25 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
     setError(null);
 
     try {
-      const { cover, user } = await apiService.generateCover(title, topic, keywords, selectedStyle);
-
-      setCoverImage({
-        url: cover.url || '',
-        base64: cover.base64 || undefined,
-        alt: cover.alt,
-        prompt: cover.prompt
-      });
-
-      if (onUserUpdate) {
-        onUserUpdate(user);
-      }
+      const { cover } = await apiService.generateCover(title, topic, keywords, selectedStyle);
+      setCoverResult(cover);
     } catch (err: any) {
-      setError(err.message || 'Не удалось сгенерировать обложку');
+      setError(err.message || 'Не удалось сгенерировать промпты');
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleDownload = () => {
-    if (!coverImage) return;
-
-    const imageSource = coverImage.base64 || coverImage.url;
-    if (!imageSource) return;
-
-    const link = document.createElement('a');
-    link.href = imageSource;
-    link.download = `cover-${Date.now()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleCopyPrompt = (promptKey: keyof CoverPrompts, promptName: string) => {
+    if (!coverResult?.prompts) return;
+    navigator.clipboard.writeText(coverResult.prompts[promptKey]);
+    setCopiedPrompt(promptKey);
+    setTimeout(() => setCopiedPrompt(null), 2000);
   };
 
   const handleCopyAlt = () => {
-    if (!coverImage?.alt) return;
-    navigator.clipboard.writeText(coverImage.alt);
+    if (!coverResult?.alt) return;
+    navigator.clipboard.writeText(coverResult.alt);
     setCopiedAlt(true);
     setTimeout(() => setCopiedAlt(false), 2000);
   };
@@ -101,7 +106,7 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
     <div className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl">
       <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-4 text-white flex items-center gap-2">
         <Image className="w-4 h-4 sm:w-5 sm:h-5 text-pink-400" />
-        Генератор обложки
+        Генератор обложки (AI Prompts)
       </h3>
 
       {/* Style Selection */}
@@ -145,17 +150,17 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
         {isGenerating ? (
           <>
             <RefreshCw className="w-4 h-4 animate-spin" />
-            Генерация обложки...
+            Генерация промптов...
           </>
-        ) : coverImage ? (
+        ) : coverResult ? (
           <>
             <RefreshCw className="w-4 h-4" />
             Сгенерировать заново
           </>
         ) : (
           <>
-            <Image className="w-4 h-4" />
-            Сгенерировать обложку
+            <Sparkles className="w-4 h-4" />
+            Сгенерировать промпты для обложки
           </>
         )}
       </button>
@@ -167,50 +172,104 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
         </div>
       )}
 
-      {/* Generated Cover Display */}
-      {coverImage && (coverImage.url || coverImage.base64) && (
+      {/* Generated Prompts Display */}
+      {coverResult && (
         <div className="mt-4 space-y-3">
-          {/* Image Preview */}
-          <div className="relative rounded-xl overflow-hidden border border-white/10">
-            <img
-              src={coverImage.base64 || coverImage.url}
-              alt={coverImage.alt}
-              className="w-full h-auto"
-            />
-            <button
-              onClick={handleDownload}
-              className="absolute top-2 right-2 p-2 bg-black/50 hover:bg-black/70 rounded-lg text-white transition-colors"
-              title="Скачать"
-            >
-              <Download className="w-4 h-4" />
-            </button>
+          {/* Description */}
+          <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+            <p className="text-xs text-slate-300 leading-relaxed">
+              <Sparkles className="w-3 h-3 inline mr-1 text-pink-400" />
+              {coverResult.prompts.description}
+            </p>
+          </div>
+
+          {/* AI Services with Prompts */}
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Промпты для AI-генераторов
+            </span>
+
+            {aiServices.map((service) => (
+              <div key={service.name} className="bg-slate-900/50 rounded-lg p-3 border border-white/10">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-white">{service.name}</span>
+                    <a
+                      href={service.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-pink-400 hover:text-pink-300"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                  <button
+                    onClick={() => handleCopyPrompt(service.promptKey, service.name)}
+                    className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-pink-400 transition-colors"
+                  >
+                    {copiedPrompt === service.promptKey ? (
+                      <><Check className="w-3 h-3" /> Скопировано</>
+                    ) : (
+                      <><Copy className="w-3 h-3" /> Копировать</>
+                    )}
+                  </button>
+                </div>
+                <p className="text-xs text-slate-400 font-mono leading-relaxed break-words">
+                  {coverResult.prompts[service.promptKey]}
+                </p>
+              </div>
+            ))}
+
+            {/* Negative Prompt (for Stable Diffusion) */}
+            <div className="bg-slate-900/50 rounded-lg p-3 border border-orange-500/20">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-orange-400">Negative Prompt (SD)</span>
+                <button
+                  onClick={() => handleCopyPrompt('negativePrompt', 'Negative')}
+                  className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-orange-400 transition-colors"
+                >
+                  {copiedPrompt === 'negativePrompt' ? (
+                    <><Check className="w-3 h-3" /> Скопировано</>
+                  ) : (
+                    <><Copy className="w-3 h-3" /> Копировать</>
+                  )}
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 font-mono leading-relaxed">
+                {coverResult.prompts.negativePrompt}
+              </p>
+            </div>
           </div>
 
           {/* Alt Text */}
-          <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+          <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg p-3 border border-green-500/20">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                SEO Alt-текст
+              <span className="text-[10px] font-bold uppercase tracking-wider text-green-400">
+                SEO Alt-текст для изображения
               </span>
               <button
                 onClick={handleCopyAlt}
-                className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-pink-400 transition-colors"
+                className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-green-400 transition-colors"
               >
                 {copiedAlt ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                 {copiedAlt ? 'Скопировано' : 'Копировать'}
               </button>
             </div>
-            <p className="text-xs text-slate-300 leading-relaxed">{coverImage.alt}</p>
+            <p className="text-xs text-slate-300 leading-relaxed">{coverResult.alt}</p>
+            <p className="text-[10px] text-slate-500 mt-2">
+              Используйте этот alt-текст при вставке изображения в статью для SEO
+            </p>
           </div>
 
-          {/* HTML Code */}
-          <div className="bg-slate-900/50 rounded-lg p-3 border border-white/10">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-              HTML код для вставки
-            </span>
-            <code className="text-xs text-pink-300 font-mono block overflow-x-auto">
-              {`<img src="${coverImage.url || '[base64_data]'}" alt="${coverImage.alt}" />`}
-            </code>
+          {/* Usage Tip */}
+          <div className="text-[10px] text-slate-500 leading-relaxed bg-white/5 rounded-lg p-3">
+            <strong>Как использовать:</strong>
+            <ol className="list-decimal list-inside mt-1 space-y-1">
+              <li>Скопируйте промпт для нужного AI-генератора</li>
+              <li>Перейдите на сайт генератора (например, <a href="https://leonardo.ai" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline">Leonardo AI</a> - бесплатный)</li>
+              <li>Вставьте промпт и сгенерируйте изображение</li>
+              <li>Скачайте и добавьте в статью с SEO alt-текстом</li>
+            </ol>
           </div>
         </div>
       )}

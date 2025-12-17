@@ -197,13 +197,27 @@ class ApiService {
         });
     }
 
-    // Cover Generation
+    // Cover Generation (returns prompts for external AI image generators)
     async generateCover(
         title: string,
         topic: string,
         keywords: string[],
         style: 'modern' | 'minimalist' | 'corporate' | 'creative' | 'tech' = 'modern'
-    ): Promise<{ cover: { url: string | null; base64: string | null; alt: string; prompt: string }; user: User }> {
+    ): Promise<{
+        cover: {
+            prompts: {
+                dallePrompt: string;
+                midjourneyPrompt: string;
+                stableDiffusionPrompt: string;
+                negativePrompt: string;
+                description: string;
+            };
+            alt: string;
+            style: string;
+            imageUrl: string | null;
+            message: string;
+        }
+    }> {
         return this.request('/generate/cover', {
             method: 'POST',
             body: JSON.stringify({ title, topic, keywords, style })

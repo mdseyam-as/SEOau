@@ -884,7 +884,8 @@ ${content}
 
 /**
  * POST /api/generate/cover
- * Generate cover image using Gemini 2.5 Flash Image via OpenRouter
+ * Generate AI image prompt and SEO alt text for article cover
+ * Returns optimized prompts for use with external image generators (DALL-E, Midjourney, Stable Diffusion)
  */
 router.post('/cover', validate(generateCoverSchema), async (req, res) => {
     try {
@@ -905,88 +906,94 @@ router.post('/cover', validate(generateCoverSchema), async (req, res) => {
 
         // Style descriptions for image generation
         const styleDescriptions = {
-            modern: 'modern, clean design with gradient backgrounds and bold typography',
-            minimalist: 'minimalist, white space, simple geometric shapes, elegant',
-            corporate: 'professional corporate style, blue tones, business-oriented',
-            creative: 'creative, artistic, vibrant colors, unique composition',
-            tech: 'futuristic tech style, dark background, neon accents, digital elements'
+            modern: 'modern clean design, gradient backgrounds, bold geometric shapes, professional',
+            minimalist: 'minimalist, lots of white space, simple geometric shapes, elegant, subtle colors',
+            corporate: 'professional corporate style, blue and gray tones, business-oriented, trustworthy',
+            creative: 'creative artistic style, vibrant colors, unique composition, dynamic',
+            tech: 'futuristic tech style, dark background, neon accents, digital elements, cyber aesthetic'
         };
 
         const styleDesc = styleDescriptions[style] || styleDescriptions.modern;
-        const keywordList = keywords.length > 0 ? keywords.slice(0, 5).join(', ') : topic;
+        const keywordList = keywords && keywords.length > 0 ? keywords.slice(0, 5).join(', ') : topic;
 
-        // Build image generation prompt
-        const imagePrompt = `Create a professional blog article cover image for the topic: "${title}".
-Style: ${styleDesc}.
-Related keywords: ${keywordList}.
-Requirements:
-- No text on the image (text will be added separately)
-- High quality, suitable for web article header
-- 16:9 aspect ratio composition
-- Professional and visually appealing
-- Relevant visual metaphors for the topic`;
-
-        // Call OpenRouter API with Gemini 2.5 Flash Image model
+        // Use LLM to generate optimized image prompts
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: getHeaders(apiKey, DEFAULT_SITE_NAME),
             body: JSON.stringify({
-                model: "google/gemini-2.0-flash-exp:free",
+                model: "google/gemini-2.0-flash-001",
                 messages: [
                     {
+                        role: "system",
+                        content: "You are an expert at creating image generation prompts for AI art tools like DALL-E, Midjourney, and Stable Diffusion. Create detailed, effective prompts that produce professional blog cover images."
+                    },
+                    {
                         role: "user",
-                        content: imagePrompt
+                        content: `Create image generation prompts for a blog article cover.
+
+ARTICLE DETAILS:
+- Title: "${title}"
+- Topic: "${topic || title}"
+- Keywords: ${keywordList}
+- Requested Style: ${styleDesc}
+
+REQUIREMENTS:
+1. No text/words in the image
+2. 16:9 aspect ratio composition
+3. Professional, high-quality look
+4. Relevant visual metaphors for the topic
+
+Return a JSON object with these prompts:
+{
+    "dallePrompt": "Optimized prompt for DALL-E 3 (detailed, descriptive)",
+    "midjourneyPrompt": "Optimized prompt for Midjourney v6 (include --ar 16:9 --v 6)",
+    "stableDiffusionPrompt": "Optimized prompt for Stable Diffusion XL",
+    "negativePrompt": "Negative prompt for SD (things to avoid)",
+    "altText": "SEO-optimized alt text for the image (max 125 chars, include main keyword)",
+    "description": "Brief description of what the image should show"
+}`
                     }
                 ],
-                // Request image generation
-                provider: {
-                    require_parameters: true
-                },
-                response_format: {
-                    type: "image"
-                }
+                temperature: 0.7
             })
         });
 
         if (!response.ok) {
             const errData = await response.json().catch(() => ({}));
-            throw new Error(`Image generation failed: ${errData.error?.message || response.statusText}`);
+            throw new Error(`Prompt generation failed: ${errData.error?.message || response.statusText}`);
         }
 
         const data = await response.json();
+        const rawContent = data.choices?.[0]?.message?.content;
 
-        // Extract image from response
-        let imageUrl = null;
-        let imageBase64 = null;
-
-        if (data.choices?.[0]?.message?.content) {
-            const content = data.choices[0].message.content;
-            // Check if content contains image URL or base64
-            if (typeof content === 'string') {
-                if (content.startsWith('data:image')) {
-                    imageBase64 = content;
-                } else if (content.startsWith('http')) {
-                    imageUrl = content;
-                }
-            } else if (content.image_url) {
-                imageUrl = content.image_url.url || content.image_url;
-            }
+        if (!rawContent) {
+            throw new Error("No content received from AI");
         }
 
-        // Generate SEO alt text for the image
-        const altText = await generateAltText(apiKey, title, keywords);
+        // Parse the response
+        const parsed = safeParseAIResponse(rawContent, { topic: title });
 
-        // Increment usage
-        const updatedUser = await incrementUsage(limitCheck.user);
+        // Extract prompts
+        const prompts = {
+            dallePrompt: parsed.dallePrompt || `Professional blog cover image about "${title}", ${styleDesc}, no text, 16:9 aspect ratio, high quality`,
+            midjourneyPrompt: parsed.midjourneyPrompt || `Professional blog cover for "${title}", ${styleDesc}, no text --ar 16:9 --v 6`,
+            stableDiffusionPrompt: parsed.stableDiffusionPrompt || `Professional blog header image, ${topic || title}, ${styleDesc}, high quality, detailed`,
+            negativePrompt: parsed.negativePrompt || 'text, words, letters, watermark, signature, blurry, low quality, distorted',
+            description: parsed.description || `Cover image for article about ${title}`
+        };
+
+        // Generate SEO alt text (use from response or generate separately)
+        const altText = parsed.altText || await generateAltText(apiKey, title, keywords || []);
 
         res.json({
             cover: {
-                url: imageUrl,
-                base64: imageBase64,
+                prompts,
                 alt: altText,
-                prompt: imagePrompt
-            },
-            user: updatedUser
+                style: style,
+                // No actual image URL - user needs to use prompts with external service
+                imageUrl: null,
+                message: 'Use these prompts with DALL-E, Midjourney, or Stable Diffusion to generate your cover image'
+            }
         });
     } catch (error) {
         console.error('Cover generation error:', error);
