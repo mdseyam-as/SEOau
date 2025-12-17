@@ -195,7 +195,9 @@ export const AdminPanel: React.FC = () => {
       maxGenerationsPerDay: 0, // 0 = Unlimited
       maxKeywords: 0, // 0 = Unlimited
       canCheckSpam: false,
-      canOptimizeRelevance: false
+      canOptimizeRelevance: false,
+      canGenerateCover: false,
+      canGenerateInfographic: false
     };
     setEditingPlan(newPlan);
   };
@@ -691,6 +693,18 @@ export const AdminPanel: React.FC = () => {
                       {plan.canOptimizeRelevance ? 'Включено' : 'Выключено'}
                     </span>
                   </p>
+                  <p className="flex justify-between items-center">
+                    <span>Генератор обложек:</span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${plan.canGenerateCover ? 'bg-pink-100 text-pink-700' : 'bg-red-100 text-red-700'}`}>
+                      {plan.canGenerateCover ? '🖼️ Включено' : 'Выключено'}
+                    </span>
+                  </p>
+                  <p className="flex justify-between items-center">
+                    <span>Генератор инфографики:</span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${plan.canGenerateInfographic ? 'bg-cyan-100 text-cyan-700' : 'bg-red-100 text-red-700'}`}>
+                      {plan.canGenerateInfographic ? '📊 Включено' : 'Выключено'}
+                    </span>
+                  </p>
                   <p className="flex justify-between">
                     <span>Доступно моделей:</span>
                     <span className="font-mono font-bold">{plan.allowedModels.length}</span>
@@ -1011,6 +1025,40 @@ export const AdminPanel: React.FC = () => {
                     </span>
                     <p className="text-xs text-slate-500">
                       Разрешить функцию автоматического добавления недостающих ключей
+                    </p>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-2 p-3 bg-gradient-to-r from-pink-50 to-purple-50 border border-pink-200 rounded-lg cursor-pointer hover:from-pink-100 hover:to-purple-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={editingPlan.canGenerateCover || false}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, canGenerateCover: e.target.checked })}
+                    className="rounded text-pink-500 focus:ring-pink-500 w-5 h-5"
+                  />
+                  <div>
+                    <span className="text-sm font-bold text-slate-700 flex items-center gap-1">
+                      🖼️ Генератор обложек (AI)
+                    </span>
+                    <p className="text-xs text-slate-500">
+                      Разрешить генерацию уникальных обложек для статей с помощью Gemini 2.5 Flash Image
+                    </p>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-2 p-3 bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 rounded-lg cursor-pointer hover:from-cyan-100 hover:to-blue-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={editingPlan.canGenerateInfographic || false}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, canGenerateInfographic: e.target.checked })}
+                    className="rounded text-cyan-500 focus:ring-cyan-500 w-5 h-5"
+                  />
+                  <div>
+                    <span className="text-sm font-bold text-slate-700 flex items-center gap-1">
+                      📊 Генератор инфографики (Mermaid)
+                    </span>
+                    <p className="text-xs text-slate-500">
+                      Разрешить генерацию диаграмм и схем для GEO-оптимизации контента
                     </p>
                   </div>
                 </label>

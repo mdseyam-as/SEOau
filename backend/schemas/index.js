@@ -104,6 +104,19 @@ export const optimizeRelevanceSchema = z.object({
     }).optional().default({})
 });
 
+export const generateCoverSchema = z.object({
+    title: z.string().min(1, 'Title is required').max(500),
+    topic: z.string().max(1000).optional().default(''),
+    keywords: z.array(z.string().max(200)).max(20).optional().default([]),
+    style: z.enum(['modern', 'minimalist', 'corporate', 'creative', 'tech']).optional().default('modern')
+});
+
+export const generateInfographicSchema = z.object({
+    topic: z.string().min(1, 'Topic is required').max(1000),
+    content: z.string().max(50000).optional().default(''),
+    diagramType: z.enum(['flowchart', 'sequence', 'mindmap', 'timeline', 'pie', 'comparison']).optional().default('flowchart')
+});
+
 // ==================== Settings Schemas ====================
 
 export const updateSettingsSchema = z.object({

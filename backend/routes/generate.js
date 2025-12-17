@@ -3,7 +3,7 @@ import User from '../models/User.js';
 import Plan from '../models/Plan.js';
 import Settings from '../models/Settings.js';
 import { validate } from '../middleware/validate.js';
-import { generateSchema, spamCheckSchema, fixSpamSchema, optimizeRelevanceSchema } from '../schemas/index.js';
+import { generateSchema, spamCheckSchema, fixSpamSchema, optimizeRelevanceSchema, generateCoverSchema, generateInfographicSchema } from '../schemas/index.js';
 
 const router = express.Router();
 
@@ -795,6 +795,331 @@ ${content}
     } catch (error) {
         console.error('Optimization error:', error);
         res.status(500).json({ error: error.message || 'Optimization failed' });
+    }
+});
+
+/**
+ * POST /api/generate/cover
+ * Generate cover image using Gemini 2.5 Flash Image via OpenRouter
+ */
+router.post('/cover', validate(generateCoverSchema), async (req, res) => {
+    try {
+        const telegramId = req.telegramUser.id;
+
+        const limitCheck = await checkUserLimits(telegramId);
+        if (!limitCheck.allowed) {
+            return res.status(403).json({ error: `Limit exceeded: ${limitCheck.reason}` });
+        }
+
+        if (!limitCheck.plan?.canGenerateCover && limitCheck.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Cover generation not available for your plan' });
+        }
+
+        const { title, topic, keywords, style } = req.body;
+
+        const apiKey = await getApiKey();
+
+        // Style descriptions for image generation
+        const styleDescriptions = {
+            modern: 'modern, clean design with gradient backgrounds and bold typography',
+            minimalist: 'minimalist, white space, simple geometric shapes, elegant',
+            corporate: 'professional corporate style, blue tones, business-oriented',
+            creative: 'creative, artistic, vibrant colors, unique composition',
+            tech: 'futuristic tech style, dark background, neon accents, digital elements'
+        };
+
+        const styleDesc = styleDescriptions[style] || styleDescriptions.modern;
+        const keywordList = keywords.length > 0 ? keywords.slice(0, 5).join(', ') : topic;
+
+        // Build image generation prompt
+        const imagePrompt = `Create a professional blog article cover image for the topic: "${title}".
+Style: ${styleDesc}.
+Related keywords: ${keywordList}.
+Requirements:
+- No text on the image (text will be added separately)
+- High quality, suitable for web article header
+- 16:9 aspect ratio composition
+- Professional and visually appealing
+- Relevant visual metaphors for the topic`;
+
+        // Call OpenRouter API with Gemini 2.5 Flash Image model
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: getHeaders(apiKey, DEFAULT_SITE_NAME),
+            body: JSON.stringify({
+                model: "google/gemini-2.0-flash-exp:free",
+                messages: [
+                    {
+                        role: "user",
+                        content: imagePrompt
+                    }
+                ],
+                // Request image generation
+                provider: {
+                    require_parameters: true
+                },
+                response_format: {
+                    type: "image"
+                }
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(`Image generation failed: ${errData.error?.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        // Extract image from response
+        let imageUrl = null;
+        let imageBase64 = null;
+
+        if (data.choices?.[0]?.message?.content) {
+            const content = data.choices[0].message.content;
+            // Check if content contains image URL or base64
+            if (typeof content === 'string') {
+                if (content.startsWith('data:image')) {
+                    imageBase64 = content;
+                } else if (content.startsWith('http')) {
+                    imageUrl = content;
+                }
+            } else if (content.image_url) {
+                imageUrl = content.image_url.url || content.image_url;
+            }
+        }
+
+        // Generate SEO alt text for the image
+        const altText = await generateAltText(apiKey, title, keywords);
+
+        // Increment usage
+        const updatedUser = await incrementUsage(limitCheck.user);
+
+        res.json({
+            cover: {
+                url: imageUrl,
+                base64: imageBase64,
+                alt: altText,
+                prompt: imagePrompt
+            },
+            user: updatedUser
+        });
+    } catch (error) {
+        console.error('Cover generation error:', error);
+        res.status(500).json({ error: error.message || 'Cover generation failed' });
+    }
+});
+
+/**
+ * Generate SEO-optimized alt text for an image
+ */
+async function generateAltText(apiKey, title, keywords) {
+    try {
+        const keywordStr = keywords.slice(0, 5).join(', ');
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: getHeaders(apiKey, DEFAULT_SITE_NAME),
+            body: JSON.stringify({
+                model: "google/gemini-2.0-flash-001",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are an SEO specialist. Generate alt text for images that is descriptive, keyword-rich, and accessible."
+                    },
+                    {
+                        role: "user",
+                        content: `Generate a concise, SEO-optimized alt text (max 125 characters) for a cover image of an article titled: "${title}".
+Include these keywords naturally if possible: ${keywordStr}.
+The alt text should describe what might be visualized in a professional article cover image about this topic.
+Return ONLY the alt text, no quotes or explanation.`
+                    }
+                ],
+                temperature: 0.3
+            })
+        });
+
+        if (!response.ok) {
+            return `${title} - обложка статьи`;
+        }
+
+        const data = await response.json();
+        const altText = data.choices?.[0]?.message?.content?.trim() || `${title} - обложка статьи`;
+
+        // Ensure alt text is not too long
+        return altText.substring(0, 125);
+    } catch (e) {
+        console.error('Alt text generation failed:', e);
+        return `${title} - обложка статьи`;
+    }
+}
+
+/**
+ * POST /api/generate/infographic
+ * Generate Mermaid diagram code for infographics
+ */
+router.post('/infographic', validate(generateInfographicSchema), async (req, res) => {
+    try {
+        const telegramId = req.telegramUser.id;
+
+        const limitCheck = await checkUserLimits(telegramId);
+        if (!limitCheck.allowed) {
+            return res.status(403).json({ error: `Limit exceeded: ${limitCheck.reason}` });
+        }
+
+        if (!limitCheck.plan?.canGenerateInfographic && limitCheck.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Infographic generation not available for your plan' });
+        }
+
+        const { topic, content, diagramType } = req.body;
+
+        const apiKey = await getApiKey();
+
+        // Diagram type instructions
+        const diagramInstructions = {
+            flowchart: `Create a flowchart diagram using Mermaid syntax.
+Example format:
+flowchart TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Action 1]
+    B -->|No| D[Action 2]
+    C --> E[End]
+    D --> E`,
+            sequence: `Create a sequence diagram using Mermaid syntax.
+Example format:
+sequenceDiagram
+    participant A as User
+    participant B as System
+    A->>B: Request
+    B-->>A: Response`,
+            mindmap: `Create a mindmap diagram using Mermaid syntax.
+Example format:
+mindmap
+    root((Main Topic))
+        Branch 1
+            Sub-topic 1.1
+            Sub-topic 1.2
+        Branch 2
+            Sub-topic 2.1`,
+            timeline: `Create a timeline diagram using Mermaid syntax.
+Example format:
+timeline
+    title Timeline Title
+    2020 : Event 1
+    2021 : Event 2
+    2022 : Event 3`,
+            pie: `Create a pie chart using Mermaid syntax.
+Example format:
+pie showData
+    title Distribution
+    "Category A" : 40
+    "Category B" : 30
+    "Category C" : 30`,
+            comparison: `Create a comparison flowchart using Mermaid syntax.
+Example format:
+flowchart LR
+    subgraph Option_A[Option A]
+        A1[Feature 1]
+        A2[Feature 2]
+    end
+    subgraph Option_B[Option B]
+        B1[Feature 1]
+        B2[Feature 2]
+    end`
+        };
+
+        const diagramInstruction = diagramInstructions[diagramType] || diagramInstructions.flowchart;
+
+        const prompt = `You are an expert at creating clear, informative diagrams using Mermaid.js syntax.
+
+Topic: "${topic}"
+
+${content ? `Context/Content to visualize:\n${content.substring(0, 5000)}\n` : ''}
+
+${diagramInstruction}
+
+Create a Mermaid diagram that clearly visualizes the key concepts, process, or structure related to the topic.
+
+Rules:
+1. Use clear, concise labels (max 30 chars per node)
+2. Keep the diagram readable (max 15 nodes for flowcharts)
+3. Use meaningful connections and groupings
+4. The diagram must be valid Mermaid syntax
+5. Labels should be in the same language as the topic
+
+Return a JSON object:
+{
+    "mermaidCode": "the complete mermaid diagram code",
+    "title": "short descriptive title for the diagram",
+    "description": "one sentence explaining what the diagram shows"
+}`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: getHeaders(apiKey, DEFAULT_SITE_NAME),
+            body: JSON.stringify({
+                model: "google/gemini-2.0-flash-001",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a diagram expert. Output strictly valid JSON with Mermaid code."
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                temperature: 0.3
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(`Infographic generation failed: ${errData.error?.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+        const rawContent = data.choices?.[0]?.message?.content;
+
+        if (!rawContent) {
+            throw new Error("No content received from AI");
+        }
+
+        // Parse the response
+        const parsed = safeParseAIResponse(rawContent, { topic });
+
+        // Extract mermaid code
+        let mermaidCode = parsed.mermaidCode || parsed.content || '';
+        let title = parsed.title || `${diagramType}: ${topic}`;
+        let description = parsed.description || '';
+
+        // If parsing failed, try to extract mermaid code directly
+        if (!mermaidCode && typeof rawContent === 'string') {
+            // Look for mermaid code block
+            const mermaidMatch = rawContent.match(/```mermaid\n?([\s\S]*?)```/);
+            if (mermaidMatch) {
+                mermaidCode = mermaidMatch[1].trim();
+            } else {
+                // Try to find diagram syntax directly
+                const diagramMatch = rawContent.match(/(flowchart|sequenceDiagram|mindmap|timeline|pie)[\s\S]*?(?=\n\n|$)/);
+                if (diagramMatch) {
+                    mermaidCode = diagramMatch[0].trim();
+                }
+            }
+        }
+
+        // Don't increment usage for infographics (it's a lightweight operation)
+
+        res.json({
+            infographic: {
+                mermaidCode,
+                title,
+                description
+            }
+        });
+    } catch (error) {
+        console.error('Infographic generation error:', error);
+        res.status(500).json({ error: error.message || 'Infographic generation failed' });
     }
 });
 

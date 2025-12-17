@@ -6,7 +6,11 @@
       "Bash(git push:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Add GEO (Generative Engine Optimization) mode\n\nAdd new generation mode for AI search engines (ChatGPT, Perplexity, Google SGE):\n- New GenerationMode type (''seo'' | ''geo'') in types.ts\n- GEO-specific prompt template with structured output rules\n- UI toggle in SettingsForm with visual mode selection\n- Conditional prompt/system message based on selected mode\n\nGEO mode generates content with:\n- Dictionary-style definitions for AI snippets\n- Markdown tables for comparisons\n- FAQ and Key Takeaways sections\n- Data-driven language instead of marketing fluff\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

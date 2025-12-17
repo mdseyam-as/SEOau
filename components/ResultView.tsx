@@ -7,6 +7,8 @@ import { SeoResult, AIModel } from '../types';
 import { Copy, Check, FileText, Globe, AlertOctagon, Sparkles, RefreshCw, ChevronDown, AlertCircle, Code } from 'lucide-react';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { SubscriptionPlan, authService } from '../services/authService';
+import { CoverGenerator } from './CoverGenerator';
+import { InfographicGenerator } from './InfographicGenerator';
 
 // Utility to sanitize content for safe rendering
 // Extracts JSON-LD scripts and removes them from visible content
@@ -39,9 +41,12 @@ interface ResultViewProps {
   userPlan?: SubscriptionPlan | null;
   onOptimizeRelevance?: (missingKeywords: string[]) => void;
   isOptimizingRelevance?: boolean;
+  onUserUpdate?: (user: any) => void;
+  topic?: string;
+  keywords?: string[];
 }
 
-export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFixingSpam, userPlan, onOptimizeRelevance, isOptimizingRelevance }) => {
+export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFixingSpam, userPlan, onOptimizeRelevance, isOptimizingRelevance, onUserUpdate, topic = '', keywords = [] }) => {
   const [copied, setCopied] = useState(false);
   const [copiedJsonLd, setCopiedJsonLd] = useState(false);
   const [selectedFixModel, setSelectedFixModel] = useState<string>(
@@ -276,6 +281,25 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFix
           </div>
         </div>
       )}
+
+      {/* AI Image & Infographic Generators */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+        {/* Cover Image Generator */}
+        <CoverGenerator
+          title={result.metaTitle || topic}
+          topic={topic}
+          keywords={keywords}
+          userPlan={userPlan}
+          onUserUpdate={onUserUpdate}
+        />
+
+        {/* Infographic Generator (Mermaid) */}
+        <InfographicGenerator
+          topic={topic || result.metaTitle}
+          content={cleanContent}
+          userPlan={userPlan}
+        />
+      </div>
     </div>
   );
 };

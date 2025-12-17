@@ -501,6 +501,9 @@ export default function App() {
                     userPlan={userPlan}
                     onOptimizeRelevance={userPlan?.canOptimizeRelevance ? handleOptimizeRelevance : undefined}
                     isOptimizingRelevance={isOptimizingRelevance}
+                    onUserUpdate={setUser}
+                    topic={config.topic}
+                    keywords={keywords.map(k => k.keyword)}
                   />
                 </div>
               )}

@@ -196,6 +196,31 @@ class ApiService {
             body: JSON.stringify({ content, missingKeywords, config })
         });
     }
+
+    // Cover Generation
+    async generateCover(
+        title: string,
+        topic: string,
+        keywords: string[],
+        style: 'modern' | 'minimalist' | 'corporate' | 'creative' | 'tech' = 'modern'
+    ): Promise<{ cover: { url: string | null; base64: string | null; alt: string; prompt: string }; user: User }> {
+        return this.request('/generate/cover', {
+            method: 'POST',
+            body: JSON.stringify({ title, topic, keywords, style })
+        });
+    }
+
+    // Infographic Generation
+    async generateInfographic(
+        topic: string,
+        content: string = '',
+        diagramType: 'flowchart' | 'sequence' | 'mindmap' | 'timeline' | 'pie' | 'comparison' = 'flowchart'
+    ): Promise<{ infographic: { mermaidCode: string; title: string; description: string } }> {
+        return this.request('/generate/infographic', {
+            method: 'POST',
+            body: JSON.stringify({ topic, content, diagramType })
+        });
+    }
 }
 
 export const apiService = new ApiService();
