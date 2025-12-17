@@ -883,118 +883,113 @@ ${content}
 });
 
 /**
- * Helper: Call Gemini API with retry logic for rate limits
- * @param {string} googleApiKey - Google AI API key
- * @param {string} imagePrompt - Prompt for image generation
- * @param {number} maxRetries - Maximum number of retries (default: 3)
- * @returns {Promise<{imageBase64: string|null, error: string|null}>}
+ * Image generation models fallback chain (in priority order)
+ * Uses OpenRouter API for image generation with multiple model fallbacks
  */
-async function callGeminiWithRetry(googleApiKey, imagePrompt, maxRetries = 3) {
+const IMAGE_GENERATION_MODELS = [
+    'black-forest-labs/flux-1-schnell',           // Best price/quality
+    'stabilityai/stable-diffusion-xl-base-1.0',   // Classic, usually available
+    'google/imagen-3-fast',                        // Google Imagen (if available)
+    'stabilityai/stable-diffusion-3-medium',       // Fallback option
+];
+
+/**
+ * Helper: Generate image using OpenRouter with fallback chain
+ * Tries multiple models until one succeeds
+ * @param {string} apiKey - OpenRouter API key
+ * @param {string} prompt - Image generation prompt
+ * @returns {Promise<{imageUrl: string|null, model: string|null, error: string|null}>}
+ */
+async function generateImageWithFallback(apiKey, prompt) {
     let lastError = null;
-    let imageBase64 = null;
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    for (const model of IMAGE_GENERATION_MODELS) {
         try {
-            console.log(`>>> Gemini attempt ${attempt}/${maxRetries}...`);
+            console.log(`🎨 Trying image generation with model: ${model}...`);
 
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${googleApiKey}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{ text: imagePrompt }]
-                        }],
-                        generationConfig: {
-                            responseModalities: ["TEXT", "IMAGE"]
-                        }
-                    })
-                }
-            );
+            const response = await fetch('https://openrouter.ai/api/v1/images/generations', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                    'HTTP-Referer': DEFAULT_SITE_URL,
+                    'X-Title': DEFAULT_SITE_NAME
+                },
+                body: JSON.stringify({
+                    model: model,
+                    prompt: prompt,
+                    n: 1,
+                    size: '1024x1024'
+                })
+            });
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('>>> Google AI response received');
-
-                // Extract image from response
-                const candidates = data.candidates || [];
-                for (const candidate of candidates) {
-                    const parts = candidate.content?.parts || [];
-                    for (const part of parts) {
-                        if (part.inlineData?.mimeType?.startsWith('image/')) {
-                            imageBase64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-                            console.log('>>> Image generated successfully with Gemini');
-                            return { imageBase64, error: null };
-                        }
+                
+                // Check for image URL in response
+                if (data.data && data.data.length > 0) {
+                    const imageData = data.data[0];
+                    
+                    // OpenRouter can return url or b64_json
+                    if (imageData.url) {
+                        console.log(`✅ Image generated successfully with ${model}`);
+                        return { imageUrl: imageData.url, model, error: null };
+                    } else if (imageData.b64_json) {
+                        const imageUrl = `data:image/png;base64,${imageData.b64_json}`;
+                        console.log(`✅ Image generated successfully with ${model} (base64)`);
+                        return { imageUrl, model, error: null };
                     }
                 }
-
-                // No image in response
-                lastError = 'Gemini не вернул изображение. Попробуйте ещё раз.';
-                console.warn('>>> Gemini response did not contain image:', JSON.stringify(data).substring(0, 500));
-                // Don't retry for this case - it's not a rate limit
-                break;
+                
+                console.warn(`⚠️ ${model} returned empty response, trying next...`);
+                lastError = `${model}: пустой ответ`;
+                continue;
             } else {
                 const errData = await response.json().catch(() => ({}));
-                const errorMessage = errData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
-                console.warn(`>>> Google AI error (attempt ${attempt}):`, errorMessage);
-
-                // Check if it's a rate limit error (429 or quota exceeded)
-                const isRateLimit = response.status === 429 || 
-                    errorMessage.toLowerCase().includes('quota') ||
-                    errorMessage.toLowerCase().includes('rate') ||
-                    errorMessage.toLowerCase().includes('resource_exhausted');
-
-                if (isRateLimit && attempt < maxRetries) {
-                    // Try to extract retry delay from error message
-                    // Example: "Please retry in 12.562397264s"
-                    const retryMatch = errorMessage.match(/retry\s+in\s+([\d.]+)s/i);
-                    let waitTime = retryMatch ? Math.ceil(parseFloat(retryMatch[1]) * 1000) : (attempt * 5000);
-                    
-                    // Cap wait time at 30 seconds
-                    waitTime = Math.min(waitTime, 30000);
-                    
-                    console.log(`>>> Rate limited. Waiting ${waitTime}ms before retry...`);
-                    await new Promise(resolve => setTimeout(resolve, waitTime));
-                    continue;
+                const errorMsg = errData.error?.message || `HTTP ${response.status}`;
+                console.warn(`❌ Failed with ${model}: ${errorMsg}`);
+                lastError = `${model}: ${errorMsg}`;
+                
+                // If rate limited, wait a bit before trying next model
+                if (response.status === 429) {
+                    await new Promise(resolve => setTimeout(resolve, 2000));
                 }
-
-                // Format user-friendly error message
-                if (isRateLimit) {
-                    const retryMatch = errorMessage.match(/retry\s+in\s+([\d.]+)s/i);
-                    if (retryMatch) {
-                        const seconds = Math.ceil(parseFloat(retryMatch[1]));
-                        lastError = `Превышен лимит запросов. Попробуйте через ${seconds} сек.`;
-                    } else {
-                        lastError = 'Превышен лимит запросов Google AI. Попробуйте позже.';
-                    }
-                } else {
-                    lastError = errorMessage;
-                }
-                break;
-            }
-        } catch (googleError) {
-            lastError = googleError.message;
-            console.warn(`>>> Google AI exception (attempt ${attempt}):`, googleError.message);
-            
-            // Retry on network errors
-            if (attempt < maxRetries) {
-                const waitTime = attempt * 2000;
-                console.log(`>>> Network error. Waiting ${waitTime}ms before retry...`);
-                await new Promise(resolve => setTimeout(resolve, waitTime));
                 continue;
             }
+        } catch (err) {
+            console.warn(`❌ Exception with ${model}: ${err.message}`);
+            lastError = `${model}: ${err.message}`;
+            continue;
         }
     }
 
-    return { imageBase64: null, error: lastError };
+    // All models failed, try Pollinations.ai as last resort (free, no API key)
+    try {
+        console.log('🎨 Trying Pollinations.ai as last resort...');
+        const encodedPrompt = encodeURIComponent(prompt);
+        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true`;
+        
+        // Verify the URL works by making a HEAD request
+        const checkResponse = await fetch(pollinationsUrl, { method: 'HEAD' });
+        if (checkResponse.ok) {
+            console.log('✅ Pollinations.ai URL generated');
+            return { imageUrl: pollinationsUrl, model: 'pollinations-ai', error: null };
+        }
+    } catch (pollErr) {
+        console.warn('❌ Pollinations.ai failed:', pollErr.message);
+    }
+
+    return { 
+        imageUrl: null, 
+        model: null, 
+        error: `Все модели недоступны. Последняя ошибка: ${lastError}` 
+    };
 }
 
 /**
  * POST /api/generate/cover
- * Generate cover image using Google AI Studio (Gemini 2.0 Flash with image generation)
- * Requires Google AI API key to be configured in admin settings
+ * Generate cover image using OpenRouter with fallback chain of models
+ * Models tried in order: FLUX, SDXL, Imagen-3, SD3, Pollinations.ai
  */
 router.post('/cover', validate(generateCoverSchema), async (req, res) => {
     try {
@@ -1011,39 +1006,7 @@ router.post('/cover', validate(generateCoverSchema), async (req, res) => {
 
         const { title, topic, keywords, style } = req.body;
 
-        const settings = await Settings.findOne();
         const openRouterKey = await getApiKey();
-
-        // Check if Google AI API key is configured
-        const googleApiKey = settings?.googleAiApiKey;
-        if (!googleApiKey) {
-            // Generate SEO alt text anyway
-            const altText = await generateAltText(openRouterKey, title, keywords || []);
-            
-            const styleDescriptions = {
-                modern: 'modern clean design with gradient backgrounds, bold geometric shapes',
-                minimalist: 'minimalist design with white space, simple geometric shapes',
-                corporate: 'professional corporate style with blue and gray tones',
-                creative: 'creative artistic style with vibrant colors',
-                tech: 'futuristic tech style with dark background, neon accents'
-            };
-            const styleDesc = styleDescriptions[style] || styleDescriptions.modern;
-
-            return res.json({
-                cover: {
-                    imageUrl: null,
-                    model: null,
-                    alt: altText,
-                    style,
-                    prompt: `Professional blog cover image about "${title}". ${styleDesc}. High quality, 16:9 aspect ratio, no text on image.`,
-                    prompts: {
-                        dallePrompt: `Professional blog cover image about "${title}". ${styleDesc}. High quality, 16:9 aspect ratio, no text on image.`,
-                        midjourneyPrompt: `Professional blog cover, ${title}, ${styleDesc}, high quality, photorealistic --ar 16:9 --v 6 --style raw`,
-                    },
-                    error: 'Google AI API ключ не настроен. Настройте его в админ-панели для генерации изображений.'
-                }
-            });
-        }
 
         // Style descriptions for image generation
         const styleDescriptions = {
@@ -1057,18 +1020,18 @@ router.post('/cover', validate(generateCoverSchema), async (req, res) => {
         const styleDesc = styleDescriptions[style] || styleDescriptions.modern;
         const keywordList = keywords && keywords.length > 0 ? keywords.slice(0, 3).join(', ') : '';
 
-        // Build optimized prompt for Gemini image generation
-        const imagePrompt = `Create a professional blog article cover image about "${title}". ${keywordList ? `Related to: ${keywordList}.` : ''} Style: ${styleDesc}. Requirements: high quality, 16:9 aspect ratio, NO TEXT or words on the image, suitable for web article header, visually appealing.`;
+        // Build optimized prompt for image generation
+        const imagePrompt = `Professional blog article cover image about "${title}". ${keywordList ? `Related to: ${keywordList}.` : ''} Style: ${styleDesc}. High quality, suitable for web article header, visually appealing, no text or words on the image.`;
 
-        console.log('>>> COVER GENERATION (Gemini):', { title, style });
+        console.log('>>> COVER GENERATION:', { title, style });
 
-        // Call Gemini with retry logic
-        const { imageBase64, error: geminiError } = await callGeminiWithRetry(googleApiKey, imagePrompt, 3);
+        // Generate image using fallback chain
+        const { imageUrl, model, error: genError } = await generateImageWithFallback(openRouterKey, imagePrompt);
 
         // Generate SEO alt text
         const altText = await generateAltText(openRouterKey, title, keywords || []);
 
-        // Prepare fallback prompts for manual use
+        // Prepare fallback prompts for manual use (DALL-E, Midjourney)
         const prompts = {
             dallePrompt: `Professional blog cover image about "${title}". ${styleDesc}. High quality, 16:9 aspect ratio, no text on image.`,
             midjourneyPrompt: `Professional blog cover, ${title}, ${styleDesc}, high quality, photorealistic --ar 16:9 --v 6 --style raw`,
@@ -1076,13 +1039,13 @@ router.post('/cover', validate(generateCoverSchema), async (req, res) => {
 
         return res.json({
             cover: {
-                imageUrl: imageBase64,
-                model: imageBase64 ? 'gemini-2.0-flash-exp' : null,
+                imageUrl,
+                model,
                 alt: altText,
                 style,
                 prompt: imagePrompt,
                 prompts,
-                error: imageBase64 ? null : geminiError
+                error: imageUrl ? null : genError
             }
         });
     } catch (error) {
