@@ -224,15 +224,17 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
                       {coverResult.model || 'Pollinations AI'}
                     </span>
                     <div className="flex gap-2">
-                      <a
-                        href={coverResult.imageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-bold text-white transition-colors"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        Открыть
-                      </a>
+                      {!coverResult.imageUrl?.startsWith('data:') && (
+                        <a
+                          href={coverResult.imageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-bold text-white transition-colors"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          Открыть
+                        </a>
+                      )}
                       <button
                         onClick={handleDownload}
                         className="flex items-center gap-1 px-3 py-1.5 bg-pink-500 hover:bg-pink-400 rounded-lg text-xs font-bold text-white transition-colors"
@@ -244,9 +246,15 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
                   </div>
                 </div>
               </div>
-              <p className="text-[10px] text-slate-500 text-center">
-                Изображение генерируется через Pollinations.ai (FLUX). Первая загрузка может занять 10-30 секунд.
-              </p>
+              {coverResult.model?.includes('gemini') ? (
+                <p className="text-[10px] text-green-500 text-center">
+                  ✓ Изображение сгенерировано через Google Gemini AI
+                </p>
+              ) : coverResult.model?.includes('pollinations') ? (
+                <p className="text-[10px] text-slate-500 text-center">
+                  Изображение генерируется через Pollinations.ai. Загрузка может занять 10-30 секунд.
+                </p>
+              ) : null}
             </div>
           ) : coverResult.error ? (
             /* Fallback: Show prompts if image generation failed */
