@@ -504,6 +504,7 @@ export default function App() {
                     onUserUpdate={setUser}
                     topic={config.topic}
                     keywords={keywords.map(k => k.keyword)}
+                    isGeoMode={config.generationMode === 'geo'}
                   />
                 </div>
               )}

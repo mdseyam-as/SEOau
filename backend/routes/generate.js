@@ -501,6 +501,29 @@ DO NOT default to FAQPage. Choose the BEST FIT based on topic type:
 
 ---
 
+8. 📊 VISUAL DIAGRAMS (Mermaid.js Strategy):
+Detect if the user's topic involves a **process**, **hierarchy**, **timeline**, or **decision logic**.
+If yes, YOU MUST generate a Mermaid.js diagram code block.
+
+STRICT SYNTAX RULES (To prevent rendering errors):
+1. Use ONLY standard node shapes: \`[]\` (rect), \`()\` (round), \`{}\` (rhombus).
+2. Do NOT use special characters (quotes, parens) INSIDE node labels unless escaped.
+3. Flowchart direction: \`graph TD\` (Top-Down) is preferred for mobile readability.
+4. Use ONLY Latin characters for node IDs (A, B, C, step1, etc.). Labels can be in any language.
+
+Template:
+\`\`\`mermaid
+graph TD
+    Start[Start] --> Action1[Step 1]
+    Action1 --> Decision{Check?}
+    Decision -- Yes --> ResultA[Good Outcome]
+    Decision -- No --> ResultB[Bad Outcome]
+\`\`\`
+
+PLACEMENT: Insert the diagram right after the "Key Takeaways" section or before the "Conclusion".
+
+---
+
 ADDITIONAL CONTEXT FROM TEMPLATE:
 ${prompt}
 

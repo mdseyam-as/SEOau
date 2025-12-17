@@ -94,7 +94,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({ history, onDelete }) =
 
           {expandedId === item.id && (
             <div className="border-t border-white/10 p-4 md:p-6 bg-black/20 animate-in slide-in-from-top-2">
-              <ResultView result={item.result} />
+              <ResultView result={item.result} isGeoMode={item.config.generationMode === 'geo'} />
 
               <div className="mt-8 pt-6 border-t border-white/10">
                 <h5 className="font-bold text-white text-sm mb-4 flex items-center gap-2">

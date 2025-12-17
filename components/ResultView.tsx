@@ -4,14 +4,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { SeoResult, AIModel } from '../types';
-import { Copy, Check, FileText, Globe, AlertOctagon, Sparkles, RefreshCw, ChevronDown, AlertCircle, Code } from 'lucide-react';
+import { Copy, Check, FileText, Globe, AlertOctagon, Sparkles, RefreshCw, ChevronDown, AlertCircle, Code, GitBranch, ExternalLink } from 'lucide-react';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { SubscriptionPlan, authService } from '../services/authService';
 
 // Utility to sanitize content for safe rendering
-// Extracts JSON-LD scripts and removes them from visible content
-function sanitizeContent(content: string): { cleanContent: string; jsonLd: string | null } {
-  if (!content) return { cleanContent: '', jsonLd: null };
+// Extracts JSON-LD scripts and Mermaid diagrams from visible content
+function sanitizeContent(content: string): { cleanContent: string; jsonLd: string | null; mermaidCode: string | null } {
+  if (!content) return { cleanContent: '', jsonLd: null, mermaidCode: null };
 
   // Extract JSON-LD script blocks
   const scriptRegex = /<script\s+type=["']application\/ld\+json["'][\s\S]*?>([\s\S]*?)<\/script>/gi;
@@ -26,10 +26,23 @@ function sanitizeContent(content: string): { cleanContent: string; jsonLd: strin
     }
   }
 
+  // Extract Mermaid code blocks
+  const mermaidRegex = /```mermaid\s*([\s\S]*?)```/gi;
+  let mermaidCode: string | null = null;
+
+  const mermaidMatches = content.match(mermaidRegex);
+  if (mermaidMatches && mermaidMatches.length > 0) {
+    // Extract the Mermaid code from the first match
+    const codeMatch = mermaidMatches[0].match(/```mermaid\s*([\s\S]*?)```/i);
+    if (codeMatch && codeMatch[1]) {
+      mermaidCode = codeMatch[1].trim();
+    }
+  }
+
   // Remove ALL script tags from content (safety measure)
   const cleanContent = content.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '').trim();
 
-  return { cleanContent, jsonLd };
+  return { cleanContent, jsonLd, mermaidCode };
 }
 
 interface ResultViewProps {
@@ -42,11 +55,13 @@ interface ResultViewProps {
   onUserUpdate?: (user: any) => void;
   topic?: string;
   keywords?: string[];
+  isGeoMode?: boolean;
 }
 
-export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFixingSpam, userPlan, onOptimizeRelevance, isOptimizingRelevance, onUserUpdate, topic = '', keywords = [] }) => {
+export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFixingSpam, userPlan, onOptimizeRelevance, isOptimizingRelevance, onUserUpdate, topic = '', keywords = [], isGeoMode = false }) => {
   const [copied, setCopied] = useState(false);
   const [copiedJsonLd, setCopiedJsonLd] = useState(false);
+  const [copiedMermaid, setCopiedMermaid] = useState(false);
   const [selectedFixModel, setSelectedFixModel] = useState<string>(
     userPlan?.allowedModels?.[0] || AIModel.GROK_CODE_FAST
   );
@@ -54,11 +69,28 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFix
   // Need to know model names to display nicely
   const [modelNames, setModelNames] = useState<Record<string, string>>({});
 
-  // Sanitize content: remove script tags, extract JSON-LD
-  const { cleanContent, jsonLd } = useMemo(() => {
-    if (!result?.content) return { cleanContent: '', jsonLd: null };
+  // Sanitize content: remove script tags, extract JSON-LD and Mermaid
+  const { cleanContent, jsonLd, mermaidCode } = useMemo(() => {
+    if (!result?.content) return { cleanContent: '', jsonLd: null, mermaidCode: null };
     return sanitizeContent(result.content);
   }, [result?.content]);
+
+  // Generate Mermaid Live Editor URL
+  const mermaidLiveUrl = useMemo(() => {
+    if (!mermaidCode) return null;
+    try {
+      const state = {
+        code: mermaidCode,
+        mermaid: { theme: 'default' },
+        autoSync: true,
+        updateDiagram: true
+      };
+      const encoded = btoa(JSON.stringify(state));
+      return `https://mermaid.live/edit#base64:${encoded}`;
+    } catch {
+      return 'https://mermaid.live';
+    }
+  }, [mermaidCode]);
 
   useEffect(() => {
     const models = authService.getModels();
@@ -276,6 +308,56 @@ export const ResultView: React.FC<ResultViewProps> = ({ result, onFixSpam, isFix
             <pre className="text-xs sm:text-sm text-purple-300 font-mono overflow-x-auto whitespace-pre-wrap break-words">
               <code>{`<script type="application/ld+json">\n${jsonLd}\n</script>`}</code>
             </pre>
+          </div>
+        </div>
+      )}
+
+      {/* Mermaid Diagram Block (for GEO mode) */}
+      {isGeoMode && mermaidCode && (
+        <div className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
+          <div className="bg-cyan-500/10 px-4 sm:px-6 py-3 sm:py-4 border-b border-cyan-500/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 backdrop-blur-sm">
+            <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white flex items-center gap-1.5 sm:gap-2">
+              <GitBranch className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
+              Mermaid-диаграмма (GEO)
+            </h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`\`\`\`mermaid\n${mermaidCode}\n\`\`\``);
+                  setCopiedMermaid(true);
+                  setTimeout(() => setCopiedMermaid(false), 2000);
+                }}
+                className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-400 hover:text-cyan-400 transition-colors bg-white/5 hover:bg-white/10 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-white/5"
+              >
+                {copiedMermaid ? <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                {copiedMermaid ? 'Скопировано!' : 'Копировать'}
+              </button>
+              {mermaidLiveUrl && (
+                <a
+                  href={mermaidLiveUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-cyan-400 hover:text-cyan-300 transition-colors bg-cyan-500/10 hover:bg-cyan-500/20 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-cyan-500/20"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  Открыть в Mermaid Live
+                </a>
+              )}
+            </div>
+          </div>
+          <div className="p-4 sm:p-6 bg-slate-900/50">
+            <pre className="text-xs sm:text-sm text-cyan-300 font-mono overflow-x-auto whitespace-pre-wrap break-words">
+              <code>{mermaidCode}</code>
+            </pre>
+          </div>
+          <div className="px-4 sm:px-6 py-3 bg-cyan-500/5 border-t border-cyan-500/10">
+            <p className="text-xs text-slate-400">
+              💡 Вставьте этот код в любой Markdown-редактор с поддержкой Mermaid или используйте{' '}
+              <a href="https://mermaid.live" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
+                mermaid.live
+              </a>
+              {' '}для визуализации и экспорта в PNG/SVG.
+            </p>
           </div>
         </div>
       )}
