@@ -594,7 +594,18 @@ Return a valid JSON object:
         const data = await response.json();
         const rawContent = data.choices?.[0]?.message?.content;
 
-        if (!rawContent) throw new Error("No content received from AI");
+        if (!rawContent) {
+            // Log full response for debugging
+            console.error('>>> GENERATION ERROR: No content in response', JSON.stringify({
+                model: config.model,
+                hasChoices: !!data.choices,
+                choicesLength: data.choices?.length,
+                finishReason: data.choices?.[0]?.finish_reason,
+                error: data.error,
+                usage: data.usage
+            }, null, 2));
+            throw new Error(`No content received from AI. Model: ${config.model}, Finish reason: ${data.choices?.[0]?.finish_reason || 'unknown'}`);
+        }
 
         // Используем надёжный парсер с очисткой и fallback
         const parsedResult = safeParseAIResponse(rawContent, {

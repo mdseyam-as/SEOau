@@ -49,7 +49,4 @@ const userSchema = new mongoose.Schema({
     timestamps: true // Adds createdAt and updatedAt
 });
 
-// Index for faster queries
-userSchema.index({ telegramId: 1 });
-
 export default mongoose.model('User', userSchema);
