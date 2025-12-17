@@ -228,79 +228,6 @@ function createFallbackResponse(rawText, fallbackData = {}) {
     };
 }
 
-/**
- * Sanitize Mermaid code to fix common LLM issues
- * - Replaces non-Latin node IDs with Latin equivalents
- * - Preserves text labels inside brackets
- */
-function sanitizeMermaidCode(code) {
-    if (!code || typeof code !== 'string') return code;
-
-    // Split into lines for processing
-    const lines = code.split('\n');
-    const nodeIdMap = new Map();
-    let nodeCounter = 1;
-
-    // Function to get or create a Latin ID for a non-Latin node name
-    const getLatinId = (nonLatinId) => {
-        if (!nodeIdMap.has(nonLatinId)) {
-            nodeIdMap.set(nonLatinId, `N${nodeCounter++}`);
-        }
-        return nodeIdMap.get(nonLatinId);
-    };
-
-    // Check if string contains non-Latin characters (excluding common symbols)
-    const hasNonLatin = (str) => /[^\x00-\x7F]/.test(str);
-
-    const sanitizedLines = lines.map(line => {
-        // Skip diagram type declarations and empty lines
-        if (/^\s*(flowchart|sequenceDiagram|mindmap|timeline|pie|graph|subgraph|end)/.test(line) || !line.trim()) {
-            return line;
-        }
-
-        // Pattern to match node definitions and connections
-        // Matches: NodeID, NodeID[Label], NodeID{Label}, NodeID(Label), etc.
-        // Also matches arrows: -->, --->, -.->, ==>, etc.
-
-        // Replace standalone non-Latin node IDs (not inside brackets)
-        // This regex finds potential node IDs that are not inside [] {} () 
-        let result = line;
-
-        // Find all potential node IDs (words before arrows or brackets)
-        const nodePattern = /(?:^|\s|-->|--\>|==>|-.->|---|\|[^|]*\|)\s*([^\s\[\]\{\}\(\)\-\=\>\<\|]+)(?=\s*(?:\[|\{|\(|-->|--\>|==>|-.->|---|$|\s))/g;
-        
-        let match;
-        const replacements = [];
-        
-        while ((match = nodePattern.exec(line)) !== null) {
-            const potentialId = match[1];
-            if (potentialId && hasNonLatin(potentialId) && potentialId.length > 0) {
-                replacements.push({
-                    original: potentialId,
-                    replacement: getLatinId(potentialId)
-                });
-            }
-        }
-
-        // Apply replacements (from longest to shortest to avoid partial replacements)
-        replacements.sort((a, b) => b.original.length - a.original.length);
-        for (const { original, replacement } of replacements) {
-            // Only replace when it's a standalone ID, not inside brackets
-            const safePattern = new RegExp(`(?<![\\[\\{\\(])${escapeRegex(original)}(?![\\]\\}\\)])`, 'g');
-            result = result.replace(safePattern, replacement);
-        }
-
-        return result;
-    });
-
-    return sanitizedLines.join('\n');
-}
-
-// Helper to escape regex special characters
-function escapeRegex(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 // Helper to get API key from settings
 async function getApiKey() {
     const settings = await Settings.findOne();
@@ -535,7 +462,42 @@ MANDATORY FORMATTING FOR "${topic}":
 2. **MARKDOWN TABLE:** CREATE a comparison table with options/features related to "${topic}".
 3. **STATISTICS:** INSERT specific numbers, percentages, or metrics relevant to "${topic}".
 4. **FAQ SECTION:** Include "## FAQ" with 3-5 questions about "${topic}" (questions and answers in ${contentLanguage}).
-5. **JSON-LD SCHEMA:** End with a valid JSON-LD script block for "${topic}".
+5. **EXPERT QUOTES:** Include 1-2 quotes from industry experts or statistics sources.
+6. **PROS/CONS SECTION:** If applicable, add a "## Плюсы и минусы" / "## Advantages and Disadvantages" section.
+
+---
+
+7. 🧠 INTELLIGENT SCHEMA SELECTION (JSON-LD):
+Analyze the User Topic and Intent, then generate ONE specific Schema markup at the END of the article.
+DO NOT default to FAQPage. Choose the BEST FIT based on topic type:
+
+👉 **Scenario A: "How-To" / Instructions** (e.g., "How to get a loan", "Steps to register", "Как оформить...")
+   - Generate: **"HowTo" Schema**.
+   - Include: "step" array with "name" and "text" matching your article's headers/steps.
+   - Example: {"@type": "HowTo", "name": "...", "step": [{"@type": "HowToStep", "name": "...", "text": "..."}]}
+
+👉 **Scenario B: Commercial / Financial Product** (e.g., "Loan 30000", "Займ на 30 тысяч", "Credit card review")
+   - Generate: **"FinancialProduct"** Schema.
+   - Include: "name", "description", "annualPercentageRate", "amount" (with "currency"), "provider".
+   - Example: {"@type": "FinancialProduct", "name": "Займ 30000", "annualPercentageRate": {"@type": "QuantitativeValue", "value": "0.8", "unitText": "% в день"}}
+
+👉 **Scenario C: Product Review** (e.g., "iPhone 16 Review", "Best laptops 2024")
+   - Generate: **"Product"** with "Review" Schema.
+   - Include: "name", "brand", "offers", "aggregateRating" if ratings mentioned.
+
+👉 **Scenario D: General Info / Questions** (e.g., "What is SEO?", "Что такое...?")
+   - Generate: **"FAQPage" Schema**.
+   - Include 3-5 questions from your FAQ section with answers.
+
+👉 **Scenario E: News / Trends / Events**
+   - Generate: **"NewsArticle"** or **"Article"** Schema.
+   - Include: "headline", "datePublished", "author", "publisher".
+
+⚠️ SCHEMA REQUIREMENTS:
+- The JSON-LD MUST be valid JSON inside <script type="application/ld+json">...</script> tags.
+- Fill schema fields with REAL DATA from the article (use actual rates, prices, steps you mentioned).
+- Always include "@context": "https://schema.org" at the top.
+- Place the schema block at the VERY END of the content.
 
 ---
 

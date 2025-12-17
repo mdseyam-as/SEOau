@@ -104,19 +104,6 @@ export const optimizeRelevanceSchema = z.object({
     }).optional().default({})
 });
 
-export const generateCoverSchema = z.object({
-    title: z.string().min(1, 'Title is required').max(500),
-    topic: z.string().max(1000).optional().default(''),
-    keywords: z.array(z.string().max(200)).optional().default([]), // No limit - will be trimmed in handler
-    style: z.enum(['modern', 'minimalist', 'corporate', 'creative', 'tech']).optional().default('modern')
-});
-
-export const generateInfographicSchema = z.object({
-    topic: z.string().min(1, 'Topic is required').max(1000),
-    content: z.string().max(50000).optional().default(''),
-    diagramType: z.enum(['flowchart', 'sequence', 'mindmap', 'timeline', 'pie', 'comparison']).optional().default('flowchart')
-});
-
 // ==================== Settings Schemas ====================
 
 export const updateSettingsSchema = z.object({
@@ -125,8 +112,7 @@ export const updateSettingsSchema = z.object({
     seoPrompt: z.string().max(50000).optional(),
     geoPrompt: z.string().max(50000).optional(),
     telegramLink: z.string().url().max(500).optional(),
-    spamCheckModel: z.string().max(100).optional(),
-    googleAiApiKey: z.string().max(500).optional() // Google AI Studio API key for image generation
+    spamCheckModel: z.string().max(100).optional()
 });
 
 // ==================== Plan Schemas ====================
@@ -144,8 +130,6 @@ export const createPlanSchema = z.object({
     allowedModels: z.array(z.string().max(100)).min(1),
     canCheckSpam: z.boolean().default(false),
     canOptimizeRelevance: z.boolean().default(false),
-    canGenerateCover: z.boolean().default(false),
-    canGenerateInfographic: z.boolean().default(false),
     features: z.array(z.string().max(200)).optional().default([])
 });
 

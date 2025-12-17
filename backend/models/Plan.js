@@ -42,14 +42,6 @@ const planSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    canGenerateCover: {
-        type: Boolean,
-        default: false
-    },
-    canGenerateInfographic: {
-        type: Boolean,
-        default: false
-    },
     // Pricing for ЮKassa
     priceRub: {
         type: Number,

@@ -34,7 +34,6 @@ export interface User {
 export interface GlobalSettings {
   telegramLink: string;
   openRouterApiKey?: string;
-  googleAiApiKey?: string; // Google AI Studio API key for image generation
   systemPrompt?: string; // Legacy - kept for backward compatibility
   seoPrompt?: string;
   geoPrompt?: string;

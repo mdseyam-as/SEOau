@@ -190,21 +190,6 @@ export interface SubscriptionPlan {
   maxKeywords: number;
   canCheckSpam: boolean;
   canOptimizeRelevance: boolean;
-  canGenerateCover: boolean;
-  canGenerateInfographic: boolean;
   priceRub: number;
   durationDays: number;
-}
-
-export interface CoverImage {
-  url: string;
-  base64?: string;
-  alt: string;
-  prompt: string;
-}
-
-export interface InfographicData {
-  mermaidCode: string;
-  title: string;
-  description: string;
 }
