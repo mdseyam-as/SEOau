@@ -935,84 +935,48 @@ Create an image that would work as a compelling cover for an article about this 
 
         console.log('>>> COVER GENERATION (Gemini):', { title, style });
 
-        let imageBase64 = null;
+        // Use Pollinations.ai for FREE high-quality image generation
+        // Models: flux, flux-realism, flux-anime, flux-3d, turbo
+        const pollinationsModels = ['flux-realism', 'flux', 'turbo'];
+        
+        let imageUrl = null;
         let usedModel = null;
-        let lastError = null;
 
-        // Try Gemini models that support image generation
-        const imageModels = [
-            'google/gemini-2.0-flash-exp:free',  // Free tier with image generation
-            'google/gemini-2.0-flash-thinking-exp:free',
-            'google/gemini-exp-1206:free'
-        ];
-
-        for (const model of imageModels) {
+        for (const model of pollinationsModels) {
             try {
-                console.log(`>>> Trying Gemini model: ${model}`);
-
-                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                    method: "POST",
-                    headers: getHeaders(apiKey, DEFAULT_SITE_NAME),
-                    body: JSON.stringify({
-                        model: model,
-                        messages: [
-                            {
-                                role: "user",
-                                content: imagePrompt
-                            }
-                        ],
-                        // Request image output
-                        modalities: ["text", "image"],
-                        temperature: 0.8
-                    })
-                });
-
-                if (!response.ok) {
-                    const errData = await response.json().catch(() => ({}));
-                    lastError = errData.error?.message || response.statusText;
-                    console.warn(`>>> Model ${model} failed:`, lastError);
-                    continue;
-                }
-
-                const data = await response.json();
-                console.log('>>> Gemini response:', JSON.stringify(data).substring(0, 500));
-
-                // Check for image in response
-                const content = data.choices?.[0]?.message?.content;
+                console.log(`>>> Trying Pollinations model: ${model}`);
                 
-                // Gemini may return image as base64 in content or as separate part
-                if (data.choices?.[0]?.message?.parts) {
-                    for (const part of data.choices[0].message.parts) {
-                        if (part.inline_data?.mime_type?.startsWith('image/')) {
-                            imageBase64 = `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`;
-                            usedModel = model;
-                            break;
-                        }
-                    }
-                }
-
-                // Also check for base64 image in content
-                if (!imageBase64 && content) {
-                    // Look for base64 image data in response
-                    const base64Match = content.match(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/);
-                    if (base64Match) {
-                        imageBase64 = base64Match[0];
-                        usedModel = model;
-                    }
-                }
-
-                if (imageBase64) {
-                    console.log(`>>> Image generated successfully with ${model}`);
+                // Pollinations API - generates image on-demand via URL
+                const encodedPrompt = encodeURIComponent(imagePrompt);
+                const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1792&height=1024&model=${model}&nologo=true&seed=${Date.now()}`;
+                
+                // Verify the URL works with a HEAD request
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
+                
+                const checkResponse = await fetch(pollinationsUrl, { 
+                    method: 'HEAD',
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                
+                if (checkResponse.ok) {
+                    imageUrl = pollinationsUrl;
+                    usedModel = `pollinations/${model}`;
+                    console.log(`>>> Pollinations image ready with model: ${model}`);
                     break;
-                } else {
-                    console.warn(`>>> Model ${model} did not return image`);
-                    lastError = 'Model did not generate an image';
                 }
-
-            } catch (modelError) {
-                lastError = modelError.message;
-                console.warn(`>>> Model ${model} error:`, modelError.message);
+            } catch (pollError) {
+                console.warn(`>>> Pollinations ${model} error:`, pollError.message);
             }
+        }
+
+        // If HEAD request failed, still try to return the URL (it generates on GET)
+        if (!imageUrl) {
+            const encodedPrompt = encodeURIComponent(imagePrompt);
+            imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1792&height=1024&model=flux&nologo=true&seed=${Date.now()}`;
+            usedModel = 'pollinations/flux';
+            console.log('>>> Using Pollinations URL directly (may load on demand)');
         }
 
         // Generate SEO alt text
@@ -1022,27 +986,12 @@ Create an image that would work as a compelling cover for an article about this 
         const prompts = {
             dallePrompt: `Professional blog cover image about "${title}". ${styleDesc}. High quality, 16:9 aspect ratio, no text on image.`,
             midjourneyPrompt: `Professional blog cover, ${title}, ${styleDesc}, high quality, photorealistic --ar 16:9 --v 6 --style raw`,
+            pollinationsUrl: imageUrl
         };
-
-        // If no image was generated, return prompts as fallback
-        if (!imageBase64) {
-            console.warn('>>> Image generation failed, returning prompts as fallback');
-            return res.json({
-                cover: {
-                    imageUrl: null,
-                    model: null,
-                    alt: altText,
-                    style,
-                    prompt: imagePrompt,
-                    prompts,
-                    error: `Image generation unavailable: ${lastError || 'Unknown error'}. Use the prompts below with external AI image generators.`
-                }
-            });
-        }
 
         return res.json({
             cover: {
-                imageUrl: imageBase64,
+                imageUrl,
                 model: usedModel,
                 alt: altText,
                 style,

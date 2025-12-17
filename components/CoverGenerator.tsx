@@ -197,28 +197,56 @@ export const CoverGenerator: React.FC<CoverGeneratorProps> = ({
           {/* Image Preview */}
           {coverResult.imageUrl ? (
             <div className="space-y-3">
-              <div className="relative rounded-xl overflow-hidden border border-white/10 bg-slate-800">
+              <div className="relative rounded-xl overflow-hidden border border-white/10 bg-slate-800 min-h-[200px]">
                 <img
                   src={coverResult.imageUrl}
                   alt={coverResult.alt}
                   className="w-full h-auto"
                   style={{ aspectRatio: '16/9', objectFit: 'cover' }}
+                  loading="eager"
+                  onLoad={(e) => {
+                    // Image loaded successfully
+                    (e.target as HTMLImageElement).style.opacity = '1';
+                  }}
+                  onError={(e) => {
+                    // Show error state
+                    const img = e.target as HTMLImageElement;
+                    img.style.display = 'none';
+                    const parent = img.parentElement;
+                    if (parent) {
+                      parent.innerHTML = '<div class="flex items-center justify-center h-48 text-slate-500 text-sm">Ошибка загрузки изображения</div>';
+                    }
+                  }}
                 />
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-slate-400">
-                      {coverResult.model || 'Gemini AI'}
+                      {coverResult.model || 'Pollinations AI'}
                     </span>
-                    <button
-                      onClick={handleDownload}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-pink-500 hover:bg-pink-400 rounded-lg text-xs font-bold text-white transition-colors"
-                    >
-                      <Download className="w-3 h-3" />
-                      Скачать
-                    </button>
+                    <div className="flex gap-2">
+                      <a
+                        href={coverResult.imageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-bold text-white transition-colors"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Открыть
+                      </a>
+                      <button
+                        onClick={handleDownload}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-pink-500 hover:bg-pink-400 rounded-lg text-xs font-bold text-white transition-colors"
+                      >
+                        <Download className="w-3 h-3" />
+                        Скачать
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
+              <p className="text-[10px] text-slate-500 text-center">
+                Изображение генерируется через Pollinations.ai (FLUX). Первая загрузка может занять 10-30 секунд.
+              </p>
             </div>
           ) : coverResult.error ? (
             /* Fallback: Show prompts if image generation failed */
