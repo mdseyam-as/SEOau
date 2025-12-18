@@ -1,7 +1,6 @@
 import express from 'express';
 import crypto from 'crypto';
-import User from '../models/User.js';
-import Plan from '../models/Plan.js';
+import { prisma } from '../lib/prisma.js';
 import { grantSubscription, notifySubscriptionActivated } from '../utils/subscriptionManager.js';
 
 const router = express.Router();
@@ -55,29 +54,44 @@ router.post('/payment', async (req, res) => {
             return res.status(400).json({ error: 'Missing metadata' });
         }
 
-        const telegramId = parseInt(metadata.telegramId);
+        const telegramId = BigInt(metadata.telegramId);
         const planId = metadata.planId;
 
         // Get plan details
-        const plan = await Plan.findOne({ id: planId });
+        const plan = await prisma.plan.findUnique({
+            where: { slug: planId }
+        });
 
         if (!plan) {
             console.error('Plan not found:', planId);
             return res.status(404).json({ error: 'Plan not found' });
         }
 
+        // Record payment
+        await prisma.payment.create({
+            data: {
+                telegramId,
+                yookassaId: object.id,
+                planSlug: planId,
+                amount: Math.round(parseFloat(object.amount.value) * 100), // Convert to kopeks
+                currency: object.amount.currency,
+                status: 'succeeded',
+                paidAt: new Date()
+            }
+        });
+
         // Grant subscription
         const user = await grantSubscription(telegramId, planId, plan.durationDays);
 
         if (!user) {
-            console.error('Failed to grant subscription for user:', telegramId);
+            console.error('Failed to grant subscription for user:', telegramId.toString());
             return res.status(500).json({ error: 'Failed to grant subscription' });
         }
 
         // Send notification to user
         await notifySubscriptionActivated(telegramId, plan.name, plan.durationDays);
 
-        console.log(`Subscription granted: User ${telegramId}, Plan ${planId}`);
+        console.log(`Subscription granted: User ${telegramId.toString()}, Plan ${planId}`);
 
         res.status(200).json({ received: true });
     } catch (error) {

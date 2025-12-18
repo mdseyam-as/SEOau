@@ -1,8 +1,10 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+
+// Import Prisma client
+import { prisma } from './lib/prisma.js';
 
 // Import middleware
 import { validateTelegramAuth } from './middleware/auth.js';
@@ -118,15 +120,25 @@ app.use((req, res, next) => {
     next();
 });
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/seo-generator')
-    .then(() => {
-        console.log('✅ Connected to MongoDB');
-    })
-    .catch((error) => {
-        console.error('❌ MongoDB connection error:', error);
+// Database connection check
+async function checkDatabase() {
+    try {
+        await prisma.$queryRaw`SELECT 1`;
+        console.log('✅ Connected to PostgreSQL (Supabase)');
+        return true;
+    } catch (error) {
+        console.error('❌ PostgreSQL connection error:', error.message);
+        return false;
+    }
+}
+
+// Initialize database connection
+checkDatabase().then(connected => {
+    if (!connected) {
+        console.error('Failed to connect to database. Exiting...');
         process.exit(1);
-    });
+    }
+});
 
 // Initialize Telegram Bot
 if (process.env.BOT_TOKEN) {
@@ -138,11 +150,19 @@ if (process.env.BOT_TOKEN) {
 }
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', async (req, res) => {
+    let dbStatus = 'disconnected';
+    try {
+        await prisma.$queryRaw`SELECT 1`;
+        dbStatus = 'connected';
+    } catch (e) {
+        dbStatus = 'error';
+    }
+
     res.json({
         status: 'ok',
         timestamp: new Date().toISOString(),
-        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+        database: dbStatus
     });
 });
 
@@ -190,6 +210,12 @@ app.listen(PORT, () => {
 // Graceful shutdown
 process.on('SIGINT', async () => {
     console.log('\n🛑 Shutting down gracefully...');
-    await mongoose.connection.close();
+    await prisma.$disconnect();
+    process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+    console.log('\n🛑 Received SIGTERM, shutting down...');
+    await prisma.$disconnect();
     process.exit(0);
 });

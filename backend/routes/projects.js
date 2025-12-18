@@ -1,10 +1,26 @@
 import express from 'express';
-import Project from '../models/Project.js';
-import History from '../models/History.js';
+import { prisma } from '../lib/prisma.js';
 import { validate, validateParams, validateQuery } from '../middleware/validate.js';
-import { createProjectSchema, mongoIdSchema, paginationSchema } from '../schemas/index.js';
+import { createProjectSchema, paginationSchema } from '../schemas/index.js';
+import { z } from 'zod';
 
 const router = express.Router();
+
+// Schema for UUID param
+const uuidParamSchema = z.object({
+    id: z.string().uuid('Invalid project ID')
+});
+
+/**
+ * Helper: Get user ID from telegram ID
+ */
+async function getUserId(telegramId) {
+    const user = await prisma.user.findUnique({
+        where: { telegramId: BigInt(telegramId) },
+        select: { id: true }
+    });
+    return user?.id;
+}
 
 /**
  * GET /api/projects
@@ -12,24 +28,24 @@ const router = express.Router();
  */
 router.get('/', validateQuery(paginationSchema), async (req, res) => {
     try {
+        const userId = await getUserId(req.telegramUser.id);
+
+        if (!userId) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
         const { page, limit } = req.validatedQuery;
         const skip = (page - 1) * limit;
 
-        const [projectsDocs, total] = await Promise.all([
-            Project.find({ userId: req.telegramUser.id })
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean(),
-            Project.countDocuments({ userId: req.telegramUser.id })
+        const [projects, total] = await Promise.all([
+            prisma.project.findMany({
+                where: { userId },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit
+            }),
+            prisma.project.count({ where: { userId } })
         ]);
-
-        // Transform _id to id since .lean() bypasses toJSON transform
-        const projects = projectsDocs.map(p => ({
-            ...p,
-            id: p._id.toString(),
-            _id: undefined
-        }));
 
         res.json({
             projects,
@@ -52,15 +68,21 @@ router.get('/', validateQuery(paginationSchema), async (req, res) => {
  */
 router.post('/', validate(createProjectSchema), async (req, res) => {
     try {
+        const userId = await getUserId(req.telegramUser.id);
+
+        if (!userId) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
         const { name, description } = req.body;
 
-        const project = new Project({
-            userId: req.telegramUser.id,
-            name,
-            description: description || ''
+        const project = await prisma.project.create({
+            data: {
+                userId,
+                name,
+                description: description || null
+            }
         });
-
-        await project.save();
 
         res.json({ success: true, project });
     } catch (error) {
@@ -71,26 +93,33 @@ router.post('/', validate(createProjectSchema), async (req, res) => {
 
 /**
  * DELETE /api/projects/:id
- * Delete project and its history
+ * Delete project and its history (cascade)
  */
-router.delete('/:id', validateParams(mongoIdSchema), async (req, res) => {
+router.delete('/:id', validateParams(uuidParamSchema), async (req, res) => {
     try {
-        const project = await Project.findById(req.params.id);
+        const userId = await getUserId(req.telegramUser.id);
+
+        if (!userId) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const project = await prisma.project.findUnique({
+            where: { id: req.params.id }
+        });
 
         if (!project) {
             return res.status(404).json({ error: 'Project not found' });
         }
 
         // Check ownership
-        if (project.userId !== req.telegramUser.id) {
+        if (project.userId !== userId) {
             return res.status(403).json({ error: 'Forbidden' });
         }
 
-        // Delete project and associated history (cascade delete)
-        await Promise.all([
-            Project.findByIdAndDelete(req.params.id),
-            History.deleteMany({ projectId: req.params.id })
-        ]);
+        // Delete project (history will be cascade deleted due to onDelete: Cascade)
+        await prisma.project.delete({
+            where: { id: req.params.id }
+        });
 
         res.json({ success: true });
     } catch (error) {

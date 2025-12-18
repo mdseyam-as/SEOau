@@ -1,15 +1,18 @@
 import express from 'express';
-import History from '../models/History.js';
-import Project from '../models/Project.js';
+import { prisma } from '../lib/prisma.js';
 import { validateParams, validateQuery } from '../middleware/validate.js';
-import { mongoIdSchema, historyQuerySchema } from '../schemas/index.js';
 import { z } from 'zod';
 
 const router = express.Router();
 
-// Schema for projectId param
+// Schema for projectId param (UUID)
 const projectIdParamSchema = z.object({
-    projectId: z.string().regex(/^[a-fA-F0-9]{24}$/, 'Invalid project ID')
+    projectId: z.string().uuid('Invalid project ID')
+});
+
+// Schema for history item ID param (UUID)
+const historyIdParamSchema = z.object({
+    id: z.string().uuid('Invalid history ID')
 });
 
 // Schema for history query with pagination
@@ -19,45 +22,64 @@ const historyPaginationSchema = z.object({
 });
 
 /**
+ * Helper: Get user ID from telegram ID
+ */
+async function getUserId(telegramId) {
+    const user = await prisma.user.findUnique({
+        where: { telegramId: BigInt(telegramId) },
+        select: { id: true }
+    });
+    return user?.id;
+}
+
+/**
  * GET /api/history/:projectId
  * Get history for a project with pagination
  */
 router.get('/:projectId', validateParams(projectIdParamSchema), validateQuery(historyPaginationSchema), async (req, res) => {
     try {
         const { projectId } = req.validatedParams || req.params;
+        const userId = await getUserId(req.telegramUser.id);
+
+        if (!userId) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
         // Verify project ownership
-        const project = await Project.findById(projectId);
+        const project = await prisma.project.findUnique({
+            where: { id: projectId }
+        });
 
         if (!project) {
             return res.status(404).json({ error: 'Project not found' });
         }
 
-        if (project.userId !== req.telegramUser.id) {
+        if (project.userId !== userId) {
             return res.status(403).json({ error: 'Forbidden' });
         }
 
         const { page, limit } = req.validatedQuery;
         const skip = (page - 1) * limit;
 
-        const [historyDocs, total] = await Promise.all([
-            History.find({ projectId })
-                .sort({ timestamp: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean(),
-            History.countDocuments({ projectId })
+        const [history, total] = await Promise.all([
+            prisma.history.findMany({
+                where: { projectId },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit
+            }),
+            prisma.history.count({ where: { projectId } })
         ]);
 
-        // Transform _id to id since .lean() bypasses toJSON transform
-        const history = historyDocs.map(h => ({
+        // Transform for backward compatibility
+        const transformedHistory = history.map(h => ({
             ...h,
-            id: h._id.toString(),
-            _id: undefined
+            id: h.id,
+            timestamp: h.createdAt // backward compatibility
         }));
 
         res.json({
-            history,
+            history: transformedHistory,
             pagination: {
                 page,
                 limit,
@@ -83,28 +105,43 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
+        const userId = await getUserId(req.telegramUser.id);
+
+        if (!userId) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
         // Verify project ownership
-        const project = await Project.findById(projectId);
+        const project = await prisma.project.findUnique({
+            where: { id: projectId }
+        });
 
         if (!project) {
             return res.status(404).json({ error: 'Project not found' });
         }
 
-        if (project.userId !== req.telegramUser.id) {
+        if (project.userId !== userId) {
             return res.status(403).json({ error: 'Forbidden' });
         }
 
-        const historyItem = new History({
-            projectId,
-            topic: config.topic || '',
-            targetUrl: config.targetUrl || '',
-            config,
-            result
+        const historyItem = await prisma.history.create({
+            data: {
+                projectId,
+                topic: config.topic || '',
+                targetUrl: config.targetUrl || null,
+                mode: config.generationMode || 'geo',
+                config: config, // JSON field
+                result: result  // JSON field
+            }
         });
 
-        await historyItem.save();
-
-        res.json({ success: true, historyItem });
+        res.json({
+            success: true,
+            historyItem: {
+                ...historyItem,
+                timestamp: historyItem.createdAt
+            }
+        });
     } catch (error) {
         console.error('Add history error:', error);
         res.status(500).json({ error: 'Failed to add history' });
@@ -115,22 +152,31 @@ router.post('/', async (req, res) => {
  * DELETE /api/history/:id
  * Delete history item
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', validateParams(historyIdParamSchema), async (req, res) => {
     try {
-        const historyItem = await History.findById(req.params.id);
+        const userId = await getUserId(req.telegramUser.id);
+
+        if (!userId) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const historyItem = await prisma.history.findUnique({
+            where: { id: req.params.id },
+            include: { project: true }
+        });
 
         if (!historyItem) {
             return res.status(404).json({ error: 'History item not found' });
         }
 
         // Verify ownership via project
-        const project = await Project.findById(historyItem.projectId);
-
-        if (!project || project.userId !== req.telegramUser.id) {
+        if (!historyItem.project || historyItem.project.userId !== userId) {
             return res.status(403).json({ error: 'Forbidden' });
         }
 
-        await History.findByIdAndDelete(req.params.id);
+        await prisma.history.delete({
+            where: { id: req.params.id }
+        });
 
         res.json({ success: true });
     } catch (error) {

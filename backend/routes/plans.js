@@ -1,10 +1,9 @@
 import express from 'express';
-import Plan from '../models/Plan.js';
-import User from '../models/User.js';
+import { prisma } from '../lib/prisma.js';
 import { validateTelegramAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { createPlanSchema, updatePlanSchema } from '../schemas/index.js';
-import { cacheGet, cacheSet, cacheDel, cacheDelPattern, CACHE_KEYS } from '../utils/cache.js';
+import { cacheGet, cacheSet, cacheDel, CACHE_KEYS } from '../utils/cache.js';
 
 const router = express.Router();
 
@@ -18,7 +17,17 @@ router.get('/', async (req, res) => {
         let plans = await cacheGet(CACHE_KEYS.PLANS_ALL);
 
         if (!plans) {
-            plans = await Plan.find().sort({ priceRub: 1 }).lean();
+            plans = await prisma.plan.findMany({
+                where: { isActive: true },
+                orderBy: { priceRub: 'asc' }
+            });
+
+            // Transform for backward compatibility (slug -> id)
+            plans = plans.map(p => ({
+                ...p,
+                id: p.slug // backward compatibility
+            }));
+
             // Cache for 10 minutes
             await cacheSet(CACHE_KEYS.PLANS_ALL, plans);
         }
@@ -32,7 +41,7 @@ router.get('/', async (req, res) => {
 
 /**
  * GET /api/plans/:id
- * Get plan by ID - cached
+ * Get plan by slug - cached
  */
 router.get('/:id', async (req, res) => {
     try {
@@ -42,11 +51,19 @@ router.get('/:id', async (req, res) => {
         let plan = await cacheGet(cacheKey);
 
         if (!plan) {
-            plan = await Plan.findOne({ id: req.params.id }).lean();
+            plan = await prisma.plan.findUnique({
+                where: { slug: req.params.id }
+            });
 
             if (!plan) {
                 return res.status(404).json({ error: 'Plan not found' });
             }
+
+            // Transform for backward compatibility
+            plan = {
+                ...plan,
+                id: plan.slug
+            };
 
             // Cache for 10 minutes
             await cacheSet(cacheKey, plan);
@@ -68,7 +85,9 @@ const checkAdminRole = async (req, res, next) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const user = await User.findOne({ telegramId: req.telegramUser.id });
+        const user = await prisma.user.findUnique({
+            where: { telegramId: BigInt(req.telegramUser.id) }
+        });
 
         if (!user || user.role !== 'admin') {
             return res.status(403).json({ error: 'Access denied. Admin only.' });
@@ -88,14 +107,26 @@ const checkAdminRole = async (req, res, next) => {
  */
 router.post('/', validateTelegramAuth, checkAdminRole, validate(createPlanSchema), async (req, res) => {
     try {
-        const plan = new Plan(req.body);
-        await plan.save();
+        const { id, ...planData } = req.body;
+
+        const plan = await prisma.plan.create({
+            data: {
+                slug: id || planData.slug,
+                ...planData
+            }
+        });
 
         // Invalidate plans cache
         await cacheDel(CACHE_KEYS.PLANS_ALL);
 
-        res.json({ success: true, plan });
+        res.json({
+            success: true,
+            plan: { ...plan, id: plan.slug }
+        });
     } catch (error) {
+        if (error.code === 'P2002') {
+            return res.status(400).json({ error: 'Plan with this ID already exists' });
+        }
         console.error('Create plan error:', error);
         res.status(500).json({ error: 'Failed to create plan' });
     }
@@ -107,15 +138,12 @@ router.post('/', validateTelegramAuth, checkAdminRole, validate(createPlanSchema
  */
 router.put('/:id', validateTelegramAuth, checkAdminRole, validate(updatePlanSchema), async (req, res) => {
     try {
-        const plan = await Plan.findOneAndUpdate(
-            { id: req.params.id },
-            req.body,
-            { new: true, runValidators: true }
-        );
+        const { id, slug, ...updateData } = req.body;
 
-        if (!plan) {
-            return res.status(404).json({ error: 'Plan not found' });
-        }
+        const plan = await prisma.plan.update({
+            where: { slug: req.params.id },
+            data: updateData
+        });
 
         // Invalidate caches
         await Promise.all([
@@ -123,8 +151,14 @@ router.put('/:id', validateTelegramAuth, checkAdminRole, validate(updatePlanSche
             cacheDel(CACHE_KEYS.PLAN(req.params.id))
         ]);
 
-        res.json({ success: true, plan });
+        res.json({
+            success: true,
+            plan: { ...plan, id: plan.slug }
+        });
     } catch (error) {
+        if (error.code === 'P2025') {
+            return res.status(404).json({ error: 'Plan not found' });
+        }
         console.error('Update plan error:', error);
         res.status(500).json({ error: 'Failed to update plan' });
     }
@@ -136,11 +170,9 @@ router.put('/:id', validateTelegramAuth, checkAdminRole, validate(updatePlanSche
  */
 router.delete('/:id', validateTelegramAuth, checkAdminRole, async (req, res) => {
     try {
-        const plan = await Plan.findOneAndDelete({ id: req.params.id });
-
-        if (!plan) {
-            return res.status(404).json({ error: 'Plan not found' });
-        }
+        await prisma.plan.delete({
+            where: { slug: req.params.id }
+        });
 
         // Invalidate caches
         await Promise.all([
@@ -150,6 +182,9 @@ router.delete('/:id', validateTelegramAuth, checkAdminRole, async (req, res) => 
 
         res.json({ success: true });
     } catch (error) {
+        if (error.code === 'P2025') {
+            return res.status(404).json({ error: 'Plan not found' });
+        }
         console.error('Delete plan error:', error);
         res.status(500).json({ error: 'Failed to delete plan' });
     }

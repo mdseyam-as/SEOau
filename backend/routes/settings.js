@@ -1,6 +1,5 @@
 import express from 'express';
-import Settings from '../models/Settings.js';
-import User from '../models/User.js';
+import { prisma } from '../lib/prisma.js';
 import { validateTelegramAuth as auth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { updateSettingsSchema } from '../schemas/index.js';
@@ -16,7 +15,9 @@ const router = express.Router();
 router.get('/', auth, async (req, res) => {
     try {
         // Check if user is admin to return full settings
-        const user = await User.findOne({ telegramId: req.telegramUser.id });
+        const user = await prisma.user.findUnique({
+            where: { telegramId: BigInt(req.telegramUser.id) }
+        });
         const isAdmin = user && user.role === 'admin';
 
         // Try to get from cache first
@@ -24,20 +25,27 @@ router.get('/', auth, async (req, res) => {
 
         if (!settings) {
             // Fetch from DB
-            let dbSettings = await Settings.findById('global');
+            let dbSettings = await prisma.systemSetting.findUnique({
+                where: { id: 'global' }
+            });
 
             if (!dbSettings) {
-                dbSettings = new Settings({ _id: 'global' });
-                await dbSettings.save();
+                // Create default settings
+                dbSettings = await prisma.systemSetting.create({
+                    data: {
+                        id: 'global',
+                        telegramLink: 'https://t.me/bankkz_admin',
+                        spamCheckModel: 'x-ai/grok-2-1212'
+                    }
+                });
             }
 
             settings = {
                 openRouterApiKey: dbSettings.openRouterApiKey || '',
-                systemPrompt: dbSettings.systemPrompt || '', // Legacy
                 seoPrompt: dbSettings.seoPrompt || '',
                 geoPrompt: dbSettings.geoPrompt || '',
                 telegramLink: dbSettings.telegramLink || 'https://t.me/bankkz_admin',
-                spamCheckModel: dbSettings.spamCheckModel || 'x-ai/grok-4.1-fast'
+                spamCheckModel: dbSettings.spamCheckModel || 'x-ai/grok-2-1212'
             };
 
             // Cache settings for 5 minutes
@@ -64,41 +72,43 @@ router.get('/', auth, async (req, res) => {
  */
 router.put('/', auth, validate(updateSettingsSchema), async (req, res) => {
     try {
-        const user = await User.findOne({ telegramId: req.telegramUser.id });
+        const user = await prisma.user.findUnique({
+            where: { telegramId: BigInt(req.telegramUser.id) }
+        });
 
         if (!user || user.role !== 'admin') {
             return res.status(403).json({ error: 'Access denied. Admin only.' });
         }
 
-        const { openRouterApiKey, systemPrompt, seoPrompt, geoPrompt, telegramLink, spamCheckModel } = req.body;
+        const { openRouterApiKey, seoPrompt, geoPrompt, telegramLink, spamCheckModel } = req.body;
 
-        let settings = await Settings.findById('global');
+        // Build update data (only provided fields)
+        const updateData = {};
+        if (openRouterApiKey !== undefined) updateData.openRouterApiKey = openRouterApiKey;
+        if (seoPrompt !== undefined) updateData.seoPrompt = seoPrompt;
+        if (geoPrompt !== undefined) updateData.geoPrompt = geoPrompt;
+        if (telegramLink !== undefined) updateData.telegramLink = telegramLink;
+        if (spamCheckModel !== undefined) updateData.spamCheckModel = spamCheckModel;
 
-        if (!settings) {
-            settings = new Settings({ _id: 'global' });
-        }
-
-        // Update only provided fields
-        if (openRouterApiKey !== undefined) settings.openRouterApiKey = openRouterApiKey;
-        if (systemPrompt !== undefined) settings.systemPrompt = systemPrompt;
-        if (seoPrompt !== undefined) settings.seoPrompt = seoPrompt;
-        if (geoPrompt !== undefined) settings.geoPrompt = geoPrompt;
-        if (telegramLink !== undefined) settings.telegramLink = telegramLink;
-        if (spamCheckModel !== undefined) settings.spamCheckModel = spamCheckModel;
-
-        await settings.save();
+        const settings = await prisma.systemSetting.upsert({
+            where: { id: 'global' },
+            update: updateData,
+            create: {
+                id: 'global',
+                ...updateData
+            }
+        });
 
         // Invalidate cache
         await cacheDel(CACHE_KEYS.SETTINGS);
 
         res.json({
             settings: {
-                openRouterApiKey: settings.openRouterApiKey,
-                systemPrompt: settings.systemPrompt,
-                seoPrompt: settings.seoPrompt,
-                geoPrompt: settings.geoPrompt,
-                telegramLink: settings.telegramLink,
-                spamCheckModel: settings.spamCheckModel
+                openRouterApiKey: settings.openRouterApiKey || '',
+                seoPrompt: settings.seoPrompt || '',
+                geoPrompt: settings.geoPrompt || '',
+                telegramLink: settings.telegramLink || '',
+                spamCheckModel: settings.spamCheckModel || ''
             }
         });
     } catch (error) {

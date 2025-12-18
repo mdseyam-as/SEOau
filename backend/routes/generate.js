@@ -1,7 +1,5 @@
 import express from 'express';
-import User from '../models/User.js';
-import Plan from '../models/Plan.js';
-import Settings from '../models/Settings.js';
+import { prisma } from '../lib/prisma.js';
 import { validate } from '../middleware/validate.js';
 import { generateSchema, spamCheckSchema, fixSpamSchema, optimizeRelevanceSchema } from '../schemas/index.js';
 
@@ -1140,7 +1138,9 @@ function createFallbackResponse(rawText, fallbackData = {}) {
 
 // Helper to get API key from settings
 async function getApiKey() {
-    const settings = await Settings.findOne();
+    const settings = await prisma.systemSetting.findUnique({
+        where: { id: 'global' }
+    });
     const key = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
     if (!key) throw new Error("API ключ не настроен администратором.");
     return key;
@@ -1183,12 +1183,16 @@ function calculateSeoMetrics(content, keywords) {
 
 // Check user limits
 async function checkUserLimits(telegramId) {
-    const user = await User.findOne({ telegramId });
+    const user = await prisma.user.findUnique({
+        where: { telegramId: BigInt(telegramId) }
+    });
     if (!user) return { allowed: false, reason: 'user_not_found' };
 
     if (user.role === 'admin') return { allowed: true, user };
 
-    const plan = await Plan.findOne({ id: user.planId });
+    const plan = await prisma.plan.findUnique({
+        where: { slug: user.planId }
+    });
     if (!plan) return { allowed: false, reason: 'plan_not_found' };
 
     const currentMonth = new Date().toISOString().slice(0, 7);
@@ -1216,22 +1220,33 @@ async function incrementUsage(user) {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const currentDay = new Date().toISOString().slice(0, 10);
 
+    const updateData = {};
+
     if (user.lastGenerationMonth !== currentMonth) {
-        user.generationsUsed = 1;
-        user.lastGenerationMonth = currentMonth;
+        updateData.generationsUsed = 1;
+        updateData.lastGenerationMonth = currentMonth;
     } else {
-        user.generationsUsed = (user.generationsUsed || 0) + 1;
+        updateData.generationsUsed = (user.generationsUsed || 0) + 1;
     }
 
     if (user.lastGenerationDate !== currentDay) {
-        user.generationsUsedToday = 1;
-        user.lastGenerationDate = currentDay;
+        updateData.generationsUsedToday = 1;
+        updateData.lastGenerationDate = currentDay;
     } else {
-        user.generationsUsedToday = (user.generationsUsedToday || 0) + 1;
+        updateData.generationsUsedToday = (user.generationsUsedToday || 0) + 1;
     }
 
-    await user.save();
-    return user;
+    const updatedUser = await prisma.user.update({
+        where: { id: user.id },
+        data: updateData
+    });
+
+    // Convert BigInt for JSON response
+    return {
+        ...updatedUser,
+        telegramId: updatedUser.telegramId.toString(),
+        _id: updatedUser.id
+    };
 }
 
 /**
@@ -1267,7 +1282,9 @@ router.post('/', validate(generateSchema), async (req, res) => {
         }
 
         const apiKey = await getApiKey();
-        const settings = await Settings.findOne();
+        const settings = await prisma.systemSetting.findUnique({
+            where: { id: 'global' }
+        });
 
         // ==================== DEBUG LOG ====================
         const isGeoMode = config.generationMode === 'geo';
@@ -1729,7 +1746,9 @@ router.post('/spam-check', validate(spamCheckSchema), async (req, res) => {
         const { content } = req.body;
 
         const apiKey = await getApiKey();
-        const settings = await Settings.findOne();
+        const settings = await prisma.systemSetting.findUnique({
+            where: { id: 'global' }
+        });
 
         const result = await checkSpam(apiKey, content, settings?.spamCheckModel);
         res.json(result);

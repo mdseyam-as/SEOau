@@ -1,5 +1,5 @@
 import TelegramBot from 'node-telegram-bot-api';
-import User from '../models/User.js';
+import { prisma } from '../lib/prisma.js';
 
 let bot;
 
@@ -36,21 +36,23 @@ export async function grantSubscription(telegramId, planId, days) {
         newExpiry.setDate(newExpiry.getDate() + days);
         newExpiry.setHours(23, 59, 59, 999);
 
-        const user = await User.findOneAndUpdate(
-            { telegramId },
-            {
+        // Ensure telegramId is BigInt
+        const tgId = typeof telegramId === 'bigint' ? telegramId : BigInt(telegramId);
+
+        const user = await prisma.user.update({
+            where: { telegramId: tgId },
+            data: {
                 planId,
                 subscriptionExpiry: newExpiry
-            },
-            { new: true }
-        );
-
-        if (!user) {
-            throw new Error('User not found');
-        }
+            }
+        });
 
         return user;
     } catch (error) {
+        if (error.code === 'P2025') {
+            console.error('User not found:', telegramId.toString());
+            return null;
+        }
         console.error('Error granting subscription:', error);
         throw error;
     }
@@ -61,7 +63,11 @@ export async function grantSubscription(telegramId, planId, days) {
  */
 export async function checkSubscriptionStatus(telegramId) {
     try {
-        const user = await User.findOne({ telegramId });
+        const tgId = typeof telegramId === 'bigint' ? telegramId : BigInt(telegramId);
+
+        const user = await prisma.user.findUnique({
+            where: { telegramId: tgId }
+        });
 
         if (!user) {
             return { active: false, reason: 'user_not_found' };
@@ -101,7 +107,10 @@ export async function notifyUser(telegramId, message) {
             return false;
         }
 
-        await bot.sendMessage(telegramId, message, {
+        // Convert BigInt to number for Telegram API
+        const chatId = typeof telegramId === 'bigint' ? Number(telegramId) : telegramId;
+
+        await bot.sendMessage(chatId, message, {
             parse_mode: 'HTML'
         });
 
