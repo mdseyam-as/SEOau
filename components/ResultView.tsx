@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import mermaid from 'mermaid';
+// MERMAID REMOVED - causes crashes
 import { SeoResult, AIModel, FaqItem } from '../types';
 import {
   Copy, Check, FileText, Globe, AlertOctagon, Sparkles, RefreshCw,
@@ -13,58 +13,16 @@ import { SubscriptionPlan, authService } from '../services/authService';
 import { GeoArticleRenderer } from './GeoArticleRenderer';
 import { ErrorBoundary } from './ErrorBoundary';
 
-// Initialize Mermaid
-mermaid.initialize({
-  startOnLoad: false,
-  theme: 'dark',
-  themeVariables: {
-    primaryColor: '#8b5cf6',
-    primaryTextColor: '#fff',
-    primaryBorderColor: '#6d28d9',
-    lineColor: '#94a3b8',
-    secondaryColor: '#1e293b',
-    tertiaryColor: '#0f172a',
-    background: '#0f172a',
-    mainBkg: '#1e293b',
-    nodeBorder: '#6d28d9',
-    clusterBkg: '#1e293b',
-    titleColor: '#f8fafc',
-    edgeLabelBackground: '#1e293b'
-  },
-  flowchart: {
-    curve: 'basis',
-    padding: 20
-  }
-});
-
-// ==================== MERMAID RENDERER ====================
+// ==================== SAFE MERMAID DISPLAY (TEXT ONLY) ====================
 
 interface MermaidDiagramProps {
   code: string;
 }
 
 const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code }) => {
-  const [svg, setSvg] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    const renderDiagram = async () => {
-      try {
-        const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
-        const { svg } = await mermaid.render(id, code);
-        setSvg(svg);
-        setError(null);
-      } catch (err: any) {
-        console.error('Mermaid render error:', err);
-        setError(err.message || 'Ошибка рендеринга диаграммы');
-      }
-    };
-
-    if (code) {
-      renderDiagram();
-    }
-  }, [code]);
+  if (!code || typeof code !== 'string') return null;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
@@ -72,46 +30,34 @@ const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (error) {
-    return (
-      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-        <div className="flex items-center gap-2 text-red-400 mb-2">
-          <AlertCircle className="w-5 h-5" />
-          <span className="font-bold">Ошибка диаграммы</span>
-        </div>
-        <pre className="text-xs text-red-300 font-mono overflow-x-auto">{error}</pre>
-        <details className="mt-3">
-          <summary className="text-xs text-slate-400 cursor-pointer">Исходный код</summary>
-          <pre className="mt-2 text-xs text-slate-400 font-mono bg-slate-900/50 p-3 rounded-lg overflow-x-auto">{code}</pre>
-        </details>
-      </div>
-    );
-  }
-
   return (
-    <div className="relative group">
-      <div
-        className="bg-slate-900/50 rounded-xl p-4 overflow-x-auto [&>svg]:max-w-full [&>svg]:h-auto"
-        dangerouslySetInnerHTML={{ __html: svg }}
-      />
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-        <button
-          onClick={handleCopy}
-          className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-cyan-400 transition-colors bg-slate-800/80 backdrop-blur px-3 py-1.5 rounded-lg"
-        >
-          {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-          {copied ? 'Скопировано' : 'Код'}
-        </button>
-        <a
-          href={`https://mermaid.live/edit#pako:${btoa(code)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-colors bg-slate-800/80 backdrop-blur px-3 py-1.5 rounded-lg"
-        >
-          <ExternalLink className="w-3.5 h-3.5" />
-          Открыть
-        </a>
+    <div className="bg-slate-900 rounded-xl overflow-hidden">
+      <div className="bg-slate-800 px-4 py-2 flex items-center justify-between">
+        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+          Диаграмма (код)
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-cyan-400 transition-colors"
+          >
+            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? 'Скопировано' : 'Копировать'}
+          </button>
+          <a
+            href={`https://mermaid.live/edit#pako:${btoa(code)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+          >
+            <ExternalLink className="w-3 h-3" />
+            Открыть в редакторе
+          </a>
+        </div>
       </div>
+      <pre className="p-4 text-xs font-mono text-slate-300 overflow-x-auto whitespace-pre-wrap">
+        {code}
+      </pre>
     </div>
   );
 };
