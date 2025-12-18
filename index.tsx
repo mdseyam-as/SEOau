@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import './index.css';
 
 // ==================== FIX FOR RUSSIAN CHARACTERS IN BTOA ====================
 // btoa() doesn't support UTF-8 (Cyrillic) characters natively
