@@ -2,6 +2,27 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
+// ==================== FIX FOR RUSSIAN CHARACTERS IN BTOA ====================
+// btoa() doesn't support UTF-8 (Cyrillic) characters natively
+// This polyfill catches the error and encodes via UTF-8
+
+const originalBtoa = window.btoa.bind(window);
+
+window.btoa = (str: string): string => {
+  try {
+    // Try standard method first
+    return originalBtoa(str);
+  } catch (err) {
+    // If it fails (due to Cyrillic characters), use UTF-8 encoding
+    console.warn('[btoa polyfill] Handling non-Latin characters...');
+    return originalBtoa(
+      encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_match, p1) =>
+        String.fromCharCode(parseInt(p1, 16))
+      )
+    );
+  }
+};
+
 // ==================== GLOBAL ERROR HANDLER (TEMPORARY DEBUG) ====================
 
 // Catch unhandled errors outside React
