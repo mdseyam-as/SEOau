@@ -55,13 +55,7 @@ interface TelegramWebApp {
     sendData(data: string): void;
 }
 
-interface WindowWithTelegram extends Window {
-    Telegram?: {
-        WebApp: TelegramWebApp;
-    };
-}
 
-declare const window: WindowWithTelegram;
 
 export function useTelegram() {
     const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
