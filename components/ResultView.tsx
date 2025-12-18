@@ -262,7 +262,19 @@ export const ResultView: React.FC<ResultViewProps> = ({
   const [modelNames, setModelNames] = useState<Record<string, string>>({});
 
   // Check if we have structured content
-  const isStructured = result._structured && result.article;
+  const isStructured = !!(result._structured && result.article);
+
+  // Debug log for troubleshooting black screen
+  console.log('>>> ResultView render:', {
+    isStructured,
+    _structured: result._structured,
+    hasArticle: !!result.article,
+    articleH1: result.article?.h1?.substring(0, 30),
+    sectionsCount: result.article?.sections?.length,
+    hasVisuals: !!result.visuals,
+    hasFaq: result.faq?.length,
+    hasContent: !!result.content
+  });
 
   // For legacy mode: sanitize content
   const { cleanContent, jsonLd: legacyJsonLd, mermaidCode: legacyMermaid } = useMemo(() => {
@@ -411,13 +423,13 @@ export const ResultView: React.FC<ResultViewProps> = ({
         </h3>
         <div className="space-y-3 sm:space-y-4">
           <div>
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Title Tag ({result.metaTitle.length} симв.)</span>
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Title Tag ({result.metaTitle?.length || 0} симв.)</span>
             <div className="p-3 sm:p-4 bg-white/5 border border-white/10 rounded-xl text-white font-medium mt-1.5 sm:mt-2 text-xs sm:text-sm lg:text-base shadow-inner">
-              {result.metaTitle}
+              {result.metaTitle || 'Без заголовка'}
             </div>
           </div>
           <div>
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Meta Description ({result.metaDescription.length} симв.)</span>
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Meta Description ({result.metaDescription?.length || 0} симв.)</span>
             <div className="p-3 sm:p-4 bg-white/5 border border-white/10 rounded-xl text-slate-300 mt-1.5 sm:mt-2 text-xs sm:text-sm lg:text-base shadow-inner leading-relaxed">
               {result.metaDescription}
             </div>
@@ -432,7 +444,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
           <div className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
             <div className="bg-gradient-to-r from-brand-green/20 to-brand-purple/20 px-4 sm:px-6 py-4 sm:py-5 border-b border-white/10">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white leading-tight">
-                {result.article.h1}
+                {result.article.h1 || 'Без заголовка'}
               </h1>
             </div>
 
@@ -457,7 +469,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
             )}
 
             {/* Sections */}
-            {result.article.sections && result.article.sections.length > 0 && (
+            {result.article.sections && result.article.sections.length > 0 ? (
               <div className="p-4 sm:p-6 lg:p-8 space-y-8">
                 {result.article.sections.map((section, index) => (
                   <div key={index} className="space-y-4">
@@ -465,12 +477,12 @@ export const ResultView: React.FC<ResultViewProps> = ({
                       <span className="w-8 h-8 bg-brand-purple/20 text-brand-purple rounded-lg flex items-center justify-center text-sm font-bold">
                         {index + 1}
                       </span>
-                      {section.h2}
+                      {section?.h2 || `Раздел ${index + 1}`}
                     </h2>
                     <div className="prose prose-invert prose-sm sm:prose-base max-w-none prose-headings:font-bold prose-headings:text-white prose-p:text-slate-300 prose-a:text-brand-green prose-strong:text-white prose-ul:text-slate-300 prose-ol:text-slate-300">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.content}</ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{section?.content || ''}</ReactMarkdown>
                     </div>
-                    {section.table && (
+                    {section?.table && (
                       <div className="overflow-x-auto -mx-4 sm:mx-0">
                         <div className="px-4 sm:px-0 prose prose-invert prose-sm max-w-none prose-table:border-collapse prose-th:bg-white/10 prose-th:border prose-th:border-white/20 prose-th:px-3 prose-th:py-2 prose-td:border prose-td:border-white/10 prose-td:px-3 prose-td:py-2">
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.table}</ReactMarkdown>
@@ -480,6 +492,13 @@ export const ResultView: React.FC<ResultViewProps> = ({
                   </div>
                 ))}
               </div>
+            ) : (
+              /* Fallback: если sections пустой, показываем legacy content */
+              result.content && (
+                <div className="p-4 sm:p-6 lg:p-8 prose prose-invert prose-sm sm:prose-base max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.content}</ReactMarkdown>
+                </div>
+              )
             )}
 
             {/* Mermaid Diagram */}

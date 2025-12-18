@@ -332,14 +332,20 @@ function parseStructuredWriterResponse(rawText, topic) {
             return {
                 article: {
                     h1: parsed.article.h1 || topic,
-                    introduction: parsed.article.introduction || '',
-                    body: cleanBodyFromVisuals(parsed.article.body || ''),
+                    intro: parsed.article.intro || parsed.article.introduction || '',
+                    sections: Array.isArray(parsed.article.sections) ? parsed.article.sections : [],
                     conclusion: parsed.article.conclusion || ''
                 },
+                visuals: {
+                    mermaid: parsed.visuals?.mermaid || null,
+                    svg: parsed.visuals?.svg || null
+                },
+                faq: Array.isArray(parsed.faq) ? parsed.faq : [],
                 seo: {
-                    title: parsed.seo?.title || parsed.article.h1 || topic,
-                    description: parsed.seo?.description || '',
+                    metaTitle: parsed.seo?.metaTitle || parsed.seo?.title || parsed.article.h1 || topic,
+                    metaDescription: parsed.seo?.metaDescription || parsed.seo?.description || '',
                     keywords: Array.isArray(parsed.seo?.keywords) ? parsed.seo.keywords : [],
+                    schemaType: parsed.seo?.schemaType || 'Article',
                     schemaLD: parsed.seo?.schemaLD || null
                 },
                 _parsed: true
@@ -394,21 +400,49 @@ function convertLegacyToStructured(legacy, topic) {
 
     // Извлекаем введение (первый параграф после H1)
     const introMatch = content.match(/^#[^\n]+\n+([^#]+?)(?=\n##|\n$)/m);
-    const introduction = introMatch ? introMatch[1].trim() : '';
+    const intro = introMatch ? introMatch[1].trim() : '';
 
     // Извлекаем заключение (последний параграф или Key Takeaways)
     const conclusionMatch = content.match(/##\s*(?:Заключение|Conclusion|Key Takeaways|Ключевые выводы)[^\n]*\n+([\s\S]+?)(?=\n##|```|<script|$)/i);
     const conclusion = conclusionMatch ? conclusionMatch[1].trim() : '';
 
-    // Body = всё остальное, очищенное от визуалов
-    const body = cleanBodyFromVisuals(content);
+    // Извлекаем секции
+    const sections = [];
+    const sectionRegex = /##\s+([^\n]+)\n+([\s\S]*?)(?=\n##|```mermaid|<script|$)/gi;
+    let match;
+    while ((match = sectionRegex.exec(content)) !== null) {
+        const sectionTitle = match[1].trim();
+        if (sectionTitle.toLowerCase().includes('faq') || 
+            sectionTitle.toLowerCase().includes('заключение') ||
+            sectionTitle.toLowerCase().includes('conclusion')) continue;
+        sections.push({
+            h2: sectionTitle,
+            content: match[2].trim(),
+            table: null
+        });
+    }
+
+    // Извлекаем визуалы
+    const mermaidMatch = content.match(/```mermaid\s*([\s\S]*?)```/i);
+    const svgMatch = content.match(/<svg[\s\S]*?<\/svg>/i);
 
     return {
-        article: { h1, introduction, body, conclusion },
+        article: { 
+            h1, 
+            intro, 
+            sections: sections.length > 0 ? sections : [{ h2: 'Содержание', content: cleanBodyFromVisuals(content), table: null }],
+            conclusion 
+        },
+        visuals: {
+            mermaid: mermaidMatch ? mermaidMatch[1].trim() : null,
+            svg: svgMatch ? svgMatch[0].trim() : null
+        },
+        faq: [],
         seo: {
-            title: legacy.metaTitle || h1,
-            description: legacy.metaDescription || '',
+            metaTitle: legacy.metaTitle || h1.substring(0, 60),
+            metaDescription: legacy.metaDescription || intro.substring(0, 160),
             keywords: legacy.usedKeywords || [],
+            schemaType: 'Article',
             schemaLD: extractSchemaLD(content)
         },
         _converted: true
@@ -440,21 +474,47 @@ function extractStructuredFromRawText(rawText, topic) {
 
     // Извлекаем введение
     const introMatch = rawText.match(/^#[^\n]+\n+([^#]+?)(?=\n##)/m);
-    const introduction = introMatch ? introMatch[1].trim().substring(0, 500) : '';
+    const intro = introMatch ? introMatch[1].trim().substring(0, 500) : '';
 
-    // Body = весь текст, очищенный от визуалов
-    const body = cleanBodyFromVisuals(rawText);
+    // Извлекаем секции
+    const sections = [];
+    const sectionRegex = /##\s+([^\n]+)\n+([\s\S]*?)(?=\n##|```mermaid|<script|$)/gi;
+    let match;
+    while ((match = sectionRegex.exec(rawText)) !== null) {
+        const sectionTitle = match[1].trim();
+        if (sectionTitle.toLowerCase().includes('faq')) continue;
+        sections.push({
+            h2: sectionTitle,
+            content: match[2].trim(),
+            table: null
+        });
+    }
 
     // Извлекаем заключение
     const conclusionMatch = rawText.match(/##\s*(?:Заключение|Conclusion|Итог|Summary)[^\n]*\n+([\s\S]+?)(?=\n##|```|<script|$)/i);
     const conclusion = conclusionMatch ? conclusionMatch[1].trim() : '';
 
+    // Извлекаем визуалы
+    const mermaidMatch = rawText.match(/```mermaid\s*([\s\S]*?)```/i);
+    const svgMatch = rawText.match(/<svg[\s\S]*?<\/svg>/i);
+
     return {
-        article: { h1, introduction, body, conclusion },
+        article: { 
+            h1, 
+            intro, 
+            sections: sections.length > 0 ? sections : [{ h2: 'Содержание', content: cleanBodyFromVisuals(rawText), table: null }],
+            conclusion 
+        },
+        visuals: {
+            mermaid: mermaidMatch ? mermaidMatch[1].trim() : null,
+            svg: svgMatch ? svgMatch[0].trim() : null
+        },
+        faq: [],
         seo: {
-            title: h1.substring(0, 60),
-            description: introduction.substring(0, 160),
+            metaTitle: h1.substring(0, 60),
+            metaDescription: intro.substring(0, 160),
             keywords: [],
+            schemaType: 'Article',
             schemaLD: extractSchemaLD(rawText)
         },
         _fallback: true
@@ -468,14 +528,20 @@ function createEmptyStructuredResponse(topic) {
     return {
         article: {
             h1: topic || 'Untitled',
-            introduction: '',
-            body: '',
+            intro: '',
+            sections: [],
             conclusion: ''
         },
+        visuals: {
+            mermaid: null,
+            svg: null
+        },
+        faq: [],
         seo: {
-            title: topic || 'Untitled',
-            description: '',
+            metaTitle: topic || 'Untitled',
+            metaDescription: '',
             keywords: [],
+            schemaType: 'Article',
             schemaLD: null
         },
         _empty: true
