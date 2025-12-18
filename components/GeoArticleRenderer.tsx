@@ -292,9 +292,11 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
   const hasSections = Array.isArray(sections) && sections.length > 0;
 
   return (
-    <div className="safe-geo-article w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* HEADER */}
+    <div className="safe-geo-article w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      
+      {/* ==================== BLOCK 1: ARTICLE TEXT ==================== */}
       <div className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
+        {/* Header with H1 */}
         <div className="bg-gradient-to-r from-brand-green/20 to-brand-purple/20 px-4 sm:px-6 py-4 sm:py-5 border-b border-white/10">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white leading-tight flex items-start gap-3">
             <span className="inline-flex items-center justify-center px-2 py-0.5 bg-brand-green/30 text-brand-green text-xs font-bold rounded shrink-0 mt-1">
@@ -310,17 +312,6 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
             <div className="prose prose-invert prose-sm sm:prose-base max-w-none prose-p:text-slate-200">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{intro}</ReactMarkdown>
             </div>
-          </div>
-        )}
-
-        {/* SVG (SAFE) */}
-        {visuals?.svg && (
-          <div className="p-4 sm:p-6 border-b border-white/5">
-            <div className="flex items-center gap-2 mb-4">
-              <Image className="w-5 h-5 text-brand-green" />
-              <span className="font-bold text-white">Инфографика</span>
-            </div>
-            <SafeSvgRenderer svg={visuals.svg} />
           </div>
         )}
 
@@ -376,13 +367,6 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
           )}
         </div>
 
-        {/* MERMAID (TEXT ONLY - NO CRASH) */}
-        {visuals?.mermaid && (
-          <div className="p-4 sm:p-6 border-t border-white/5">
-            <SafeMermaidDisplay code={visuals.mermaid} />
-          </div>
-        )}
-
         {/* Conclusion */}
         {conclusion && (
           <div className="p-4 sm:p-6 bg-white/5 border-t border-white/10">
@@ -400,7 +384,29 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
         )}
       </div>
 
-      {/* FAQ */}
+      {/* ==================== BLOCK 2: SVG INFOGRAPHIC ==================== */}
+      {visuals?.svg && (
+        <div className="glass-panel p-4 sm:p-6 rounded-xl sm:rounded-2xl">
+          <div className="flex items-center gap-2 mb-4">
+            <Image className="w-5 h-5 text-brand-green" />
+            <span className="font-bold text-white text-lg">📊 Инфографика</span>
+          </div>
+          <SafeSvgRenderer svg={visuals.svg} />
+        </div>
+      )}
+
+      {/* ==================== BLOCK 3: MERMAID DIAGRAM ==================== */}
+      {visuals?.mermaid && (
+        <div className="glass-panel p-4 sm:p-6 rounded-xl sm:rounded-2xl">
+          <div className="flex items-center gap-2 mb-4">
+            <Code className="w-5 h-5 text-cyan-400" />
+            <span className="font-bold text-white text-lg">🔀 Диаграмма процесса</span>
+          </div>
+          <SafeMermaidDisplay code={visuals.mermaid} />
+        </div>
+      )}
+
+      {/* ==================== BLOCK 4: FAQ ==================== */}
       {faq && Array.isArray(faq) && faq.length > 0 && (
         <div className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl">
           <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-4 text-white flex items-center gap-2">
