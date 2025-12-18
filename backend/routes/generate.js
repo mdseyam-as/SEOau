@@ -191,7 +191,8 @@ const EXPECTED_GEO_STRUCTURE = {
         metaTitle: "String (max 60 символов)",
         metaDescription: "String (max 160 символов)",
         keywords: ["String"],
-        schemaType: "String (например: FAQPage, HowTo, FinancialProduct, Article)"
+        schemaType: "String (FAQPage, HowTo, FinancialProduct, Article, etc.)",
+        schemaLD: "Object (JSON-LD structured data for Schema.org)"
     }
 };
 
@@ -218,7 +219,8 @@ ${schemaString}
    - "visuals.mermaid": Create a valid Mermaid.js flowchart (flowchart TD, NOT graph TD). Use Latin node IDs (A, B, C), labels in ${language}
    - "visuals.svg": Create a simple, valid SVG infographic (viewBox, no fixed dimensions, standard colors)
    - "faq": Generate 4-5 relevant Q&A pairs about "${topic}"
-   - "seo.schemaType": Choose the most appropriate Schema.org type for the topic
+   - "seo.schemaType": Choose the most appropriate Schema.org type (FAQPage, HowTo, Article, FinancialProduct, etc.)
+   - "seo.schemaLD": Generate valid JSON-LD structured data object for Schema.org (NOT as string, as actual JSON object)
 
 5. MERMAID SYNTAX (CRITICAL):
    - Start with: flowchart TD
@@ -244,7 +246,8 @@ Remember:
 - Include mermaid flowchart (raw code, no backticks)
 - Include SVG infographic (raw code)
 - Generate 4-5 FAQ items
-- Choose appropriate schemaType for SEO`;
+- Choose appropriate schemaType for SEO
+- Generate seo.schemaLD as JSON-LD object (Schema.org structured data)`;
 }
 
 // ==================== VISUALIZER PROMPT (Claude) - STRICT JSON ====================
@@ -671,7 +674,8 @@ function validateGeoStructure(parsed, topic) {
             metaTitle: parsed.seo?.metaTitle || parsed.seo?.title || topic,
             metaDescription: parsed.seo?.metaDescription || parsed.seo?.description || '',
             keywords: Array.isArray(parsed.seo?.keywords) ? parsed.seo.keywords : [],
-            schemaType: parsed.seo?.schemaType || 'Article'
+            schemaType: parsed.seo?.schemaType || 'Article',
+            schemaLD: parsed.seo?.schemaLD || null
         },
         // CRITICAL: Mark as successfully parsed to prevent fallback warning
         _parsed: true
