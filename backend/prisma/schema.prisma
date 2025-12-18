@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ПОЛЬЗОВАТЕЛИ ====================
+
+model User {
+  id                   String    @id @default(uuid())
+  telegramId           BigInt    @unique // Telegram ID может быть большим числом
+  username             String?
+  firstName            String
+  lastName             String?
+  
+  // Роль и подписка
+  role                 String    @default("user") // "user", "admin"
+  planId               String    @default("free")
+  subscriptionExpiry   DateTime?
+  
+  // Лимиты использования
+  generationsUsed      Int       @default(0)
+  lastGenerationMonth  String?   // Format: "YYYY-MM"
+  generationsUsedToday Int       @default(0)
+  lastGenerationDate   String?   // Format: "YYYY-MM-DD"
+  
+  // Timestamps
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  
+  // Relations
+  projects             Project[]
+  
+  @@index([telegramId])
+  @@index([planId])
+}
+
+// ==================== ТАРИФНЫЕ ПЛАНЫ ====================
+
+model Plan {
+  id                     String   @id @default(uuid())
+  slug                   String   @unique // "free", "pro", "unlimited"
+  name                   String
+  
+  // Лимиты
+  maxChars               Int      @default(5000)
+  maxGenerationsPerMonth Int      @default(0) // 0 = unlimited
+  maxGenerationsPerDay   Int      @default(0) // 0 = unlimited
+  maxKeywords            Int      @default(0) // 0 = unlimited
+  
+  // Разрешённые модели (JSON массив строк)
+  allowedModels          String[] @default([])
+  
+  // Функции
+  canCheckSpam           Boolean  @default(false)
+  canOptimizeRelevance   Boolean  @default(false)
+  canUseGeoMode          Boolean  @default(false)
+  
+  // Ценообразование
+  priceRub               Int      @default(0)
+  durationDays           Int      @default(30)
+  
+  // Флаги
+  isDefault              Boolean  @default(false)
+  isActive               Boolean  @default(true)
+  
+  // Timestamps
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+// ==================== ПРОЕКТЫ ====================
+
+model Project {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name        String
+  description String?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  history     History[]
+  
+  @@index([userId])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+// ==================== ИСТОРИЯ ГЕНЕРАЦИЙ ====================
+
+model History {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Основные поля
+  topic       String
+  targetUrl   String?
+  mode        String   @default("geo") // "seo" | "geo"
+  
+  // JSON поля для хранения сложных структур
+  config      Json     // GenerationConfig
+  result      Json     // SeoResult (включает article, visuals, faq, seo)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  
+  @@index([projectId])
+  @@index([projectId, createdAt(sort: Desc)])
+}
+
+// ==================== СИСТЕМНЫЕ НАСТРОЙКИ ====================
+
+model SystemSetting {
+  id        String   @id @default("global")
+  
+  // API ключи
+  openRouterApiKey String?
+  
+  // Промпты
+  seoPrompt        String?  @db.Text
+  geoPrompt        String?  @db.Text
+  
+  // Настройки
+  telegramLink     String   @default("https://t.me/bankkz_admin")
+  spamCheckModel   String   @default("x-ai/grok-4.1-fast")
+  
+  // Timestamps
+  updatedAt        DateTime @updatedAt
+}
+
+// ==================== ПЛАТЕЖИ (для ЮKassa) ====================
+
+model Payment {
+  id              String   @id @default(uuid())
+  
+  // Связь с пользователем (по telegramId для простоты)
+  telegramId      BigInt
+  
+  // Данные платежа
+  yookassaId      String?  @unique // ID платежа в ЮKassa
+  planSlug        String   // Какой план покупается
+  amount          Int      // Сумма в копейках
+  currency        String   @default("RUB")
+  
+  // Статус
+  status          String   @default("pending") // "pending", "succeeded", "canceled"
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  paidAt          DateTime?
+  
+  @@index([telegramId])
+  @@index([yookassaId])
+  @@index([status])
+}

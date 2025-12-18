@@ -5,15 +5,15 @@
     "description": "Backend API for SEO Generator Telegram WebApp",
     "main": "server.js",
     "scripts": {
-        "start": "node server.js",
+        "start": "prisma generate && node server.js",
         "dev": "node --watch server.js",
         "db:generate": "prisma generate",
         "db:push": "prisma db push",
-        "db:seed": "node ../prisma/seed.js",
-        "postinstall": "prisma generate --schema=../prisma/schema.prisma || echo 'Prisma generate skipped'"
+        "db:seed": "node ../prisma/seed.js"
     },
     "dependencies": {
         "@prisma/client": "^5.22.0",
+        "prisma": "^5.22.0",
         "cors": "^2.8.5",
         "crypto": "^1.0.1",
         "dotenv": "^16.4.7",
@@ -27,7 +27,6 @@
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.6",
         "@types/node": "^22.14.0",
-        "prisma": "^5.22.0",
         "ts-node": "^10.9.2",
         "typescript": "^5.9.3"
     }
