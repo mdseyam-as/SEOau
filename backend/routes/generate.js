@@ -14,16 +14,21 @@ const DEFAULT_SITE_NAME = 'SeoGenerator';
 // Маппинг моделей для мультимодальной генерации
 const MODEL_MAPPING = {
     // Writer models (для текста)
-    'gemini-3.0': 'google/gemini-2.5-flash-preview',
-    'gpt-5.2': 'openai/gpt-4.1',
-    'grok-4.1': 'x-ai/grok-4.1',
+    'gemini-3.0': 'google/gemini-2.0-flash-001',
+    'gemini-3-pro': 'google/gemini-2.0-flash-001',
+    'google/gemini-3-pro-preview': 'google/gemini-2.0-flash-001', // Redirect to working model
+    'gpt-5.2': 'openai/gpt-4o',
+    'gpt-4.1': 'openai/gpt-4o',
+    'openai/gpt-4.1': 'openai/gpt-4o', // Redirect to working model
+    'grok-4.1': 'x-ai/grok-2-1212',
 
     // Visualizer model (для диаграмм и SVG)
-    'claude-sonnet-4.5': 'anthropic/claude-sonnet-4',
+    'claude-sonnet-4.5': 'anthropic/claude-3.5-sonnet',
+    'anthropic/claude-sonnet-4': 'anthropic/claude-3.5-sonnet', // Redirect to working model
 
     // Fallback/default
-    'default-writer': 'google/gemini-2.5-flash-preview',
-    'default-visualizer': 'anthropic/claude-sonnet-4'
+    'default-writer': 'google/gemini-2.0-flash-001',
+    'default-visualizer': 'anthropic/claude-3.5-sonnet'
 };
 
 // Получить реальный model ID для OpenRouter
@@ -630,9 +635,8 @@ async function generateGeoContent({
     const modelId = getModelId(writerModel);
 
     // Определяем, поддерживает ли модель response_format
-    const supportsJsonMode = modelId.includes('gpt') ||
-                             modelId.includes('gemini') ||
-                             modelId.includes('claude');
+    // OpenRouter: только GPT и Claude надёжно поддерживают json_object
+    const supportsJsonMode = modelId.includes('gpt') || modelId.includes('claude');
 
     console.log('>>> STRICT JSON GEO: Starting generation', {
         writer: modelId,
@@ -700,6 +704,17 @@ async function generateGeoContent({
         writerRaw = writerData.choices?.[0]?.message?.content || '';
 
         console.log('>>> STRICT JSON GEO: Writer response received, length:', writerRaw.length);
+        
+        // Логируем если ответ пустой
+        if (!writerRaw || writerRaw.length === 0) {
+            console.error('>>> STRICT JSON GEO: Writer returned EMPTY response!', {
+                hasChoices: !!writerData.choices,
+                choicesLength: writerData.choices?.length,
+                finishReason: writerData.choices?.[0]?.finish_reason,
+                error: writerData.error,
+                usage: writerData.usage
+            });
+        }
 
         // Парсим JSON
         const rawParsed = parseStrictJson(writerRaw);
