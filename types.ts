@@ -135,7 +135,43 @@ export interface SeoMetrics {
   }[];
 }
 
+// ==================== STRUCTURED GEO TYPES ====================
+
+export interface ArticleSection {
+  h2: string;
+  content: string;
+  table: string | null;
+}
+
+export interface StructuredArticle {
+  h1: string;
+  intro: string;
+  sections: ArticleSection[];
+  conclusion: string;
+}
+
+export interface StructuredVisuals {
+  mermaid: string | null;
+  svg: string | null;
+}
+
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface StructuredSeo {
+  metaTitle: string;
+  metaDescription: string;
+  keywords: string[];
+  schemaType: string;
+  schemaLD?: object | null;
+}
+
+// ==================== SEO RESULT ====================
+
 export interface SeoResult {
+  // Legacy fields (for backward compatibility)
   content: string;
   metaTitle: string;
   metaDescription: string;
@@ -143,6 +179,22 @@ export interface SeoResult {
   metrics?: SeoMetrics;
   spamScore?: number; // 0-100%
   spamAnalysis?: string;
+
+  // NEW: Structured GEO fields
+  article?: StructuredArticle | null;
+  visuals?: StructuredVisuals | null;
+  faq?: FaqItem[];
+  seo?: StructuredSeo | null;
+
+  // Meta flags
+  _structured?: boolean;
+  _strictJsonMode?: boolean;
+  _meta?: {
+    writerModel?: string;
+    visualizerModel?: string;
+    jsonMode?: boolean;
+    fallback?: boolean;
+  };
 }
 
 export interface Project {

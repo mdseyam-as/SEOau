@@ -158,79 +158,134 @@ Return a valid JSON object:
   "usedKeywords": ["list", "of", "keywords", "used"]
 }`;
 
-// ==================== STRUCTURED GEO WRITER PROMPT ====================
+// ==================== STRICT JSON MODE - EXPECTED STRUCTURE ====================
 
-const GEO_STRUCTURED_SYSTEM_PROMPT = `You are a GEO (Generative Engine Optimization) Content Writer.
-Your output must be STRICTLY valid JSON - no markdown wrappers, no explanations.
-Write content optimized for AI search engines (ChatGPT, Perplexity, Google SGE).`;
+/**
+ * JSON Schema для GEO генерации
+ * Эта структура передаётся модели для строгого следования
+ */
+const EXPECTED_GEO_STRUCTURE = {
+    article: {
+        h1: "String (Заголовок статьи)",
+        intro: "String (Вступление, 50-80 слов)",
+        sections: [
+            {
+                h2: "String (Подзаголовок секции)",
+                content: "String (Markdown текст секции)",
+                table: "String | null (Markdown таблица, если нужна)"
+            }
+        ],
+        conclusion: "String (Заключение, 30-50 слов)"
+    },
+    visuals: {
+        mermaid: "String (Raw Mermaid code: flowchart TD... БЕЗ обратных кавычек)",
+        svg: "String (Raw SVG code: <svg>...</svg>)"
+    },
+    faq: [
+        { question: "String (Вопрос)", answer: "String (Ответ)" }
+    ],
+    seo: {
+        metaTitle: "String (max 60 символов)",
+        metaDescription: "String (max 160 символов)",
+        keywords: ["String"],
+        schemaType: "String (например: FAQPage, HowTo, FinancialProduct, Article)"
+    }
+};
 
-function getGeoStructuredUserPrompt(topic, language, context) {
-    return `Write a comprehensive article about "${topic}" in ${language}.
+/**
+ * Генерирует System Prompt для Strict JSON Mode
+ */
+function getStrictJsonSystemPrompt(topic, language) {
+    const schemaString = JSON.stringify(EXPECTED_GEO_STRUCTURE, null, 2);
 
-CONTEXT:
+    return `ROLE: You are a headless CMS generator specialized in GEO (Generative Engine Optimization).
+TASK: Generate a structured article about "${topic}".
+
+CRITICAL OUTPUT RULES:
+1. OUTPUT FORMAT: JSON ONLY. Do not output markdown code blocks (\`\`\`json). Just the raw JSON object.
+2. LANGUAGE: ${language}. Write ALL content (h1, intro, sections, faq, etc.) in ${language}.
+3. STRUCTURE: You MUST follow this EXACT JSON structure:
+
+${schemaString}
+
+4. CONTENT REQUIREMENTS:
+   - "article.intro": Start with a direct definition of "${topic}" (50-80 words)
+   - "article.sections": Create 3-5 sections with h2 headings, each section should have substantial content
+   - "article.sections[].table": Include comparison tables where relevant (Markdown format), set to null if not needed
+   - "visuals.mermaid": Create a valid Mermaid.js flowchart (flowchart TD, NOT graph TD). Use Latin node IDs (A, B, C), labels in ${language}
+   - "visuals.svg": Create a simple, valid SVG infographic (viewBox, no fixed dimensions, standard colors)
+   - "faq": Generate 4-5 relevant Q&A pairs about "${topic}"
+   - "seo.schemaType": Choose the most appropriate Schema.org type for the topic
+
+5. MERMAID SYNTAX (CRITICAL):
+   - Start with: flowchart TD
+   - Node format: A[Label] --> B[Label]
+   - Decision: C{Question} -->|Yes| D[Result]
+   - NO backticks, NO code blocks - just raw mermaid code
+
+6. DO NOT include any explanations, comments, or text outside the JSON object.`;
+}
+
+/**
+ * Генерирует User Prompt с контекстом
+ */
+function getStrictJsonUserPrompt(topic, language, context) {
+    return `Generate a comprehensive GEO-optimized article about: "${topic}"
+
+CONTEXT & KEYWORDS:
 ${context}
 
-OUTPUT REQUIREMENTS:
-Return a SINGLE valid JSON object with this EXACT structure:
-
-{
-  "article": {
-    "h1": "Main headline for the article",
-    "introduction": "Opening paragraph with definition (2-3 sentences, Markdown allowed)",
-    "body": "Main article content with ## headings, tables, lists, FAQ section (Markdown). Do NOT include any mermaid diagrams or SVG code here - visuals are handled separately.",
-    "conclusion": "Summary paragraph with key takeaways (Markdown allowed)"
-  },
-  "seo": {
-    "title": "SEO meta title (max 60 chars)",
-    "description": "SEO meta description (max 160 chars)",
-    "keywords": ["keyword1", "keyword2", "keyword3"],
-    "schemaLD": {
-      "@context": "https://schema.org",
-      "@type": "Article or FAQPage or HowTo etc",
-      "name": "...",
-      "description": "..."
-    }
-  }
+Remember:
+- Output ONLY valid JSON matching the schema
+- Write in ${language}
+- Include mermaid flowchart (raw code, no backticks)
+- Include SVG infographic (raw code)
+- Generate 4-5 FAQ items
+- Choose appropriate schemaType for SEO`;
 }
 
-CRITICAL RULES:
-1. The "body" field must contain ONLY text content - NO mermaid diagrams, NO SVG graphics
-2. Use Markdown for formatting: ## headings, **bold**, tables, bullet lists
-3. Include a FAQ section in "body" using format: **Q: Question?**\\nA: Answer
-4. schemaLD must be a valid JSON-LD object (NOT wrapped in <script> tags)
-5. Write EVERYTHING in ${language}
-6. Return ONLY the JSON object - no \`\`\`json wrapper, no explanations`;
-}
+// ==================== VISUALIZER PROMPT (Claude) - STRICT JSON ====================
 
-// ==================== VISUALIZER PROMPT (Claude) - JSON FORMAT ====================
+/**
+ * System Prompt для Visualizer (Claude) в Strict JSON Mode
+ */
+function getVisualizerSystemPrompt(topic, language) {
+    return `ROLE: You are a Data Visualization Expert.
+TASK: Create visual assets for an article about "${topic}".
 
-const VISUALIZER_SYSTEM_PROMPT = `You are a Data Visualization Expert.
-Your output must be STRICTLY valid JSON - no markdown wrappers, no code blocks, no explanations.`;
+OUTPUT FORMAT: JSON ONLY. No markdown, no code blocks, no explanations.
 
-function getVisualizerUserPrompt(topic, language) {
-    return `Create visual assets for an article about "${topic}".
-
-Return a SINGLE valid JSON object with this EXACT structure:
-
+You MUST return this EXACT structure:
 {
-  "mermaidDiagram": "flowchart TD\\n    A[Step 1] --> B[Step 2]\\n    B --> C{Decision}\\n    C -->|Yes| D[Result 1]\\n    C -->|No| E[Result 2]",
-  "svgGraph": "<svg viewBox=\\"0 0 400 300\\" xmlns=\\"http://www.w3.org/2000/svg\\">...</svg>"
+  "mermaid": "flowchart TD\\n    A[Label] --> B[Label]\\n    B --> C{Decision}\\n    C -->|Yes| D[Result]\\n    C -->|No| E[Other]",
+  "svg": "<svg viewBox=\\"0 0 400 300\\" xmlns=\\"http://www.w3.org/2000/svg\\">...</svg>"
 }
 
 MERMAID RULES:
 - Start with "flowchart TD" (NOT "graph TD")
-- Node IDs: Latin only (A, B, C, step1)
-- Labels can be in ${language}
-- Use \\n for newlines in the string
+- Node IDs: Latin only (A, B, C, step1, step2)
+- Labels in ${language}
+- Use \\n for newlines
 - 5-8 nodes maximum
+- NO backticks, NO code blocks
 
 SVG RULES:
-- Use viewBox for responsiveness, no fixed width/height
-- Clean modern design
-- Include text labels in ${language}
+- viewBox for responsiveness (no width/height attributes)
+- Modern flat design
+- Text labels in ${language}
 - Escape quotes as \\"
+- Keep it simple (10-15 elements max)`;
+}
 
-CRITICAL: Return ONLY raw JSON - no \`\`\`json wrapper!`;
+function getVisualizerUserPrompt(topic, language) {
+    return `Create visuals for: "${topic}"
+
+Return JSON with:
+1. "mermaid": flowchart showing the main process/decision flow
+2. "svg": simple infographic/chart
+
+Language for labels: ${language}
+Output: Raw JSON only, no markdown.`;
 }
 
 // ==================== STRUCTURED RESPONSE PARSER ====================
@@ -462,14 +517,99 @@ function parseVisualizerResponse(content) {
     return (result.mermaidDiagram || result.svgGraph) ? result : null;
 }
 
-// ==================== MULTIMODAL GEO ORCHESTRATOR ====================
+// ==================== STRICT JSON PARSER ====================
 
 /**
- * Мультимодальная GEO-генерация со структурированным выводом
- * Writer (Gemini/GPT) генерирует article + seo
- * Visualizer (Claude) генерирует visuals
+ * Надёжный парсер JSON с очисткой markdown-обёрток
+ * @param {string} rawText - Сырой текст от AI
+ * @returns {object|null} - Распарсенный объект или null
+ */
+function parseStrictJson(rawText) {
+    if (!rawText || typeof rawText !== 'string') {
+        return null;
+    }
+
+    // Шаг 1: Удаляем markdown обёртки
+    let cleanText = rawText.trim()
+        .replace(/^```json\s*/gi, '')
+        .replace(/^```\s*/gi, '')
+        .replace(/\s*```$/g, '')
+        .replace(/^\uFEFF/, '') // BOM
+        .trim();
+
+    // Шаг 2: Если не начинается с {, пробуем найти JSON объект
+    if (!cleanText.startsWith('{')) {
+        const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            cleanText = jsonMatch[0];
+        }
+    }
+
+    // Шаг 3: Парсинг
+    try {
+        return JSON.parse(cleanText);
+    } catch (e) {
+        console.warn('parseStrictJson: Parse failed:', e.message);
+        console.warn('parseStrictJson: First 300 chars:', cleanText.substring(0, 300));
+        return null;
+    }
+}
+
+/**
+ * Валидирует и нормализует структуру GEO ответа
+ */
+function validateGeoStructure(parsed, topic) {
+    if (!parsed || typeof parsed !== 'object') {
+        return null;
+    }
+
+    // Проверяем наличие основных полей
+    const hasArticle = parsed.article && typeof parsed.article === 'object';
+    const hasSeo = parsed.seo && typeof parsed.seo === 'object';
+
+    if (!hasArticle) {
+        console.warn('validateGeoStructure: Missing article field');
+        return null;
+    }
+
+    // Нормализуем структуру
+    return {
+        article: {
+            h1: parsed.article.h1 || topic,
+            intro: parsed.article.intro || parsed.article.introduction || '',
+            sections: Array.isArray(parsed.article.sections) ? parsed.article.sections.map(s => ({
+                h2: s.h2 || s.heading || '',
+                content: s.content || s.text || '',
+                table: s.table || null
+            })) : [],
+            conclusion: parsed.article.conclusion || ''
+        },
+        visuals: {
+            mermaid: parsed.visuals?.mermaid || parsed.visuals?.mermaidDiagram || null,
+            svg: parsed.visuals?.svg || parsed.visuals?.svgGraph || null
+        },
+        faq: Array.isArray(parsed.faq) ? parsed.faq.map(f => ({
+            question: f.question || f.q || '',
+            answer: f.answer || f.a || ''
+        })) : [],
+        seo: {
+            metaTitle: parsed.seo?.metaTitle || parsed.seo?.title || topic,
+            metaDescription: parsed.seo?.metaDescription || parsed.seo?.description || '',
+            keywords: Array.isArray(parsed.seo?.keywords) ? parsed.seo.keywords : [],
+            schemaType: parsed.seo?.schemaType || 'Article'
+        }
+    };
+}
+
+// ==================== MULTIMODAL GEO ORCHESTRATOR (STRICT JSON MODE) ====================
+
+/**
+ * Мультимодальная GEO-генерация в Strict JSON Mode
  *
- * @returns {Promise<{article, visuals, seo}>} - Структурированный результат
+ * Writer (Gemini/GPT) генерирует: article, visuals, faq, seo
+ * Visualizer (Claude) генерирует: mermaid, svg (fallback/enhancement)
+ *
+ * @returns {Promise<{article, visuals, faq, seo, _meta}>} - Структурированный результат
  */
 async function generateGeoContent({
     topic,
@@ -481,139 +621,291 @@ async function generateGeoContent({
     siteName
 }) {
     const headers = getHeaders(apiKey, siteName);
+    const modelId = getModelId(writerModel);
 
-    // Запрос А: Writer (структурированный JSON)
+    // Определяем, поддерживает ли модель response_format
+    const supportsJsonMode = modelId.includes('gpt') ||
+                             modelId.includes('gemini') ||
+                             modelId.includes('claude');
+
+    console.log('>>> STRICT JSON GEO: Starting generation', {
+        writer: modelId,
+        visualizer: getModelId(visualizerModel),
+        supportsJsonMode,
+        topic: topic.substring(0, 50)
+    });
+
+    // ==================== ЗАПРОС А: WRITER (Strict JSON Mode) ====================
+    const writerBody = {
+        model: modelId,
+        messages: [
+            { role: "system", content: getStrictJsonSystemPrompt(topic, language) },
+            { role: "user", content: getStrictJsonUserPrompt(topic, language, writerContext) }
+        ],
+        temperature: 0.2,
+        max_tokens: 8000
+    };
+
+    // Добавляем response_format для моделей, которые его поддерживают
+    if (supportsJsonMode) {
+        writerBody.response_format = { type: "json_object" };
+    }
+
     const writerRequest = fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers,
-        body: JSON.stringify({
-            model: getModelId(writerModel),
-            messages: [
-                { role: "system", content: GEO_STRUCTURED_SYSTEM_PROMPT },
-                { role: "user", content: getGeoStructuredUserPrompt(topic, language, writerContext) }
-            ],
-            temperature: 0.2
-        })
+        body: JSON.stringify(writerBody)
     });
 
-    // Запрос Б: Visualizer (JSON с mermaid + svg)
+    // ==================== ЗАПРОС Б: VISUALIZER (Strict JSON Mode) ====================
+    const visualizerBody = {
+        model: getModelId(visualizerModel),
+        messages: [
+            { role: "system", content: getVisualizerSystemPrompt(topic, language) },
+            { role: "user", content: getVisualizerUserPrompt(topic, language) }
+        ],
+        temperature: 0.3,
+        max_tokens: 4000
+    };
+
+    // Claude поддерживает JSON mode
+    if (getModelId(visualizerModel).includes('claude')) {
+        visualizerBody.response_format = { type: "json_object" };
+    }
+
     const visualizerRequest = fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers,
-        body: JSON.stringify({
-            model: getModelId(visualizerModel),
-            messages: [
-                { role: "system", content: VISUALIZER_SYSTEM_PROMPT },
-                { role: "user", content: getVisualizerUserPrompt(topic, language) }
-            ],
-            temperature: 0.3
-        })
+        body: JSON.stringify(visualizerBody)
     });
 
-    console.log('>>> MULTIMODAL GEO: Starting parallel requests', {
-        writer: getModelId(writerModel),
-        visualizer: getModelId(visualizerModel),
-        topic
-    });
-
-    // Параллельный запуск
+    // ==================== ПАРАЛЛЕЛЬНЫЙ ЗАПУСК ====================
     const [writerResult, visualizerResult] = await Promise.allSettled([
         writerRequest,
         visualizerRequest
     ]);
 
-    // Обработка Writer (обязательный)
-    let writerContent = '';
+    // ==================== ОБРАБОТКА WRITER (обязательный) ====================
+    let parsedWriter = null;
+    let writerRaw = '';
+
     if (writerResult.status === 'fulfilled' && writerResult.value.ok) {
         const writerData = await writerResult.value.json();
-        writerContent = writerData.choices?.[0]?.message?.content || '';
-        console.log('>>> MULTIMODAL GEO: Writer success, length:', writerContent.length);
+        writerRaw = writerData.choices?.[0]?.message?.content || '';
+
+        console.log('>>> STRICT JSON GEO: Writer response received, length:', writerRaw.length);
+
+        // Парсим JSON
+        const rawParsed = parseStrictJson(writerRaw);
+        parsedWriter = validateGeoStructure(rawParsed, topic);
+
+        if (parsedWriter) {
+            console.log('>>> STRICT JSON GEO: Writer parsed successfully', {
+                h1: parsedWriter.article.h1?.substring(0, 40),
+                sectionsCount: parsedWriter.article.sections?.length,
+                faqCount: parsedWriter.faq?.length,
+                hasMermaid: !!parsedWriter.visuals.mermaid,
+                hasSvg: !!parsedWriter.visuals.svg
+            });
+        } else {
+            console.error('>>> STRICT JSON GEO: Writer parse/validation failed');
+        }
     } else {
         const error = writerResult.status === 'rejected'
-            ? writerResult.reason
-            : await writerResult.value.text();
-        console.error('>>> MULTIMODAL GEO: Writer failed:', error);
+            ? writerResult.reason?.message || writerResult.reason
+            : await writerResult.value.text().catch(() => 'Unknown error');
+        console.error('>>> STRICT JSON GEO: Writer request failed:', error);
         throw new Error(`Writer model failed: ${error}`);
     }
 
-    // Парсим структурированный ответ Writer
-    const structured = parseStructuredWriterResponse(writerContent, topic);
+    // Если парсинг не удался, создаём fallback структуру
+    if (!parsedWriter) {
+        console.warn('>>> STRICT JSON GEO: Using fallback structure');
+        parsedWriter = createFallbackGeoStructure(writerRaw, topic);
+    }
 
-    // Обработка Visualizer (soft fallback)
-    let visuals = { mermaidDiagram: null, svgGraph: null };
+    // ==================== ОБРАБОТКА VISUALIZER (soft fallback) ====================
+    let visualizerVisuals = { mermaid: null, svg: null };
+
     if (visualizerResult.status === 'fulfilled' && visualizerResult.value.ok) {
         try {
             const visualizerData = await visualizerResult.value.json();
-            const visualizerContent = visualizerData.choices?.[0]?.message?.content || '';
-            const parsedVisuals = parseVisualizerResponse(visualizerContent);
+            const visualizerRaw = visualizerData.choices?.[0]?.message?.content || '';
+            const parsedVisuals = parseStrictJson(visualizerRaw);
+
             if (parsedVisuals) {
-                visuals = parsedVisuals;
+                visualizerVisuals = {
+                    mermaid: parsedVisuals.mermaid || parsedVisuals.mermaidDiagram || null,
+                    svg: parsedVisuals.svg || parsedVisuals.svgGraph || null
+                };
+                console.log('>>> STRICT JSON GEO: Visualizer parsed', {
+                    hasMermaid: !!visualizerVisuals.mermaid,
+                    hasSvg: !!visualizerVisuals.svg
+                });
             }
-            console.log('>>> MULTIMODAL GEO: Visualizer success', {
-                hasMermaid: !!visuals.mermaidDiagram,
-                hasSvg: !!visuals.svgGraph
-            });
         } catch (e) {
-            console.warn('>>> MULTIMODAL GEO: Visualizer parse error:', e.message);
+            console.warn('>>> STRICT JSON GEO: Visualizer parse error:', e.message);
         }
     } else {
-        console.warn('>>> MULTIMODAL GEO: Visualizer soft fail');
+        console.warn('>>> STRICT JSON GEO: Visualizer request failed (soft fallback)');
     }
 
+    // ==================== MERGE VISUALS ====================
+    // Приоритет: Writer visuals > Visualizer visuals
+    const finalVisuals = {
+        mermaid: parsedWriter.visuals.mermaid || visualizerVisuals.mermaid,
+        svg: parsedWriter.visuals.svg || visualizerVisuals.svg
+    };
+
+    // ==================== РЕЗУЛЬТАТ ====================
     return {
-        article: structured.article,
-        visuals: visuals,
-        seo: structured.seo,
+        article: parsedWriter.article,
+        visuals: finalVisuals,
+        faq: parsedWriter.faq,
+        seo: parsedWriter.seo,
         _meta: {
-            parsed: structured._parsed || false,
-            converted: structured._converted || false,
-            fallback: structured._fallback || false
+            writerModel: modelId,
+            visualizerModel: getModelId(visualizerModel),
+            jsonMode: supportsJsonMode,
+            writerVisualsUsed: !!(parsedWriter.visuals.mermaid || parsedWriter.visuals.svg),
+            visualizerVisualsUsed: !!(visualizerVisuals.mermaid || visualizerVisuals.svg),
+            fallback: !parsedWriter._parsed
         }
     };
 }
 
-// ==================== LEGACY TO STRUCTURED CONVERTER ====================
-
 /**
- * Конвертирует legacy результат {content, metaTitle, ...} в структурированный формат
- * Используется для обратной совместимости и fallback
+ * Создаёт fallback структуру из сырого текста
  */
-function convertLegacyResultToStructured(legacy, topic) {
-    const content = legacy.content || '';
-
-    // Извлекаем структуру из content
-    const structured = convertLegacyToStructured(legacy, topic);
-
-    // Извлекаем визуалы из content (если модель их добавила)
-    const visuals = {
-        mermaidDiagram: null,
-        svgGraph: null
-    };
-
-    // Извлекаем Mermaid
-    const mermaidMatch = content.match(/```mermaid\s*([\s\S]*?)```/i);
-    if (mermaidMatch) {
-        visuals.mermaidDiagram = mermaidMatch[1].trim();
-    }
-
-    // Извлекаем SVG
-    const svgMatch = content.match(/<svg[\s\S]*?<\/svg>/i);
-    if (svgMatch) {
-        visuals.svgGraph = svgMatch[0].trim();
-    }
+function createFallbackGeoStructure(rawText, topic) {
+    // Пробуем извлечь хоть что-то из текста
+    const h1Match = rawText.match(/^#\s+([^\n]+)/m);
+    const mermaidMatch = rawText.match(/```mermaid\s*([\s\S]*?)```/i) ||
+                         rawText.match(/(flowchart\s+TD[\s\S]*?)(?=\n\n|```|$)/i);
+    const svgMatch = rawText.match(/<svg[\s\S]*?<\/svg>/i);
 
     return {
-        article: structured.article,
-        visuals: visuals,
-        seo: structured.seo,
-        // Legacy поля для обратной совместимости
-        content: content,
+        article: {
+            h1: h1Match ? h1Match[1].trim() : topic,
+            intro: '',
+            sections: [{
+                h2: 'Содержание',
+                content: cleanBodyFromVisuals(rawText),
+                table: null
+            }],
+            conclusion: ''
+        },
+        visuals: {
+            mermaid: mermaidMatch ? mermaidMatch[1]?.trim() || mermaidMatch[0]?.trim() : null,
+            svg: svgMatch ? svgMatch[0].trim() : null
+        },
+        faq: [],
+        seo: {
+            metaTitle: topic.substring(0, 60),
+            metaDescription: '',
+            keywords: [],
+            schemaType: 'Article'
+        },
+        _fallback: true
+    };
+}
+
+// ==================== LEGACY TO NEW STRUCTURE CONVERTER ====================
+
+/**
+ * Конвертирует legacy результат {content, metaTitle, ...} в НОВЫЙ структурированный формат
+ * с article.sections[], faq[], visuals{mermaid, svg}
+ */
+function convertLegacyToNewStructure(legacy, topic) {
+    const content = legacy.content || '';
+
+    // Извлекаем H1
+    const h1Match = content.match(/^#\s+([^\n]+)/m);
+    const h1 = h1Match ? h1Match[1].trim() : topic;
+
+    // Извлекаем intro (первый параграф после H1)
+    const introMatch = content.match(/^#[^\n]+\n+([^#]+?)(?=\n##)/m);
+    const intro = introMatch ? introMatch[1].trim() : '';
+
+    // Извлекаем sections (все H2)
+    const sections = [];
+    const sectionRegex = /##\s+([^\n]+)\n+([\s\S]*?)(?=\n##|\n```mermaid|<script|$)/gi;
+    let match;
+    while ((match = sectionRegex.exec(content)) !== null) {
+        const sectionTitle = match[1].trim();
+        const sectionContent = match[2].trim();
+
+        // Пропускаем FAQ - обрабатываем отдельно
+        if (sectionTitle.toLowerCase().includes('faq')) continue;
+
+        // Извлекаем таблицу из секции (если есть)
+        const tableMatch = sectionContent.match(/(\|[^\n]+\|\n)+/);
+
+        sections.push({
+            h2: sectionTitle,
+            content: tableMatch ? sectionContent.replace(tableMatch[0], '').trim() : sectionContent,
+            table: tableMatch ? tableMatch[0].trim() : null
+        });
+    }
+
+    // Извлекаем FAQ
+    const faq = [];
+    const faqMatch = content.match(/##\s*FAQ[\s\S]*?(?=\n##|```mermaid|<script|$)/i);
+    if (faqMatch) {
+        // Ищем Q&A паттерны
+        const qaRegex = /\*\*Q:\s*([^*]+)\*\*\s*\n\s*A:\s*([^\n]+)/gi;
+        let qaMatch;
+        while ((qaMatch = qaRegex.exec(faqMatch[0])) !== null) {
+            faq.push({
+                question: qaMatch[1].trim(),
+                answer: qaMatch[2].trim()
+            });
+        }
+    }
+
+    // Извлекаем conclusion
+    const conclusionMatch = content.match(/##\s*(?:Заключение|Conclusion|Итог|Key Takeaways)[^\n]*\n+([\s\S]+?)(?=\n##|```|<script|$)/i);
+    const conclusion = conclusionMatch ? conclusionMatch[1].trim() : '';
+
+    // Извлекаем визуалы
+    const mermaidMatch = content.match(/```mermaid\s*([\s\S]*?)```/i);
+    const svgMatch = content.match(/<svg[\s\S]*?<\/svg>/i);
+
+    // Извлекаем schema type из JSON-LD
+    const schemaMatch = content.match(/"@type"\s*:\s*"([^"]+)"/);
+    const schemaType = schemaMatch ? schemaMatch[1] : 'Article';
+
+    return {
+        article: {
+            h1,
+            intro,
+            sections: sections.length > 0 ? sections : [{
+                h2: 'Содержание',
+                content: cleanBodyFromVisuals(content),
+                table: null
+            }],
+            conclusion
+        },
+        visuals: {
+            mermaid: mermaidMatch ? mermaidMatch[1].trim() : null,
+            svg: svgMatch ? svgMatch[0].trim() : null
+        },
+        faq,
+        seo: {
+            metaTitle: legacy.metaTitle || h1.substring(0, 60),
+            metaDescription: legacy.metaDescription || intro.substring(0, 160),
+            keywords: legacy.usedKeywords || [],
+            schemaType,
+            schemaLD: extractSchemaLD(content)
+        },
+        // Legacy поля
+        content,
         metaTitle: legacy.metaTitle,
         metaDescription: legacy.metaDescription,
         usedKeywords: legacy.usedKeywords || [],
         _structured: true,
         _converted: true,
-        _fallback: legacy._fallback || structured._fallback
+        _fallback: legacy._fallback
     };
 }
 
@@ -1100,7 +1392,7 @@ Return a valid JSON object:
         const useMultimodal = isGeoMode && config.useMultimodalGeo !== false;
 
         if (useMultimodal) {
-            console.log('>>> MULTIMODAL GEO MODE ACTIVATED (Structured Output)');
+            console.log('>>> STRICT JSON GEO MODE ACTIVATED');
 
             // Определяем модели
             const writerModel = config.writerModel || config.model || 'gemini-3.0';
@@ -1130,30 +1422,49 @@ ${exampleInstruction}
                     siteName: config.websiteName
                 });
 
-                // Структурированный результат
+                // Собираем body из sections для legacy поля content
+                const sectionsMarkdown = (geoResult.article.sections || [])
+                    .map(s => {
+                        let sectionContent = `## ${s.h2}\n\n${s.content}`;
+                        if (s.table) sectionContent += `\n\n${s.table}`;
+                        return sectionContent;
+                    })
+                    .join('\n\n');
+
+                const faqMarkdown = (geoResult.faq || [])
+                    .map(f => `**Q: ${f.question}**\nA: ${f.answer}`)
+                    .join('\n\n');
+
+                // Структурированный результат (НОВАЯ СТРУКТУРА)
                 result = {
-                    article: geoResult.article,
-                    visuals: geoResult.visuals,
-                    seo: geoResult.seo,
-                    // Legacy поле для обратной совместимости
-                    content: `# ${geoResult.article.h1}\n\n${geoResult.article.introduction}\n\n${geoResult.article.body}\n\n${geoResult.article.conclusion}`,
-                    metaTitle: geoResult.seo.title,
-                    metaDescription: geoResult.seo.description,
+                    // Новая структура
+                    article: geoResult.article,       // {h1, intro, sections[], conclusion}
+                    visuals: geoResult.visuals,       // {mermaid, svg}
+                    faq: geoResult.faq,               // [{question, answer}]
+                    seo: geoResult.seo,               // {metaTitle, metaDescription, keywords, schemaType}
+
+                    // Legacy поля для обратной совместимости
+                    content: `# ${geoResult.article.h1}\n\n${geoResult.article.intro}\n\n${sectionsMarkdown}\n\n## FAQ\n\n${faqMarkdown}\n\n${geoResult.article.conclusion}`,
+                    metaTitle: geoResult.seo.metaTitle,
+                    metaDescription: geoResult.seo.metaDescription,
                     usedKeywords: geoResult.seo.keywords,
+
+                    // Meta
                     _structured: true,
-                    _multimodal: true,
+                    _strictJsonMode: true,
                     _meta: geoResult._meta
                 };
 
-                console.log('>>> MULTIMODAL GEO: Complete (Structured)', {
+                console.log('>>> STRICT JSON GEO: Complete', {
                     h1: result.article.h1?.substring(0, 50),
-                    bodyLength: result.article.body?.length,
-                    hasMermaid: !!result.visuals.mermaidDiagram,
-                    hasSvg: !!result.visuals.svgGraph
+                    sectionsCount: result.article.sections?.length,
+                    faqCount: result.faq?.length,
+                    hasMermaid: !!result.visuals.mermaid,
+                    hasSvg: !!result.visuals.svg
                 });
 
             } catch (multimodalError) {
-                console.error('>>> MULTIMODAL GEO: Failed, falling back to single-model', multimodalError.message);
+                console.error('>>> STRICT JSON GEO: Failed, falling back to single-model', multimodalError.message);
                 // Fallback к обычной генерации
                 const legacyResult = await fallbackSingleModelGeneration({
                     apiKey,
@@ -1165,8 +1476,8 @@ ${exampleInstruction}
                     topic: config.topic,
                     isGeoMode
                 });
-                // Конвертируем legacy в structured
-                result = convertLegacyResultToStructured(legacyResult, config.topic);
+                // Конвертируем legacy в новый structured формат
+                result = convertLegacyToNewStructure(legacyResult, config.topic);
             }
 
         } else {
@@ -1182,19 +1493,21 @@ ${exampleInstruction}
                 isGeoMode
             });
 
-            // Для SEO режима тоже конвертируем в структурированный формат
+            // Для GEO режима конвертируем в новый формат
             if (isGeoMode) {
-                result = convertLegacyResultToStructured(legacyResult, config.topic);
+                result = convertLegacyToNewStructure(legacyResult, config.topic);
             } else {
-                // SEO режим - возвращаем legacy формат + добавляем пустой visuals
+                // SEO режим - возвращаем legacy формат + добавляем пустые структурные поля
                 result = {
                     ...legacyResult,
-                    article: null, // SEO режим не использует структурированный формат
-                    visuals: { mermaidDiagram: null, svgGraph: null },
+                    article: null,
+                    visuals: { mermaid: null, svg: null },
+                    faq: [],
                     seo: {
-                        title: legacyResult.metaTitle,
-                        description: legacyResult.metaDescription,
-                        keywords: legacyResult.usedKeywords,
+                        metaTitle: legacyResult.metaTitle,
+                        metaDescription: legacyResult.metaDescription,
+                        keywords: legacyResult.usedKeywords || [],
+                        schemaType: 'Article',
                         schemaLD: extractSchemaLD(legacyResult.content || '')
                     }
                 };
@@ -1206,8 +1519,9 @@ ${exampleInstruction}
             console.warn('>>> GENERATION: Used fallback parsing for', isGeoMode ? 'GEO' : 'SEO', 'mode');
         }
 
-        // Calculate metrics (используем body или content)
-        const contentForMetrics = result.article?.body || result.content || '';
+        // Calculate metrics (используем sections content или legacy content)
+        const sectionsContent = result.article?.sections?.map(s => s.content).join('\n') || '';
+        const contentForMetrics = sectionsContent || result.content || '';
         try {
             result.metrics = calculateSeoMetrics(contentForMetrics, keywords);
         } catch (e) {
