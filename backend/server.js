@@ -53,18 +53,11 @@ const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
 
 // ==================== SECURITY: Helmet.js ====================
+// Note: CSP is disabled for now due to Vite/React compatibility issues
+// TODO: Enable strict CSP with nonces in production
 app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://telegram.org"],
-            imgSrc: ["'self'", "data:", "https:", "blob:"],
-            connectSrc: ["'self'", "https://openrouter.ai", "https://api.telegram.org", "wss:"],
-            frameSrc: ["'self'", "https://telegram.org"],
-        }
-    },
+    contentSecurityPolicy: false, // Disabled - Vite injects inline scripts/styles
+    crossOriginEmbedderPolicy: false, // Required for some Telegram WebApp features
     hsts: {
         maxAge: 31536000,
         includeSubDomains: true,
