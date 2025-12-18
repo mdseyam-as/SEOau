@@ -296,8 +296,11 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
       {/* HEADER */}
       <div className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
         <div className="bg-gradient-to-r from-brand-green/20 to-brand-purple/20 px-4 sm:px-6 py-4 sm:py-5 border-b border-white/10">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white leading-tight">
-            {h1}
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white leading-tight flex items-start gap-3">
+            <span className="inline-flex items-center justify-center px-2 py-0.5 bg-brand-green/30 text-brand-green text-xs font-bold rounded shrink-0 mt-1">
+              H1
+            </span>
+            <span>{h1}</span>
           </h1>
         </div>
 
@@ -332,11 +335,11 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
 
                 return (
                   <div key={idx} className="space-y-4">
-                    <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                      <span className="w-8 h-8 bg-brand-purple/20 text-brand-purple rounded-lg flex items-center justify-center text-sm font-bold">
-                        {idx + 1}
+                    <h2 className="text-lg sm:text-xl font-bold text-white flex items-start gap-2">
+                      <span className="inline-flex items-center justify-center px-2 py-0.5 bg-purple-500/30 text-purple-300 text-xs font-bold rounded shrink-0 mt-0.5">
+                        H2
                       </span>
-                      {sectionH2}
+                      <span>{sectionH2}</span>
                     </h2>
                     {sectionContent && (
                       <div className="prose prose-invert prose-sm sm:prose-base max-w-none prose-p:text-slate-300">
@@ -384,6 +387,9 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
         {conclusion && (
           <div className="p-4 sm:p-6 bg-white/5 border-t border-white/10">
             <div className="flex items-center gap-2 mb-3">
+              <span className="inline-flex items-center justify-center px-2 py-0.5 bg-cyan-500/30 text-cyan-300 text-xs font-bold rounded shrink-0">
+                H3
+              </span>
               <Layers className="w-5 h-5 text-brand-green" />
               <span className="font-bold text-white">Заключение</span>
             </div>
@@ -398,6 +404,9 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
       {faq && Array.isArray(faq) && faq.length > 0 && (
         <div className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl">
           <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-4 text-white flex items-center gap-2">
+            <span className="inline-flex items-center justify-center px-2 py-0.5 bg-amber-500/30 text-amber-300 text-xs font-bold rounded shrink-0">
+              H3
+            </span>
             <MessageCircleQuestion className="w-5 h-5 text-amber-400" />
             FAQ — Часто задаваемые вопросы
             <span className="ml-auto text-xs font-normal bg-amber-500/20 text-amber-300 px-2 py-1 rounded-lg">
