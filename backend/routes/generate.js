@@ -20,13 +20,13 @@ const MODEL_MAPPING = {
     'openai/gpt-4.1': 'openai/gpt-4o', // Redirect to working model
     'grok-4.1': 'x-ai/grok-2-1212',
 
-    // Visualizer model (для диаграмм и SVG)
-    'claude-sonnet-4.5': 'anthropic/claude-3.5-sonnet',
-    'anthropic/claude-sonnet-4': 'anthropic/claude-3.5-sonnet', // Redirect to working model
+    // Visualizer model (для диаграмм и SVG) - Claude Sonnet 4 (latest)
+    'claude-sonnet-4.5': 'anthropic/claude-sonnet-4',
+    'anthropic/claude-sonnet-4': 'anthropic/claude-sonnet-4',
 
     // Fallback/default
     'default-writer': 'google/gemini-2.0-flash-001',
-    'default-visualizer': 'anthropic/claude-3.5-sonnet'
+    'default-visualizer': 'anthropic/claude-sonnet-4'
 };
 
 // Получить реальный model ID для OpenRouter
@@ -250,48 +250,155 @@ Remember:
 - Generate seo.schemaLD as JSON-LD object (Schema.org structured data)`;
 }
 
-// ==================== VISUALIZER PROMPT (Claude) - STRICT JSON ====================
+// ==================== VISUALIZER PROMPT (Claude Sonnet 4.5) - STRICT JSON ====================
 
 /**
- * System Prompt для Visualizer (Claude) в Strict JSON Mode
+ * System Prompt для Visualizer (Claude Sonnet 4) в Strict JSON Mode
+ * Создаёт профессиональные инфографики и диаграммы
  */
 function getVisualizerSystemPrompt(topic, language) {
-    return `ROLE: You are a Data Visualization Expert.
-TASK: Create visual assets for an article about "${topic}".
+    return `ROLE: You are a world-class Infographic Designer creating visuals for "${topic}".
 
-OUTPUT FORMAT: JSON ONLY. No markdown, no code blocks, no explanations.
-
-You MUST return this EXACT structure:
+OUTPUT: Return ONLY valid JSON (no markdown, no backticks):
 {
-  "mermaid": "flowchart TD\\n    A[Label] --> B[Label]\\n    B --> C{Decision}\\n    C -->|Yes| D[Result]\\n    C -->|No| E[Other]",
-  "svg": "<svg viewBox=\\"0 0 400 300\\" xmlns=\\"http://www.w3.org/2000/svg\\">...</svg>"
+  "mermaid": "flowchart TD\\n    A[Step 1] --> B[Step 2]...",
+  "svg": "<svg viewBox=\\"0 0 800 600\\" xmlns=\\"http://www.w3.org/2000/svg\\">...</svg>"
 }
 
+═══════════════════════════════════════════════════════════════
 MERMAID RULES:
-- Start with "flowchart TD" (NOT "graph TD")
-- Node IDs: Latin only (A, B, C, step1, step2)
-- Labels in ${language}
-- Use \\n for newlines
-- 5-8 nodes maximum
-- NO backticks, NO code blocks
+═══════════════════════════════════════════════════════════════
+- Start: "flowchart TD" (NOT graph)
+- Node IDs: Latin (A, B, C)
+- Labels: ${language}
+- 6-10 nodes with decision points {Question}
+- NO backticks
 
-SVG RULES:
-- viewBox for responsiveness (no width/height attributes)
-- Modern flat design
-- Text labels in ${language}
+═══════════════════════════════════════════════════════════════
+SVG INFOGRAPHIC - MANDATORY REQUIREMENTS:
+═══════════════════════════════════════════════════════════════
+
+YOU MUST CREATE A COMPLETE, PROFESSIONAL INFOGRAPHIC WITH ALL THESE ELEMENTS:
+
+1. HEADER SECTION (y: 0-80):
+   - Dark gradient background (#1E293B to #334155)
+   - Large white title (font-size 28-32)
+   - Subtitle with topic context
+
+2. STATISTICS CARDS (y: 100-280) - CREATE 4 CARDS IN A ROW:
+   - Each card: 170x140px with rounded corners (rx=12)
+   - Gradient backgrounds (blue→purple, green→teal, etc.)
+   - Large number/stat (font-size 36-42, bold, white)
+   - Label below (font-size 13-14, white/light)
+   - Icon or visual element in each card
+
+3. PROCESS/STEPS SECTION (y: 300-420):
+   - 3-4 connected steps with arrows
+   - Numbered circles (1, 2, 3, 4)
+   - Step descriptions
+   - Connecting arrows or lines
+
+4. KEY FACTS SECTION (y: 440-580):
+   - 2-3 horizontal bars or bullet points
+   - Important facts about "${topic}"
+   - Icons or checkmarks
+
+COLORS TO USE:
+- Blues: #3B82F6, #2563EB, #1D4ED8
+- Greens: #10B981, #059669
+- Purples: #8B5CF6, #7C3AED
+- Amber: #F59E0B, #D97706
+- Background: #F8FAFC, #F1F5F9
+- Dark text: #1E293B, #334155
+- Light text: #FFFFFF, #F8FAFC
+
+REQUIRED SVG STRUCTURE:
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="600" fill="#F1F5F9" rx="16"/>
+  
+  <!-- Header -->
+  <rect width="800" height="80" fill="url(#headerGrad)" rx="16 16 0 0"/>
+  <text x="400" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white">[TITLE IN ${language}]</text>
+  <text x="400" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#94A3B8">[Subtitle]</text>
+  
+  <!-- Stats Cards Row -->
+  <g filter="url(#shadow)">
+    <rect x="30" y="100" width="170" height="140" rx="12" fill="url(#blueGrad)"/>
+    <text x="115" y="155" text-anchor="middle" font-family="Arial" font-size="42" font-weight="bold" fill="white">[STAT]</text>
+    <text x="115" y="185" text-anchor="middle" font-family="Arial" font-size="13" fill="#E0E7FF">[Label]</text>
+  </g>
+  <!-- Add 3 more cards at x=210, x=390, x=570 -->
+  
+  <!-- Process Steps -->
+  <text x="400" y="280" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold" fill="#1E293B">[Process Title]</text>
+  <!-- Add numbered circles and connecting arrows -->
+  
+  <!-- Key Facts -->
+  <text x="50" y="460" font-family="Arial" font-size="16" font-weight="bold" fill="#1E293B">[Key Facts]</text>
+  <!-- Add fact items with icons -->
+</svg>
+
+CRITICAL: 
+- Fill ALL placeholders with REAL data about "${topic}"
+- Include ACTUAL statistics and facts (research or estimate realistic numbers)
+- All text in ${language}
 - Escape quotes as \\"
-- Keep it simple (10-15 elements max)`;
+- DO NOT create primitive 2-circle graphics - create FULL infographic!`;
 }
 
 function getVisualizerUserPrompt(topic, language) {
-    return `Create visuals for: "${topic}"
+    return `Create a COMPLETE, PROFESSIONAL infographic for: "${topic}"
 
-Return JSON with:
-1. "mermaid": flowchart showing the main process/decision flow
-2. "svg": simple infographic/chart
+CRITICAL REQUIREMENTS:
 
-Language for labels: ${language}
-Output: Raw JSON only, no markdown.`;
+1. "mermaid": Detailed flowchart (6-10 nodes) showing the process/decision flow for "${topic}"
+
+2. "svg": A FULL INFOGRAPHIC (NOT just 2 circles!) with:
+
+   SECTION 1 - HEADER (dark gradient):
+   - Title: "${topic}" in ${language}
+   - Subtitle explaining the context
+   
+   SECTION 2 - STATISTICS ROW (4 gradient cards):
+   - Card 1: Key number/percentage about "${topic}"
+   - Card 2: Another important statistic
+   - Card 3: Comparison or growth metric
+   - Card 4: User/market data
+   
+   SECTION 3 - PROCESS STEPS:
+   - 3-4 numbered steps showing how "${topic}" works
+   - Connected with arrows
+   
+   SECTION 4 - KEY FACTS:
+   - 2-3 important facts with checkmark icons
+
+FILL IN REAL DATA - research or estimate realistic statistics for "${topic}".
+All text must be in ${language}.
+
+Output: Raw JSON only, no markdown code blocks.`;
 }
 
 // ==================== STRUCTURED RESPONSE PARSER ====================
