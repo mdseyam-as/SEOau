@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { SubscriptionPlan, authService } from '../services/authService';
+import { GeoArticleRenderer } from './GeoArticleRenderer';
+import { ErrorBoundary } from './ErrorBoundary';
 
 // Initialize Mermaid
 mermaid.initialize({
@@ -454,107 +456,24 @@ export const ResultView: React.FC<ResultViewProps> = ({
 
       {/* ==================== STRUCTURED GEO CONTENT ==================== */}
       {isStructured && result.article ? (
-        <>
-          {/* H1 Title */}
-          <div className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
-            <div className="bg-gradient-to-r from-brand-green/20 to-brand-purple/20 px-4 sm:px-6 py-4 sm:py-5 border-b border-white/10">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white leading-tight">
-                {result.article.h1 || 'Без заголовка'}
-              </h1>
-            </div>
-
-            {/* Introduction */}
-            {result.article.intro && (
-              <div className="p-4 sm:p-6 border-b border-white/5">
-                <div className="prose prose-invert prose-sm sm:prose-base max-w-none prose-p:text-slate-200 prose-p:leading-relaxed">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.article.intro}</ReactMarkdown>
-                </div>
+        <ErrorBoundary
+          fallback={
+            <div className="glass-panel p-6 rounded-xl">
+              <div className="text-center mb-4">
+                <AlertCircle className="w-12 h-12 text-yellow-400 mx-auto mb-2" />
+                <p className="text-yellow-400 font-bold">Ошибка рендеринга структурированного контента</p>
+                <p className="text-slate-400 text-sm mt-1">Показываем резервный вариант</p>
               </div>
-            )}
-
-            {/* SVG Infographic (after intro) */}
-            {svgCode && (
-              <div className="p-4 sm:p-6 border-b border-white/5">
-                <div className="flex items-center gap-2 mb-4">
-                  <Image className="w-5 h-5 text-brand-green" />
-                  <span className="font-bold text-white">Инфографика</span>
-                </div>
-                <SvgRenderer svg={svgCode} />
-              </div>
-            )}
-
-            {/* Sections */}
-            {result.article.sections && result.article.sections.length > 0 ? (
-              <div className="p-4 sm:p-6 lg:p-8 space-y-8">
-                {result.article.sections.map((section, index) => (
-                  <div key={index} className="space-y-4">
-                    <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                      <span className="w-8 h-8 bg-brand-purple/20 text-brand-purple rounded-lg flex items-center justify-center text-sm font-bold">
-                        {index + 1}
-                      </span>
-                      {section?.h2 || `Раздел ${index + 1}`}
-                    </h2>
-                    <div className="prose prose-invert prose-sm sm:prose-base max-w-none prose-headings:font-bold prose-headings:text-white prose-p:text-slate-300 prose-a:text-brand-green prose-strong:text-white prose-ul:text-slate-300 prose-ol:text-slate-300">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{section?.content || ''}</ReactMarkdown>
-                    </div>
-                    {section?.table && (
-                      <div className="overflow-x-auto -mx-4 sm:mx-0">
-                        <div className="px-4 sm:px-0 prose prose-invert prose-sm max-w-none prose-table:border-collapse prose-th:bg-white/10 prose-th:border prose-th:border-white/20 prose-th:px-3 prose-th:py-2 prose-td:border prose-td:border-white/10 prose-td:px-3 prose-td:py-2">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.table}</ReactMarkdown>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              /* Fallback: если sections пустой, показываем legacy content */
-              result.content && (
-                <div className="p-4 sm:p-6 lg:p-8 prose prose-invert prose-sm sm:prose-base max-w-none">
+              {result.content && (
+                <div className="prose prose-invert prose-sm max-w-none">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.content}</ReactMarkdown>
                 </div>
-              )
-            )}
-
-            {/* Mermaid Diagram */}
-            {mermaidCode && (
-              <div className="p-4 sm:p-6 border-t border-white/5">
-                <div className="flex items-center gap-2 mb-4">
-                  <GitBranch className="w-5 h-5 text-cyan-400" />
-                  <span className="font-bold text-white">Диаграмма процесса</span>
-                </div>
-                <MermaidDiagram code={mermaidCode} />
-              </div>
-            )}
-
-            {/* Conclusion */}
-            {result.article.conclusion && (
-              <div className="p-4 sm:p-6 bg-white/5 border-t border-white/10">
-                <div className="flex items-center gap-2 mb-3">
-                  <Layers className="w-5 h-5 text-brand-green" />
-                  <span className="font-bold text-white">Заключение</span>
-                </div>
-                <div className="prose prose-invert prose-sm sm:prose-base max-w-none prose-p:text-slate-300">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.article.conclusion}</ReactMarkdown>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* FAQ Accordion */}
-          {result.faq && result.faq.length > 0 && (
-            <div className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl">
-              <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-4 text-white flex items-center gap-2">
-                <MessageCircleQuestion className="w-5 h-5 text-amber-400" />
-                FAQ — Часто задаваемые вопросы
-                <span className="ml-auto text-xs font-normal bg-amber-500/20 text-amber-300 px-2 py-1 rounded-lg">
-                  {result.faq.length} вопросов
-                </span>
-              </h3>
-              <FaqAccordion items={result.faq} />
+              )}
             </div>
-          )}
-        </>
+          }
+        >
+          <GeoArticleRenderer data={result} />
+        </ErrorBoundary>
       ) : (
         /* ==================== LEGACY CONTENT ==================== */
         <div className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
