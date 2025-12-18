@@ -1,7 +1,7 @@
 
 import React, { useRef, useState, useEffect, useMemo } from 'react';
-import { GenerationConfig, ModelConfig, TextTone, TextStyle, GenerationMode, ContentLanguage } from '../types';
-import { Settings2, Type, AlignLeft, Cpu, Link as LinkIcon, FileText, Upload, X, Lock, Globe, Feather, Mic, Plus, Trash2, FileSpreadsheet, Sparkles, Search } from 'lucide-react';
+import { GenerationConfig, TextTone, TextStyle, GenerationMode, ContentLanguage } from '../types';
+import { Settings2, Type, AlignLeft, Link as LinkIcon, FileText, Upload, X, Globe, Feather, Mic, Plus, Trash2, FileSpreadsheet, Sparkles, Search, Lock } from 'lucide-react';
 import { parseDocxFile } from '../services/docxParser';
 import { parseExcelToRawText } from '../services/excelParser';
 import { SubscriptionPlan, authService } from '../services/authService';
@@ -18,7 +18,6 @@ interface SettingsFormProps {
 export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, disabled, isLocked = false, onSubmit, userPlan }) => {
   const [docxFileName, setDocxFileName] = useState<string | null>(null);
   const [isDocxLoading, setIsDocxLoading] = useState(false);
-  const [availableModels, setAvailableModels] = useState<ModelConfig[]>([]);
 
   // Competitor Inputs State - Initialize lazily from props
   const [competitorLinks, setCompetitorLinks] = useState<string[]>(() => {
@@ -38,13 +37,9 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
   const isDisabled = disabled || isLocked;
   const isOverLimit = userPlan ? config.maxChars > userPlan.maxChars : false;
 
-  // Check if current plan is 'free' to hide model details
-  const isFreePlan = userPlan?.id === 'free';
 
-  useEffect(() => {
-    // Load dynamic models from storage
-    setAvailableModels(authService.getModels());
-  }, []);
+
+
 
   // Initialize docx placeholder state
   useEffect(() => {
@@ -207,20 +202,6 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
       )}
     </button>
   );
-
-  const isModelAllowed = (modelId: string) => {
-    if (!userPlan) return true;
-    return userPlan.allowedModels.includes(modelId);
-  };
-
-  const groupedModels = useMemo(() => {
-    const groups: Record<string, ModelConfig[]> = {};
-    availableModels.forEach(m => {
-      if (!groups[m.provider]) groups[m.provider] = [];
-      groups[m.provider].push(m);
-    });
-    return groups;
-  }, [availableModels]);
 
   return (
     <div className={`glass-panel rounded-2xl flex flex-col ${isLocked ? 'opacity-75' : ''}`}>
@@ -430,49 +411,6 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               disabled={isDisabled}
             />
           </div>
-        </div>
-
-        {/* Model Selection */}
-        <div>
-          <label className="block text-xs sm:text-sm font-bold text-slate-200 mb-1.5 sm:mb-2 flex items-center gap-2">
-            <Cpu className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-green" /> Модель ИИ
-          </label>
-
-          {isFreePlan ? (
-            <div className="w-full p-2.5 sm:p-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 text-xs sm:text-sm flex items-center justify-between select-none">
-              <span>Автоматический выбор (Free)</span>
-              <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500" />
-            </div>
-          ) : (
-            <div className="relative">
-              <select
-                value={config.model}
-                onChange={(e) => handleChange('model', e.target.value)}
-                className="w-full p-2.5 sm:p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green shadow-sm text-xs sm:text-sm appearance-none [&>optgroup]:text-slate-900 [&>optgroup>option]:text-slate-900 transition-all"
-                disabled={isDisabled}
-              >
-                {Object.keys(groupedModels).map(provider => {
-                  const providerModels = groupedModels[provider].filter(m => isModelAllowed(m.id));
-                  if (providerModels.length === 0) return null;
-                  return (
-                    <optgroup key={provider} label={provider}>
-                      {providerModels.map(model => (
-                        <option key={model.id} value={model.id}>{model.name}</option>
-                      ))}
-                    </optgroup>
-                  );
-                })}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-              </div>
-            </div>
-          )}
-          {userPlan && (
-            <p className="text-[10px] text-slate-500 mt-1.5 ml-1">
-              {isFreePlan ? 'Базовый доступ' : `Доступно моделей: ${userPlan.allowedModels.length} (Тариф: ${userPlan.name})`}
-            </p>
-          )}
         </div>
 
         {/* Competitor Links & Files */}
