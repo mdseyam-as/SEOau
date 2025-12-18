@@ -14,14 +14,16 @@
     },
     "dependencies": {
         "@prisma/client": "^5.22.0",
-        "prisma": "^5.22.0",
+        "cookie-parser": "^1.4.7",
         "cors": "^2.8.5",
         "crypto": "^1.0.1",
         "dotenv": "^16.4.7",
         "express": "^5.1.0",
         "express-rate-limit": "^7.5.0",
+        "helmet": "^8.1.0",
         "ioredis": "^5.8.2",
-        "node-telegram-bot-api": "^0.66.0",
+        "node-telegram-bot-api": "^0.67.0",
+        "prisma": "^5.22.0",
         "zod": "^4.1.13"
     },
     "devDependencies": {

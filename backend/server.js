@@ -1,5 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import crypto from 'crypto';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 
@@ -27,6 +30,19 @@ import { initRedis } from './utils/cache.js';
 // Load environment variables
 dotenv.config();
 
+// ==================== SECURITY: Production Safety Checks ====================
+if (process.env.NODE_ENV === 'production') {
+    if (process.env.DEV_BYPASS_TELEGRAM === 'true') {
+        console.error('🚨 FATAL: DEV_BYPASS_TELEGRAM is enabled in production!');
+        console.error('🚨 This is a critical security vulnerability. Exiting...');
+        process.exit(1);
+    }
+
+    if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length < 32) {
+        console.warn('⚠️  WARNING: ENCRYPTION_KEY not set or too short. API key encryption disabled.');
+    }
+}
+
 // Initialize Redis cache
 initRedis();
 
@@ -36,7 +52,28 @@ const PORT = process.env.PORT || 3000;
 // Trust proxy (needed for rate limiting behind reverse proxy)
 app.set('trust proxy', 1);
 
-// Middleware - CORS configuration
+// ==================== SECURITY: Helmet.js ====================
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://telegram.org"],
+            imgSrc: ["'self'", "data:", "https:", "blob:"],
+            connectSrc: ["'self'", "https://openrouter.ai", "https://api.telegram.org", "wss:"],
+            frameSrc: ["'self'", "https://telegram.org"],
+        }
+    },
+    hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+    },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+}));
+
+// ==================== SECURITY: CORS Configuration ====================
 const configuredOrigins = (process.env.FRONTEND_URL || '').split(',').map(s => s.trim()).filter(Boolean);
 
 // Default origins for Telegram WebApp
@@ -46,7 +83,13 @@ const defaultOrigins = [
     'https://webz.telegram.org'
 ];
 
-const allowedOrigins = [...new Set([...configuredOrigins, ...defaultOrigins])];
+// Specific allowed hosting origins (NOT wildcards)
+const hostingOrigins = (process.env.ALLOWED_HOSTING_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+
+const allowedOrigins = [...new Set([...configuredOrigins, ...defaultOrigins, ...hostingOrigins])];
+
+// Development origins (only used in dev mode)
+const devOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000'];
 
 app.use(cors({
     origin: (origin, callback) => {
@@ -55,18 +98,15 @@ app.use(cors({
             return callback(null, true);
         }
 
-        // In development, allow all origins
+        // In development, allow only specific dev origins
         if (process.env.NODE_ENV !== 'production') {
-            return callback(null, true);
+            if (devOrigins.includes(origin) || allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
         }
 
         // Check whitelist
         if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-
-        // Allow known hosting platforms (same-origin when serving frontend)
-        if (origin.includes('.twc1.net') || origin.includes('.amvera.io')) {
             return callback(null, true);
         }
 
@@ -76,8 +116,82 @@ app.use(cors({
     credentials: true
 }));
 
+// ==================== SECURITY: CSRF Protection (Double Submit Cookie) ====================
+const csrfTokens = new Map(); // In production, use Redis
+
+function generateCsrfToken() {
+    return crypto.randomBytes(32).toString('hex');
+}
+
+// CSRF token endpoint
+app.get('/api/csrf-token', (req, res) => {
+    const token = generateCsrfToken();
+    const tokenId = crypto.randomBytes(16).toString('hex');
+
+    // Store token with expiry (15 minutes)
+    csrfTokens.set(tokenId, { token, expires: Date.now() + 15 * 60 * 1000 });
+
+    // Clean up expired tokens periodically
+    if (csrfTokens.size > 1000) {
+        const now = Date.now();
+        for (const [key, value] of csrfTokens.entries()) {
+            if (value.expires < now) csrfTokens.delete(key);
+        }
+    }
+
+    res.cookie('csrf_token_id', tokenId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 15 * 60 * 1000
+    });
+
+    res.json({ csrfToken: token });
+});
+
+// CSRF validation middleware for state-changing operations
+function validateCsrf(req, res, next) {
+    // Skip CSRF for webhooks (they use signature validation)
+    if (req.path.startsWith('/api/webhook')) {
+        return next();
+    }
+
+    // Skip for GET, HEAD, OPTIONS
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+        return next();
+    }
+
+    const tokenId = req.cookies?.csrf_token_id;
+    const submittedToken = req.headers['x-csrf-token'];
+
+    if (!tokenId || !submittedToken) {
+        // For Telegram WebApp, CSRF is less critical due to initData validation
+        // Log but allow if Telegram auth is present
+        if (req.headers['x-telegram-init-data']) {
+            return next();
+        }
+        return res.status(403).json({ error: 'Missing CSRF token' });
+    }
+
+    const storedData = csrfTokens.get(tokenId);
+    if (!storedData || storedData.expires < Date.now()) {
+        csrfTokens.delete(tokenId);
+        return res.status(403).json({ error: 'CSRF token expired' });
+    }
+
+    if (storedData.token !== submittedToken) {
+        return res.status(403).json({ error: 'Invalid CSRF token' });
+    }
+
+    next();
+}
+
+app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Apply CSRF validation to all routes
+app.use(validateCsrf);
 
 // Rate limiting
 const generalLimiter = rateLimit({
@@ -109,6 +223,15 @@ const generateLimiter = rateLimit({
     keyGenerator: (req) => {
         return req.telegramUser?.id?.toString() || req.ip;
     }
+});
+
+// Rate limiter for webhooks (15 minutes window)
+const webhookLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 30, // 30 webhook calls per 15 minutes per IP
+    message: { error: 'Too many webhook requests' },
+    standardHeaders: true,
+    legacyHeaders: false
 });
 
 // Apply general rate limit to all requests
@@ -168,7 +291,7 @@ app.get('/health', async (req, res) => {
 
 // Public routes (no auth required)
 app.use('/api/plans', planRoutes); // Plans are public for viewing
-app.use('/api/webhook', webhookRoutes); // Webhook doesn't use Telegram auth
+app.use('/api/webhook', webhookLimiter, webhookRoutes); // Webhook with rate limiting
 
 // Protected routes (require Telegram auth)
 app.use('/api/auth', authLimiter, validateTelegramAuth, authRoutes);

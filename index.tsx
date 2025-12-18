@@ -25,12 +25,10 @@ window.btoa = (str: string): string => {
 
 // ==================== GLOBAL ERROR HANDLER (TEMPORARY DEBUG) ====================
 
-// Catch unhandled errors outside React
-window.onerror = function(message, source, lineno, colno, error) {
-  console.error('🔴 GLOBAL ERROR:', message, source, lineno);
-  
+// Safe helper to create error overlay without innerHTML (XSS safe)
+function createErrorOverlay(id: string, title: string, details: { label: string; value: string; color: string }[], stack?: string) {
   const errorDiv = document.createElement('div');
-  errorDiv.id = 'global-error-overlay';
+  errorDiv.id = id;
   errorDiv.style.cssText = `
     position: fixed;
     top: 0;
@@ -45,49 +43,71 @@ window.onerror = function(message, source, lineno, colno, error) {
     font-family: monospace;
     font-size: 12px;
   `;
-  errorDiv.innerHTML = `
-    <h1 style="color: #ff6b6b; margin-bottom: 10px;">💥 GLOBAL ERROR</h1>
-    <p style="color: #ffd93d; margin-bottom: 5px;"><strong>Message:</strong> ${message}</p>
-    <p style="color: #6bcb77; margin-bottom: 5px;"><strong>Source:</strong> ${source}</p>
-    <p style="color: #4d96ff; margin-bottom: 15px;"><strong>Line:</strong> ${lineno}:${colno}</p>
-    ${error?.stack ? `<pre style="background: #0f0f23; padding: 10px; border-radius: 5px; overflow: auto; color: #ff9f9f;">${error.stack}</pre>` : ''}
-    <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #ff6b6b; color: white; border: none; border-radius: 5px; cursor: pointer;">
-      🔄 RELOAD PAGE
-    </button>
-  `;
+
+  // Title
+  const h1 = document.createElement('h1');
+  h1.style.cssText = 'color: #ff6b6b; margin-bottom: 10px;';
+  h1.textContent = title;
+  errorDiv.appendChild(h1);
+
+  // Details
+  details.forEach(({ label, value, color }) => {
+    const p = document.createElement('p');
+    p.style.cssText = `color: ${color}; margin-bottom: 5px;`;
+    const strong = document.createElement('strong');
+    strong.textContent = `${label}: `;
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(String(value)));
+    errorDiv.appendChild(p);
+  });
+
+  // Stack trace
+  if (stack) {
+    const pre = document.createElement('pre');
+    pre.style.cssText = 'background: #0f0f23; padding: 10px; border-radius: 5px; overflow: auto; color: #ff9f9f; margin-top: 15px;';
+    pre.textContent = stack;
+    errorDiv.appendChild(pre);
+  }
+
+  // Reload button
+  const button = document.createElement('button');
+  button.style.cssText = 'margin-top: 20px; padding: 10px 20px; background: #ff6b6b; color: white; border: none; border-radius: 5px; cursor: pointer;';
+  button.textContent = 'RELOAD PAGE';
+  button.onclick = () => window.location.reload();
+  errorDiv.appendChild(button);
+
   document.body.appendChild(errorDiv);
+}
+
+// Catch unhandled errors outside React
+window.onerror = function(message, source, lineno, colno, error) {
+  console.error('GLOBAL ERROR:', message, source, lineno);
+
+  createErrorOverlay(
+    'global-error-overlay',
+    'GLOBAL ERROR',
+    [
+      { label: 'Message', value: String(message), color: '#ffd93d' },
+      { label: 'Source', value: String(source), color: '#6bcb77' },
+      { label: 'Line', value: `${lineno}:${colno}`, color: '#4d96ff' }
+    ],
+    error?.stack
+  );
   return true; // Prevent default error handling
 };
 
 // Catch unhandled promise rejections
 window.onunhandledrejection = function(event) {
-  console.error('🔴 UNHANDLED PROMISE REJECTION:', event.reason);
-  
-  const errorDiv = document.createElement('div');
-  errorDiv.id = 'promise-error-overlay';
-  errorDiv.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #1a1a2e;
-    color: #ff6b6b;
-    z-index: 99999;
-    padding: 20px;
-    overflow: auto;
-    font-family: monospace;
-    font-size: 12px;
-  `;
-  errorDiv.innerHTML = `
-    <h1 style="color: #ff6b6b; margin-bottom: 10px;">💥 PROMISE REJECTION</h1>
-    <p style="color: #ffd93d; margin-bottom: 15px;">${event.reason?.message || event.reason || 'Unknown error'}</p>
-    ${event.reason?.stack ? `<pre style="background: #0f0f23; padding: 10px; border-radius: 5px; overflow: auto; color: #ff9f9f;">${event.reason.stack}</pre>` : ''}
-    <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #ff6b6b; color: white; border: none; border-radius: 5px; cursor: pointer;">
-      🔄 RELOAD PAGE
-    </button>
-  `;
-  document.body.appendChild(errorDiv);
+  console.error('UNHANDLED PROMISE REJECTION:', event.reason);
+
+  createErrorOverlay(
+    'promise-error-overlay',
+    'PROMISE REJECTION',
+    [
+      { label: 'Error', value: event.reason?.message || String(event.reason) || 'Unknown error', color: '#ffd93d' }
+    ],
+    event.reason?.stack
+  );
 };
 
 // ==================== REACT ERROR BOUNDARY ====================
@@ -190,7 +210,11 @@ if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
-  document.body.innerHTML = '<div style="padding:20px;color:red;font-family:monospace;">ERROR: Could not find root element</div>';
+  // Safe DOM creation without innerHTML
+  const errorDiv = document.createElement('div');
+  errorDiv.style.cssText = 'padding:20px;color:red;font-family:monospace;';
+  errorDiv.textContent = 'ERROR: Could not find root element';
+  document.body.appendChild(errorDiv);
   throw new Error("Could not find root element to mount to");
 }
 

@@ -2,6 +2,7 @@ import express from 'express';
 import { prisma } from '../lib/prisma.js';
 import { validate } from '../middleware/validate.js';
 import { generateSchema, spamCheckSchema, fixSpamSchema, optimizeRelevanceSchema } from '../schemas/index.js';
+import { sanitizePromptInput } from '../utils/promptSanitizer.js';
 
 const router = express.Router();
 
@@ -1378,6 +1379,22 @@ router.post('/', validate(generateSchema), async (req, res) => {
 
         const { config, keywords } = req.body;
 
+        // ==================== SECURITY: Sanitize user inputs ====================
+        const sanitizedConfig = {
+            ...config,
+            topic: sanitizePromptInput(config.topic, { maxLength: 500 }),
+            exampleContent: config.exampleContent ? sanitizePromptInput(config.exampleContent, { maxLength: 50000 }) : '',
+            competitorUrls: config.competitorUrls ? sanitizePromptInput(config.competitorUrls, { maxLength: 5000 }) : '',
+            targetUrl: config.targetUrl ? sanitizePromptInput(config.targetUrl, { maxLength: 500, removeInjection: false }) : '',
+            websiteName: config.websiteName ? sanitizePromptInput(config.websiteName, { maxLength: 200 }) : ''
+        };
+
+        // Sanitize keywords
+        const sanitizedKeywords = keywords.map(k => ({
+            ...k,
+            keyword: sanitizePromptInput(k.keyword, { maxLength: 200 })
+        }));
+
         // Check keywords limit per plan (0 means unlimited)
         if (limitCheck.plan && limitCheck.plan.maxKeywords > 0) {
             if (keywords.length > limitCheck.plan.maxKeywords) {
@@ -1389,7 +1406,7 @@ router.post('/', validate(generateSchema), async (req, res) => {
 
         // Validate model is allowed for user's plan
         if (limitCheck.plan && limitCheck.plan.allowedModels && limitCheck.plan.allowedModels.length > 0) {
-            if (!limitCheck.plan.allowedModels.includes(config.model)) {
+            if (!limitCheck.plan.allowedModels.includes(sanitizedConfig.model)) {
                 return res.status(403).json({ error: 'Model not allowed for your plan' });
             }
         }
@@ -1400,7 +1417,7 @@ router.post('/', validate(generateSchema), async (req, res) => {
         });
 
         // ==================== DEBUG LOG ====================
-        const isGeoMode = config.generationMode === 'geo';
+        const isGeoMode = sanitizedConfig.generationMode === 'geo';
 
         // Check GEO mode permission
         if (isGeoMode && !limitCheck.plan?.canUseGeoMode && limitCheck.user.role !== 'admin') {
@@ -1408,38 +1425,38 @@ router.post('/', validate(generateSchema), async (req, res) => {
         }
 
         console.log('>>> GENERATION REQUEST:', {
-            topic: config.topic,
-            mode: config.generationMode,
+            topic: sanitizedConfig.topic,
+            mode: sanitizedConfig.generationMode,
             isGeoMode,
-            model: config.model
+            model: sanitizedConfig.model
         });
 
-        // Prepare prompt
-        const topKeywords = keywords
+        // Prepare prompt using sanitized inputs
+        const topKeywords = sanitizedKeywords
             .slice(0, 50)
             .map(k => `${k.keyword} (Freq: ${k.frequency})`)
             .join(', ');
 
-        const mainKeywords = keywords
+        const mainKeywords = sanitizedKeywords
             .slice(0, 5)
             .map(k => k.keyword)
             .join(', ');
 
-        const competitorsList = (config.competitorUrls || '').trim();
-        const competitorsFileContent = config.competitorFiles
-            ? config.competitorFiles.map(f => `--- CONTENT FROM FILE: ${f.name} ---\n${f.content}`).join('\n\n')
+        const competitorsList = (sanitizedConfig.competitorUrls || '').trim();
+        const competitorsFileContent = sanitizedConfig.competitorFiles
+            ? sanitizedConfig.competitorFiles.map(f => `--- CONTENT FROM FILE: ${f.name} ---\n${sanitizePromptInput(f.content, { maxLength: 20000 })}`).join('\n\n')
             : '';
 
         const competitors = [competitorsList, competitorsFileContent].filter(Boolean).join('\n\n') || "Provided context";
 
-        const exampleInstruction = config.exampleContent?.trim()
+        const exampleInstruction = sanitizedConfig.exampleContent?.trim()
             ? `
 ### REFERENCE STYLE & STRUCTURE
 The user has provided an example of a high-quality text. Mimic the writing style, paragraph length, tone, and how keywords are naturally woven into the text.
 
 **Example Text:**
 """
-${config.exampleContent}
+${sanitizedConfig.exampleContent}
 """`
             : "";
 
@@ -1454,22 +1471,22 @@ ${config.exampleContent}
         }
 
         // Language for content generation
-        const contentLanguage = config.language || 'Русский';
+        const contentLanguage = sanitizedConfig.language || 'Русский';
 
         const replacements = {
-            '{{targetUrl}}': config.targetUrl || '',
-            '{{topic}}': config.topic || '',
-            '{{websiteName}}': config.websiteName || DEFAULT_SITE_NAME,
-            '{{targetCountry}}': config.targetCountry || 'Global',
+            '{{targetUrl}}': sanitizedConfig.targetUrl || '',
+            '{{topic}}': sanitizedConfig.topic || '',
+            '{{websiteName}}': sanitizedConfig.websiteName || DEFAULT_SITE_NAME,
+            '{{targetCountry}}': sanitizedConfig.targetCountry || 'Global',
             '{{language}}': contentLanguage,
-            '{{tone}}': config.tone || 'Professional',
-            '{{style}}': config.style || 'Informative',
-            '{{minChars}}': config.minChars || 2500,
-            '{{maxChars}}': config.maxChars || 5000,
-            '{{minParas}}': config.minParas || 3,
-            '{{maxParas}}': config.maxParas || 12,
+            '{{tone}}': sanitizedConfig.tone || 'Professional',
+            '{{style}}': sanitizedConfig.style || 'Informative',
+            '{{minChars}}': sanitizedConfig.minChars || 2500,
+            '{{maxChars}}': sanitizedConfig.maxChars || 5000,
+            '{{minParas}}': sanitizedConfig.minParas || 3,
+            '{{maxParas}}': sanitizedConfig.maxParas || 12,
             '{{mainKeywords}}': mainKeywords,
-            '{{lsiKeywords}}': config.lsiKeywords || '',
+            '{{lsiKeywords}}': sanitizedConfig.lsiKeywords || '',
             '{{topKeywords}}': topKeywords,
             '{{competitors}}': competitors,
             '{{exampleInstruction}}': exampleInstruction
@@ -1488,7 +1505,7 @@ ${config.exampleContent}
 
             // CRITICAL FIX: Чётко отделяем ТЕМУ от ИНСТРУКЦИЙ
             // Модель должна писать о теме пользователя, а не о GEO как концепции
-            const topic = config.topic || 'the requested topic';
+            const topic = sanitizedConfig.topic || 'the requested topic';
             
             userMessageContent = `🔴 MAIN TASK: Write a detailed article about the following topic.
 
@@ -1591,7 +1608,7 @@ Return a valid JSON object:
         // System message also depends on mode
         const systemMessage = isGeoMode
             ? `You are a professional content writer. Your task is to write an article about the USER'S TOPIC using structured formatting. You are NOT writing about GEO methodology - GEO is just your writing style. Focus 100% on the user's topic. IMPORTANT: Write the entire article in ${contentLanguage}. Output strictly valid JSON.`
-            : `You are an advanced SEO AI. You write content for ${config.targetCountry || 'Global'}. IMPORTANT: Write the entire article in ${contentLanguage}. You always output strictly valid JSON.`;
+            : `You are an advanced SEO AI. You write content for ${sanitizedConfig.targetCountry || 'Global'}. IMPORTANT: Write the entire article in ${contentLanguage}. You always output strictly valid JSON.`;
 
         console.log('>>> SENDING TO LLM:', {
             mode: isGeoMode ? 'GEO' : 'SEO',
@@ -1606,37 +1623,37 @@ Return a valid JSON object:
         // Используем двухъядерный подход для GEO режима:
         // - Writer (Gemini/GPT) генерирует article + seo
         // - Visualizer (Claude) генерирует visuals (mermaid + svg)
-        const useMultimodal = isGeoMode && config.useMultimodalGeo !== false;
+        const useMultimodal = isGeoMode && sanitizedConfig.useMultimodalGeo !== false;
 
         if (useMultimodal) {
             console.log('>>> STRICT JSON GEO MODE ACTIVATED');
 
             // Определяем модели
-            const writerModel = config.writerModel || config.model || 'gemini-3.0';
-            const visualizerModel = config.visualizerModel || 'claude-sonnet-4.5';
+            const writerModel = sanitizedConfig.writerModel || sanitizedConfig.model || 'gemini-3.0';
+            const visualizerModel = sanitizedConfig.visualizerModel || 'claude-sonnet-4.5';
 
             // Формируем контекст для Writer
             const writerContext = `
 Keywords: ${mainKeywords}
-LSI Keywords: ${config.lsiKeywords || 'N/A'}
+LSI Keywords: ${sanitizedConfig.lsiKeywords || 'N/A'}
 Top Keywords: ${topKeywords}
-Target Country: ${config.targetCountry || 'Global'}
-Tone: ${config.tone || 'Professional'}
-Style: ${config.style || 'Informative'}
-Min/Max Chars: ${config.minChars || 2500} - ${config.maxChars || 5000}
+Target Country: ${sanitizedConfig.targetCountry || 'Global'}
+Tone: ${sanitizedConfig.tone || 'Professional'}
+Style: ${sanitizedConfig.style || 'Informative'}
+Min/Max Chars: ${sanitizedConfig.minChars || 2500} - ${sanitizedConfig.maxChars || 5000}
 Competitors Context: ${competitors}
 ${exampleInstruction}
             `.trim();
 
             try {
                 const geoResult = await generateGeoContent({
-                    topic: config.topic,
+                    topic: sanitizedConfig.topic,
                     writerModel,
                     visualizerModel,
                     writerContext,
                     language: contentLanguage,
                     apiKey,
-                    siteName: config.websiteName
+                    siteName: sanitizedConfig.websiteName
                 });
 
                 // Собираем body из sections для legacy поля content
@@ -1685,34 +1702,34 @@ ${exampleInstruction}
                 // Fallback к обычной генерации
                 const legacyResult = await fallbackSingleModelGeneration({
                     apiKey,
-                    model: config.model,
+                    model: sanitizedConfig.model,
                     systemMessage,
                     userMessageContent,
                     temperature,
-                    websiteName: config.websiteName,
-                    topic: config.topic,
+                    websiteName: sanitizedConfig.websiteName,
+                    topic: sanitizedConfig.topic,
                     isGeoMode
                 });
                 // Конвертируем legacy в новый structured формат
-                result = convertLegacyToNewStructure(legacyResult, config.topic);
+                result = convertLegacyToNewStructure(legacyResult, sanitizedConfig.topic);
             }
 
         } else {
             // ==================== STANDARD SINGLE-MODEL GENERATION ====================
             const legacyResult = await fallbackSingleModelGeneration({
                 apiKey,
-                model: config.model,
+                model: sanitizedConfig.model,
                 systemMessage,
                 userMessageContent,
                 temperature,
-                websiteName: config.websiteName,
-                topic: config.topic,
+                websiteName: sanitizedConfig.websiteName,
+                topic: sanitizedConfig.topic,
                 isGeoMode
             });
 
             // Для GEO режима конвертируем в новый формат
             if (isGeoMode) {
-                result = convertLegacyToNewStructure(legacyResult, config.topic);
+                result = convertLegacyToNewStructure(legacyResult, sanitizedConfig.topic);
             } else {
                 // SEO режим - возвращаем legacy формат + добавляем пустые структурные поля
                 result = {
@@ -1954,18 +1971,29 @@ router.post('/optimize', validate(optimizeRelevanceSchema), async (req, res) => 
 
         const { content, missingKeywords, config } = req.body;
 
+        // Sanitize inputs for this route
+        const sanitizedContent = sanitizePromptInput(content, { maxLength: 50000 });
+        const sanitizedMissingKeywords = missingKeywords.map(k => sanitizePromptInput(k, { maxLength: 200 }));
+        const sanitizedOptConfig = {
+            ...config,
+            websiteName: config.websiteName ? sanitizePromptInput(config.websiteName, { maxLength: 200 }) : DEFAULT_SITE_NAME,
+            targetCountry: config.targetCountry ? sanitizePromptInput(config.targetCountry, { maxLength: 100 }) : 'Global',
+            tone: config.tone ? sanitizePromptInput(config.tone, { maxLength: 50 }) : 'Professional',
+            style: config.style ? sanitizePromptInput(config.style, { maxLength: 50 }) : 'Informative'
+        };
+
         const apiKey = await getApiKey();
-        const missingStr = missingKeywords.join(', ');
+        const missingStr = sanitizedMissingKeywords.join(', ');
 
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
-            headers: getHeaders(apiKey, config.websiteName || DEFAULT_SITE_NAME),
+            headers: getHeaders(apiKey, sanitizedOptConfig.websiteName),
             body: JSON.stringify({
-                model: config.model,
+                model: config.model, // Model ID doesn't need sanitization
                 messages: [
                     {
                         role: "system",
-                        content: `You are an expert SEO Editor for ${config.targetCountry || 'Global'}. Your goal is to increase the relevance of the text by naturally integrating specific keywords. You must prioritize readability and natural flow over keyword density.`
+                        content: `You are an expert SEO Editor for ${sanitizedOptConfig.targetCountry}. Your goal is to increase the relevance of the text by naturally integrating specific keywords. You must prioritize readability and natural flow over keyword density.`
                     },
                     {
                         role: "user",
@@ -1976,12 +2004,12 @@ CRITICAL ANTI-SPAM INSTRUCTIONS:
 1. **Natural Integration Only:** Only insert keywords where they fit grammatically and logically. If a keyword cannot be added naturally, SKIP IT.
 2. **Avoid Stuffing:** Do not force keywords into every paragraph. The text must remain human-like.
 3. **Maintenance:** Strictly maintain the original Markdown structure, headings, and length.
-4. **Tone:** Keep the ${config.tone || 'Professional'} tone and ${config.style || 'Informative'} style.
+4. **Tone:** Keep the ${sanitizedOptConfig.tone} tone and ${sanitizedOptConfig.style} style.
 5. **Constraint:** Do not increase the overall word count significantly.
 
 Original Text:
 """
-${content}
+${sanitizedContent}
 """`
                     }
                 ],

@@ -4,6 +4,7 @@ import { validateTelegramAuth as auth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { updateSettingsSchema } from '../schemas/index.js';
 import { cacheGet, cacheSet, cacheDel, CACHE_KEYS } from '../utils/cache.js';
+import { encrypt, decrypt } from '../utils/encryption.js';
 
 const router = express.Router();
 
@@ -41,7 +42,8 @@ router.get('/', auth, async (req, res) => {
             }
 
             settings = {
-                openRouterApiKey: dbSettings.openRouterApiKey || '',
+                // Decrypt API key when reading
+                openRouterApiKey: decrypt(dbSettings.openRouterApiKey) || '',
                 seoPrompt: dbSettings.seoPrompt || '',
                 geoPrompt: dbSettings.geoPrompt || '',
                 telegramLink: dbSettings.telegramLink || 'https://t.me/bankkz_admin',
@@ -84,7 +86,8 @@ router.put('/', auth, validate(updateSettingsSchema), async (req, res) => {
 
         // Build update data (only provided fields)
         const updateData = {};
-        if (openRouterApiKey !== undefined) updateData.openRouterApiKey = openRouterApiKey;
+        // Encrypt API key before storing
+        if (openRouterApiKey !== undefined) updateData.openRouterApiKey = encrypt(openRouterApiKey);
         if (seoPrompt !== undefined) updateData.seoPrompt = seoPrompt;
         if (geoPrompt !== undefined) updateData.geoPrompt = geoPrompt;
         if (telegramLink !== undefined) updateData.telegramLink = telegramLink;
@@ -104,7 +107,8 @@ router.put('/', auth, validate(updateSettingsSchema), async (req, res) => {
 
         res.json({
             settings: {
-                openRouterApiKey: settings.openRouterApiKey || '',
+                // Decrypt API key for response
+                openRouterApiKey: decrypt(settings.openRouterApiKey) || '',
                 seoPrompt: settings.seoPrompt || '',
                 geoPrompt: settings.geoPrompt || '',
                 telegramLink: settings.telegramLink || '',
