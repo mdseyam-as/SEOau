@@ -2,13 +2,23 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Копируем файлы зависимостей
+# Устанавливаем OpenSSL для Prisma
+RUN apk add --no-cache openssl
+
+# Копируем package.json
 COPY package*.json ./
 
-# Устанавливаем зависимости с verbose логами
-RUN npm ci --only=production --loglevel verbose
+# Копируем Prisma схему из корня проекта
+# (при сборке из корня с context: .)
+COPY prisma ../prisma/
 
-# Копируем исходный код
+# Устанавливаем зависимости
+RUN npm ci
+
+# Генерируем Prisma Client
+RUN npx prisma generate --schema=../prisma/schema.prisma
+
+# Копируем исходный код backend
 COPY . .
 
 # Открываем порт

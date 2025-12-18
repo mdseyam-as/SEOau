@@ -1,36 +1,63 @@
-# Миграция на PostgreSQL (Supabase)
+# Миграция на PostgreSQL (Supabase) + Timeweb Cloud
 
 ## 1. Настройка Supabase
 
 1. Создай проект на [supabase.com](https://supabase.com)
-2. Скопируй `DATABASE_URL` из Settings → Database → Connection string (URI)
-3. Добавь в `.env`:
+2. Перейди в Settings → Database → Connection string
+3. Скопируй URI (Transaction pooler для serverless)
+
+```
+postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true
+```
+
+## 2. Настройка переменных окружения
+
+Добавь в Timeweb Cloud (или `.env`):
 
 ```env
-DATABASE_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres"
+DATABASE_URL="postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
 ```
 
-## 2. Установка зависимостей
+## 3. Локальная разработка
 
 ```bash
-npm install @prisma/client
-npm install -D prisma
-```
+# Установи зависимости
+npm install
 
-## 3. Инициализация базы данных
-
-```bash
-# Генерация Prisma Client
+# Сгенерируй Prisma Client
 npm run db:generate
 
-# Применение схемы к базе данных
+# Примени схему к базе данных
 npm run db:push
 
-# Заполнение начальными данными (планы, настройки)
+# Заполни начальными данными (планы, настройки)
 npm run db:seed
+
+# Запусти dev сервер
+cd backend && npm run dev
 ```
 
-## 4. Структура базы данных
+## 4. Деплой на Timeweb Cloud
+
+### Переменные окружения в Timeweb:
+
+| Переменная | Значение |
+|------------|----------|
+| `DATABASE_URL` | `postgresql://...` (из Supabase) |
+| `BOT_TOKEN` | Токен Telegram бота |
+| `ADMIN_TELEGRAM_IDS` | ID админов через запятую |
+| `OPENROUTER_API_KEY` | API ключ OpenRouter |
+| `NODE_ENV` | `production` |
+| `PORT` | `3000` |
+
+### Деплой:
+
+```bash
+git push origin main
+# Timeweb автоматически соберёт Docker образ
+```
+
+## 5. Структура базы данных
 
 ### Таблицы:
 
@@ -48,76 +75,40 @@ npm run db:seed
 - `History.config` - полный объект `GenerationConfig`
 - `History.result` - полный объект `SeoResult` (включая `article`, `visuals`, `faq`, `seo`)
 
-## 5. Обновление бэкенда
-
-Замени импорты mongoose на Prisma:
-
-```javascript
-// Было:
-import User from '../models/User.js';
-
-// Стало:
-import { prisma } from '../lib/prisma.js';
-
-// Было:
-const user = await User.findOne({ telegramId });
-
-// Стало:
-const user = await prisma.user.findUnique({ 
-  where: { telegramId: BigInt(telegramId) } 
-});
-```
-
-## 6. Примеры запросов
-
-### Создание пользователя:
-```javascript
-const user = await prisma.user.create({
-  data: {
-    telegramId: BigInt(telegramId),
-    username,
-    firstName,
-    planId: 'free'
-  }
-});
-```
-
-### Получение истории с проектом:
-```javascript
-const history = await prisma.history.findMany({
-  where: { projectId },
-  orderBy: { createdAt: 'desc' },
-  include: { project: true }
-});
-```
-
-### Обновление лимитов:
-```javascript
-await prisma.user.update({
-  where: { id: userId },
-  data: {
-    generationsUsed: { increment: 1 },
-    lastGenerationDate: new Date().toISOString().slice(0, 10)
-  }
-});
-```
-
-## 7. Полезные команды
+## 6. Полезные команды
 
 ```bash
 # Открыть Prisma Studio (GUI для БД)
 npm run db:studio
 
-# Создать миграцию
+# Применить схему без миграций (dev)
+npm run db:push
+
+# Создать миграцию (production)
 npm run db:migrate
 
 # Сбросить БД и пересоздать
 npx prisma migrate reset
+
+# Посмотреть данные в консоли
+npx prisma db pull
 ```
 
-## 8. Особенности
+## 7. Особенности Prisma + Supabase
 
+- Используй **Transaction pooler** (порт 6543) для serverless
+- Добавь `?pgbouncer=true` в конец DATABASE_URL
 - `telegramId` хранится как `BigInt` (Telegram ID могут быть большими)
-- JSON поля (`config`, `result`) автоматически сериализуются/десериализуются
-- Каскадное удаление: удаление User удаляет все его Projects и History
-- Индексы оптимизированы для частых запросов
+- JSON поля автоматически сериализуются/десериализуются
+
+## 8. Troubleshooting
+
+### Ошибка "Can't reach database server"
+- Проверь что IP Timeweb добавлен в Supabase (Settings → Database → Network)
+- Или включи "Allow all IPs" в Supabase
+
+### Ошибка "prepared statement already exists"
+- Добавь `?pgbouncer=true` в DATABASE_URL
+
+### BigInt serialization error
+- Все telegramId конвертируются в string перед отправкой в JSON
