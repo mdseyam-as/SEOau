@@ -4,9 +4,8 @@ import remarkGfm from 'remark-gfm';
 import mermaid from 'mermaid';
 import {
   Copy, Check, ChevronDown, ChevronUp, AlertCircle, GitBranch, ExternalLink,
-  Image, MessageCircleQuestion, Layers
+  Image, MessageCircleQuestion, Layers, Code
 } from 'lucide-react';
-import { StructuredArticle, StructuredVisuals, FaqItem, StructuredSeo } from '../types';
 
 // Initialize Mermaid
 mermaid.initialize({
@@ -43,8 +42,15 @@ const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code }) => {
   useEffect(() => {
     const renderDiagram = async () => {
       try {
+        // Clean the code
+        const cleanCode = code?.trim() || '';
+        if (!cleanCode) {
+          setError('Empty mermaid code');
+          return;
+        }
+        
         const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
-        const { svg } = await mermaid.render(id, code);
+        const { svg } = await mermaid.render(id, cleanCode);
         setSvg(svg);
         setError(null);
       } catch (err: any) {
@@ -68,11 +74,19 @@ const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code }) => {
           <AlertCircle className="w-5 h-5" />
           <span className="font-bold">Ошибка диаграммы</span>
         </div>
-        <pre className="text-xs text-red-300 font-mono overflow-x-auto">{error}</pre>
+        <pre className="text-xs text-red-300 font-mono overflow-x-auto whitespace-pre-wrap">{error}</pre>
         <details className="mt-3">
           <summary className="text-xs text-slate-400 cursor-pointer">Исходный код</summary>
-          <pre className="mt-2 text-xs text-slate-400 font-mono bg-slate-900/50 p-3 rounded-lg overflow-x-auto">{code}</pre>
+          <pre className="mt-2 text-xs text-slate-400 font-mono bg-slate-900/50 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">{code}</pre>
         </details>
+      </div>
+    );
+  }
+
+  if (!svg) {
+    return (
+      <div className="bg-slate-900/50 rounded-xl p-4 text-center text-slate-400">
+        Загрузка диаграммы...
       </div>
     );
   }
@@ -113,18 +127,17 @@ interface SvgRendererProps {
 
 const SvgRenderer: React.FC<SvgRendererProps> = ({ svg }) => {
   const [copied, setCopied] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Validate SVG
   const safeSvg = useMemo(() => {
     if (!svg || typeof svg !== 'string') return null;
-    // Basic validation - must start with <svg
-    if (!svg.trim().toLowerCase().startsWith('<svg')) {
-      setError('Некорректный SVG код');
+    const trimmed = svg.trim();
+    // Basic validation - must contain <svg
+    if (!trimmed.toLowerCase().includes('<svg')) {
+      console.warn('SvgRenderer: Invalid SVG - does not contain <svg tag');
       return null;
     }
-    setError(null);
-    return svg;
+    return trimmed;
   }, [svg]);
 
   const handleCopy = () => {
@@ -133,14 +146,11 @@ const SvgRenderer: React.FC<SvgRendererProps> = ({ svg }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (error || !safeSvg) {
+  if (!safeSvg) {
     return (
-      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
-        <div className="flex items-center gap-2 text-yellow-400 mb-2">
-          <AlertCircle className="w-5 h-5" />
-          <span className="font-bold">SVG недоступен</span>
-        </div>
-        {error && <p className="text-xs text-yellow-300">{error}</p>}
+      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 text-center">
+        <AlertCircle className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
+        <p className="text-yellow-400 text-sm">SVG инфографика недоступна</p>
       </div>
     );
   }
@@ -164,6 +174,13 @@ const SvgRenderer: React.FC<SvgRendererProps> = ({ svg }) => {
 
 // ==================== FAQ ACCORDION ====================
 
+interface FaqItem {
+  question?: string;
+  answer?: string;
+  q?: string;
+  a?: string;
+}
+
 interface FaqAccordionProps {
   items: FaqItem[];
 }
@@ -171,39 +188,86 @@ interface FaqAccordionProps {
 const FaqAccordion: React.FC<FaqAccordionProps> = ({ items }) => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  if (!items || items.length === 0) return null;
+  if (!items || !Array.isArray(items) || items.length === 0) return null;
 
   return (
     <div className="space-y-3">
-      {items.map((item, index) => (
-        <div
-          key={index}
-          className="bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-all"
-        >
-          <button
-            onClick={() => setOpenIndex(openIndex === index ? null : index)}
-            className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors"
-          >
-            <span className="font-semibold text-white text-sm sm:text-base pr-4">
-              {item.question}
-            </span>
-            {openIndex === index ? (
-              <ChevronUp className="w-5 h-5 text-brand-green flex-shrink-0" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-slate-400 flex-shrink-0" />
-            )}
-          </button>
+      {items.map((item, index) => {
+        // Support both {question, answer} and {q, a} formats
+        const question = item?.question || item?.q || `Вопрос ${index + 1}`;
+        const answer = item?.answer || item?.a || '';
+        
+        if (!answer) return null;
+
+        return (
           <div
-            className={`overflow-hidden transition-all duration-300 ${
-              openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-            }`}
+            key={index}
+            className="bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-all"
           >
-            <div className="px-4 pb-4 text-slate-300 text-sm leading-relaxed border-t border-white/5 pt-3">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.answer}</ReactMarkdown>
+            <button
+              onClick={() => setOpenIndex(openIndex === index ? null : index)}
+              className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors"
+            >
+              <span className="font-semibold text-white text-sm sm:text-base pr-4">
+                {question}
+              </span>
+              {openIndex === index ? (
+                <ChevronUp className="w-5 h-5 text-brand-green flex-shrink-0" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-slate-400 flex-shrink-0" />
+              )}
+            </button>
+            <div
+              className={`overflow-hidden transition-all duration-300 ${
+                openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="px-4 pb-4 text-slate-300 text-sm leading-relaxed border-t border-white/5 pt-3">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{answer}</ReactMarkdown>
+              </div>
             </div>
           </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ==================== DEBUG VIEW ====================
+
+interface DebugViewProps {
+  data: any;
+  title?: string;
+}
+
+const DebugView: React.FC<DebugViewProps> = ({ data, title = 'Debug Data' }) => {
+  const [copied, setCopied] = useState(false);
+  const jsonString = JSON.stringify(data, null, 2);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(jsonString);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="glass-panel rounded-xl overflow-hidden">
+      <div className="bg-amber-500/10 px-4 py-3 border-b border-amber-500/20 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Code className="w-5 h-5 text-amber-400" />
+          <span className="font-bold text-amber-400">{title}</span>
         </div>
-      ))}
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-amber-400 transition-colors"
+        >
+          {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+          {copied ? 'Скопировано' : 'Копировать'}
+        </button>
+      </div>
+      <pre className="p-4 text-xs text-slate-300 font-mono overflow-x-auto max-h-96 overflow-y-auto whitespace-pre-wrap">
+        {jsonString}
+      </pre>
     </div>
   );
 };
@@ -211,11 +275,27 @@ const FaqAccordion: React.FC<FaqAccordionProps> = ({ items }) => {
 // ==================== MAIN COMPONENT ====================
 
 export interface GeoArticleData {
-  article?: StructuredArticle | null;
-  visuals?: StructuredVisuals | null;
+  article?: {
+    h1?: string;
+    intro?: string;
+    introduction?: string;
+    sections?: any[] | string;
+    body?: string;
+    conclusion?: string;
+  } | null;
+  visuals?: {
+    mermaid?: string | null;
+    svg?: string | null;
+  } | null;
   faq?: FaqItem[];
-  seo?: StructuredSeo | null;
-  content?: string; // Legacy fallback
+  seo?: {
+    metaTitle?: string;
+    metaDescription?: string;
+    keywords?: string[];
+    schemaType?: string;
+  } | null;
+  content?: string;
+  _structured?: boolean;
 }
 
 interface GeoArticleRendererProps {
@@ -223,8 +303,20 @@ interface GeoArticleRendererProps {
 }
 
 export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) => {
-  // 1. Protection against null/undefined
+  // 1. DIAGNOSTIC LOGGING
+  console.log('🚀 GEO RENDERER RECEIVED:', data);
+  console.log('🚀 GEO RENDERER TYPE:', typeof data);
+  
+  if (data && typeof data === 'object') {
+    console.log('🚀 GEO RENDERER KEYS:', Object.keys(data));
+    console.log('🚀 GEO RENDERER article:', data.article);
+    console.log('🚀 GEO RENDERER visuals:', data.visuals);
+    console.log('🚀 GEO RENDERER faq:', data.faq);
+  }
+
+  // 2. Protection against null/undefined
   if (!data) {
+    console.warn('GeoArticleRenderer: No data provided');
     return (
       <div className="glass-panel p-6 rounded-xl text-center">
         <p className="text-slate-400">Нет данных для отображения</p>
@@ -232,8 +324,9 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
     );
   }
 
-  // 2. Legacy string format support
+  // 3. Legacy string format support
   if (typeof data === 'string') {
+    console.log('GeoArticleRenderer: Rendering as string (legacy format)');
     return (
       <div className="glass-panel rounded-xl p-6">
         <div className="prose prose-invert prose-sm sm:prose-base max-w-none">
@@ -243,26 +336,57 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
     );
   }
 
-  // 3. Destructure new JSON format
-  const { article, visuals, faq, seo } = data;
+  // 4. Destructure with safety
+  const article = data?.article;
+  const visuals = data?.visuals;
+  const faq = data?.faq;
+  const legacyContent = data?.content;
 
-  // If object came but empty or broken - show legacy content if available
+  // 5. If no article, show debug view with legacy content fallback
   if (!article) {
-    if (data.content) {
+    console.warn('GeoArticleRenderer: No article field, showing debug/fallback');
+    
+    // Try to show legacy content if available
+    if (legacyContent && typeof legacyContent === 'string') {
       return (
-        <div className="glass-panel rounded-xl p-6">
-          <div className="prose prose-invert prose-sm sm:prose-base max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.content}</ReactMarkdown>
+        <div className="space-y-4">
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
+            <p className="text-yellow-400 text-sm">⚠️ Структурированные данные недоступны, показан резервный контент</p>
+          </div>
+          <div className="glass-panel rounded-xl p-6">
+            <div className="prose prose-invert prose-sm sm:prose-base max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{legacyContent}</ReactMarkdown>
+            </div>
           </div>
         </div>
       );
     }
+
+    // Show debug view
     return (
-      <div className="glass-panel p-6 rounded-xl text-center">
-        <p className="text-red-400">Ошибка формата данных: отсутствует article</p>
+      <div className="space-y-4">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+          <p className="text-red-400 font-bold">⚠️ Получен объект без поля article</p>
+          <p className="text-slate-400 text-sm mt-1">Ниже показаны сырые данные для отладки</p>
+        </div>
+        <DebugView data={data} title="Полученные данные" />
       </div>
     );
   }
+
+  // 6. Extract article fields with fallbacks
+  const h1 = article?.h1 || 'Сгенерированная статья';
+  const intro = article?.intro || article?.introduction || '';
+  const conclusion = article?.conclusion || '';
+  
+  // 7. SMART SECTIONS HANDLING - can be array OR string
+  const sections = article?.sections;
+  const body = article?.body;
+  
+  const hasSections = Array.isArray(sections) && sections.length > 0;
+  const hasStringContent = typeof sections === 'string' || typeof body === 'string';
+
+  console.log('GeoArticleRenderer: sections type:', typeof sections, 'isArray:', Array.isArray(sections));
 
   return (
     <div className="geo-article w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -270,15 +394,15 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
       <div className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
         <div className="bg-gradient-to-r from-brand-green/20 to-brand-purple/20 px-4 sm:px-6 py-4 sm:py-5 border-b border-white/10">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white leading-tight">
-            {article.h1 || 'Без заголовка'}
+            {h1}
           </h1>
         </div>
 
         {/* Introduction */}
-        {article.intro && (
+        {intro && (
           <div className="p-4 sm:p-6 border-b border-white/5">
             <div className="prose prose-invert prose-sm sm:prose-base max-w-none prose-p:text-slate-200 prose-p:leading-relaxed">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{article.intro}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{intro}</ReactMarkdown>
             </div>
           </div>
         )}
@@ -294,38 +418,62 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
           </div>
         )}
 
-        {/* Sections */}
-        {article.sections && article.sections.length > 0 ? (
-          <div className="p-4 sm:p-6 lg:p-8 space-y-8">
-            {article.sections.map((section, index) => (
-              <div key={index} className="space-y-4">
-                <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                  <span className="w-8 h-8 bg-brand-purple/20 text-brand-purple rounded-lg flex items-center justify-center text-sm font-bold">
-                    {index + 1}
-                  </span>
-                  {section?.h2 || `Раздел ${index + 1}`}
-                </h2>
-                <div className="prose prose-invert prose-sm sm:prose-base max-w-none prose-headings:font-bold prose-headings:text-white prose-p:text-slate-300 prose-a:text-brand-green prose-strong:text-white prose-ul:text-slate-300 prose-ol:text-slate-300">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{section?.content || ''}</ReactMarkdown>
-                </div>
-                {section?.table && (
-                  <div className="overflow-x-auto -mx-4 sm:mx-0">
-                    <div className="px-4 sm:px-0 prose prose-invert prose-sm max-w-none prose-table:border-collapse prose-th:bg-white/10 prose-th:border prose-th:border-white/20 prose-th:px-3 prose-th:py-2 prose-td:border prose-td:border-white/10 prose-td:px-3 prose-td:py-2">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.table}</ReactMarkdown>
-                    </div>
+        {/* CONTENT BODY - Smart handling */}
+        <div className="p-4 sm:p-6 lg:p-8">
+          {hasSections ? (
+            // Sections as array
+            <div className="space-y-8">
+              {sections.map((section: any, index: number) => {
+                // Handle various section formats
+                const sectionH2 = section?.h2 || section?.heading || section?.title || `Раздел ${index + 1}`;
+                const sectionContent = section?.content || section?.text || section?.body || '';
+                const sectionTable = section?.table;
+
+                return (
+                  <div key={index} className="space-y-4">
+                    <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                      <span className="w-8 h-8 bg-brand-purple/20 text-brand-purple rounded-lg flex items-center justify-center text-sm font-bold">
+                        {index + 1}
+                      </span>
+                      {sectionH2}
+                    </h2>
+                    {sectionContent && (
+                      <div className="prose prose-invert prose-sm sm:prose-base max-w-none prose-headings:font-bold prose-headings:text-white prose-p:text-slate-300 prose-a:text-brand-green prose-strong:text-white prose-ul:text-slate-300 prose-ol:text-slate-300">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {typeof sectionContent === 'string' ? sectionContent : JSON.stringify(sectionContent)}
+                        </ReactMarkdown>
+                      </div>
+                    )}
+                    {sectionTable && (
+                      <div className="overflow-x-auto -mx-4 sm:mx-0">
+                        <div className="px-4 sm:px-0 prose prose-invert prose-sm max-w-none prose-table:border-collapse prose-th:bg-white/10 prose-th:border prose-th:border-white/20 prose-th:px-3 prose-th:py-2 prose-td:border prose-td:border-white/10 prose-td:px-3 prose-td:py-2">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {typeof sectionTable === 'string' ? sectionTable : ''}
+                          </ReactMarkdown>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          /* Fallback: if sections empty, show legacy content */
-          data.content && (
-            <div className="p-4 sm:p-6 lg:p-8 prose prose-invert prose-sm sm:prose-base max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.content}</ReactMarkdown>
+                );
+              })}
             </div>
-          )
-        )}
+          ) : hasStringContent ? (
+            // Sections as string or body field
+            <div className="prose prose-invert prose-sm sm:prose-base max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {typeof sections === 'string' ? sections : (body || '')}
+              </ReactMarkdown>
+            </div>
+          ) : legacyContent ? (
+            // Fallback to legacy content
+            <div className="prose prose-invert prose-sm sm:prose-base max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{legacyContent}</ReactMarkdown>
+            </div>
+          ) : (
+            // No content at all
+            <p className="text-slate-400 italic text-center">Контент секций недоступен</p>
+          )}
+        </div>
 
         {/* Mermaid Diagram */}
         {visuals?.mermaid && (
@@ -339,21 +487,21 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
         )}
 
         {/* Conclusion */}
-        {article.conclusion && (
+        {conclusion && (
           <div className="p-4 sm:p-6 bg-white/5 border-t border-white/10">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-5 h-5 text-brand-green" />
               <span className="font-bold text-white">Заключение</span>
             </div>
             <div className="prose prose-invert prose-sm sm:prose-base max-w-none prose-p:text-slate-300">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{article.conclusion}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{conclusion}</ReactMarkdown>
             </div>
           </div>
         )}
       </div>
 
       {/* FAQ Accordion */}
-      {faq && faq.length > 0 && (
+      {faq && Array.isArray(faq) && faq.length > 0 && (
         <div className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl">
           <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-4 text-white flex items-center gap-2">
             <MessageCircleQuestion className="w-5 h-5 text-amber-400" />
