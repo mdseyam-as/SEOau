@@ -270,10 +270,15 @@ export const ResultView: React.FC<ResultViewProps> = ({
     _structured: result._structured,
     hasArticle: !!result.article,
     articleH1: result.article?.h1?.substring(0, 30),
+    articleIntro: result.article?.intro?.substring(0, 50),
     sectionsCount: result.article?.sections?.length,
+    firstSectionH2: result.article?.sections?.[0]?.h2,
     hasVisuals: !!result.visuals,
+    mermaid: result.visuals?.mermaid?.substring(0, 50),
     hasFaq: result.faq?.length,
-    hasContent: !!result.content
+    hasContent: !!result.content,
+    contentLength: result.content?.length,
+    metaTitle: result.metaTitle
   });
 
   // For legacy mode: sanitize content
@@ -315,6 +320,16 @@ export const ResultView: React.FC<ResultViewProps> = ({
   };
 
   const isSpamError = result.spamScore === -1;
+
+  // Safety check - if result is invalid, show error
+  if (!result || typeof result !== 'object') {
+    console.error('>>> ResultView: Invalid result object', result);
+    return (
+      <div className="glass-panel p-6 rounded-xl text-center">
+        <p className="text-red-400">Ошибка: некорректные данные результата</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 sm:space-y-5 lg:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
