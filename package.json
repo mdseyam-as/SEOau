@@ -12,7 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate || echo 'Prisma generate skipped'"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
