@@ -29,3 +29,5 @@ dist-ssr
 !.env.example
 !.env.production
 backend/.env
+
+/generated/prisma
