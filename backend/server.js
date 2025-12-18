@@ -200,11 +200,12 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Internal server error' });
 });
 
-// Start server
-app.listen(PORT, () => {
+// Start server - bind to 0.0.0.0 for container accessibility
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`   Health check: http://localhost:${PORT}/health`);
+    console.log(`   Listening on: 0.0.0.0:${PORT}`);
 });
 
 // Graceful shutdown
