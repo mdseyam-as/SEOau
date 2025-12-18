@@ -132,11 +132,11 @@ async function checkDatabase() {
     }
 }
 
-// Initialize database connection
+// Initialize database connection (non-fatal - will retry on requests)
 checkDatabase().then(connected => {
     if (!connected) {
-        console.error('Failed to connect to database. Exiting...');
-        process.exit(1);
+        console.warn('⚠️ Database not available at startup - will retry on requests');
+        // Don't exit - let the server start and handle DB errors per-request
     }
 });
 
