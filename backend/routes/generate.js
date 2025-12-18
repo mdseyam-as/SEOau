@@ -10,6 +10,27 @@ const router = express.Router();
 const DEFAULT_SITE_URL = 'https://example.com';
 const DEFAULT_SITE_NAME = 'SeoGenerator';
 
+// ==================== MODEL MAPPING ====================
+// Маппинг моделей для мультимодальной генерации
+const MODEL_MAPPING = {
+    // Writer models (для текста)
+    'gemini-3.0': 'google/gemini-2.5-flash-preview',
+    'gpt-5.2': 'openai/gpt-4.1',
+    'grok-4.1': 'x-ai/grok-4.1',
+
+    // Visualizer model (для диаграмм и SVG)
+    'claude-sonnet-4.5': 'anthropic/claude-sonnet-4',
+
+    // Fallback/default
+    'default-writer': 'google/gemini-2.5-flash-preview',
+    'default-visualizer': 'anthropic/claude-sonnet-4'
+};
+
+// Получить реальный model ID для OpenRouter
+function getModelId(modelKey) {
+    return MODEL_MAPPING[modelKey] || modelKey;
+}
+
 // ==================== PROMPT TEMPLATES ====================
 
 const DEFAULT_PROMPT_TEMPLATE = `You are a Senior SEO Copywriter and Content Strategist for **{{websiteName}}**.
@@ -136,6 +157,299 @@ Return a valid JSON object:
   "metaDescription": "Meta description (max 160 chars)",
   "usedKeywords": ["list", "of", "keywords", "used"]
 }`;
+
+// ==================== VISUALIZER PROMPT (Claude) ====================
+
+const VISUALIZER_SYSTEM_PROMPT = `You are a Data Visualization Expert specializing in Mermaid.js diagrams and SVG infographics.
+
+Your task is to create visual assets that enhance article comprehension and engagement.
+
+OUTPUT RULES:
+1. Return ONLY valid Markdown code blocks - no explanations, no comments
+2. First block: Mermaid.js diagram
+3. Second block: SVG infographic
+
+MERMAID RULES:
+- Use \`flowchart TD\` (NOT "graph TD")
+- Node IDs: Latin letters only (A, B, C, step1)
+- Labels can be in any language
+- Use: [] rectangles, (()) circles, {} diamonds
+- Arrows: --> or -- label -->
+
+SVG RULES:
+- Responsive: use viewBox, no fixed width/height
+- Embedded text for labels
+- Clean, modern design with gradients or flat colors
+- Max complexity: 15-20 elements`;
+
+function getVisualizerUserPrompt(topic, language) {
+    return `Generate 2 visual assets for an article about "${topic}":
+
+1. **Mermaid.js Diagram**: Illustrate the main process, flow, or decision tree related to "${topic}".
+   - Use flowchart TD format
+   - 5-8 nodes maximum
+   - Labels in ${language}
+
+2. **SVG Infographic**: Create a responsive infographic (chart, icon composition, or visual summary).
+   - Use viewBox for responsiveness
+   - Include embedded text labels in ${language}
+   - Modern flat design or subtle gradients
+   - Visualize key statistics, steps, or comparisons
+
+Return ONLY the two code blocks:
+\`\`\`mermaid
+flowchart TD
+    ...
+\`\`\`
+
+\`\`\`svg
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+    ...
+</svg>
+\`\`\``;
+}
+
+// ==================== MULTIMODAL GEO ORCHESTRATOR ====================
+
+/**
+ * Мультимодальная GEO-генерация
+ * Writer (Gemini/GPT) генерирует текст
+ * Visualizer (Claude) генерирует Mermaid + SVG
+ *
+ * @param {object} params - Параметры генерации
+ * @param {string} params.topic - Тема статьи
+ * @param {string} params.writerModel - Модель для текста (gemini-3.0, gpt-5.2)
+ * @param {string} params.visualizerModel - Модель для визуализации (claude-sonnet-4.5)
+ * @param {string} params.writerPrompt - Промпт для Writer
+ * @param {string} params.systemMessage - System message для Writer
+ * @param {string} params.language - Язык контента
+ * @param {string} params.apiKey - API ключ OpenRouter
+ * @param {string} params.siteName - Название сайта для headers
+ * @returns {Promise<{content: string, visuals: object|null, writerRaw: string}>}
+ */
+async function generateGeoContent({
+    topic,
+    writerModel,
+    visualizerModel = 'claude-sonnet-4.5',
+    writerPrompt,
+    systemMessage,
+    language,
+    apiKey,
+    siteName
+}) {
+    const headers = getHeaders(apiKey, siteName);
+
+    // Запрос А: Writer (текст статьи)
+    const writerRequest = fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+            model: getModelId(writerModel),
+            messages: [
+                { role: "system", content: systemMessage },
+                { role: "user", content: writerPrompt }
+            ],
+            temperature: 0.2
+        })
+    });
+
+    // Запрос Б: Visualizer (Mermaid + SVG)
+    const visualizerRequest = fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+            model: getModelId(visualizerModel),
+            messages: [
+                { role: "system", content: VISUALIZER_SYSTEM_PROMPT },
+                { role: "user", content: getVisualizerUserPrompt(topic, language) }
+            ],
+            temperature: 0.3
+        })
+    });
+
+    console.log('>>> MULTIMODAL GEO: Starting parallel requests', {
+        writer: getModelId(writerModel),
+        visualizer: getModelId(visualizerModel),
+        topic
+    });
+
+    // Параллельный запуск с Promise.allSettled для soft fallback
+    const [writerResult, visualizerResult] = await Promise.allSettled([
+        writerRequest,
+        visualizerRequest
+    ]);
+
+    // Обработка Writer (обязательный)
+    let writerContent = '';
+    if (writerResult.status === 'fulfilled' && writerResult.value.ok) {
+        const writerData = await writerResult.value.json();
+        writerContent = writerData.choices?.[0]?.message?.content || '';
+        console.log('>>> MULTIMODAL GEO: Writer success, length:', writerContent.length);
+    } else {
+        const error = writerResult.status === 'rejected'
+            ? writerResult.reason
+            : await writerResult.value.text();
+        console.error('>>> MULTIMODAL GEO: Writer failed:', error);
+        throw new Error(`Writer model failed: ${error}`);
+    }
+
+    // Обработка Visualizer (soft fallback - необязательный)
+    let visuals = null;
+    if (visualizerResult.status === 'fulfilled' && visualizerResult.value.ok) {
+        try {
+            const visualizerData = await visualizerResult.value.json();
+            const visualizerContent = visualizerData.choices?.[0]?.message?.content || '';
+            visuals = parseVisualizerResponse(visualizerContent);
+            console.log('>>> MULTIMODAL GEO: Visualizer success', {
+                hasMermaid: !!visuals?.mermaid,
+                hasSvg: !!visuals?.svg
+            });
+        } catch (e) {
+            console.warn('>>> MULTIMODAL GEO: Visualizer parse error:', e.message);
+        }
+    } else {
+        const error = visualizerResult.status === 'rejected'
+            ? visualizerResult.reason?.message
+            : 'Request failed';
+        console.warn('>>> MULTIMODAL GEO: Visualizer soft fail:', error);
+        // Не бросаем ошибку - soft fallback
+    }
+
+    // Склейка: вставляем визуальные элементы в текст
+    const mergedContent = mergeContentWithVisuals(writerContent, visuals);
+
+    return {
+        content: mergedContent,
+        visuals,
+        writerRaw: writerContent
+    };
+}
+
+/**
+ * Парсит ответ Visualizer, извлекая Mermaid и SVG блоки
+ */
+function parseVisualizerResponse(content) {
+    if (!content) return null;
+
+    const result = { mermaid: null, svg: null };
+
+    // Извлекаем Mermaid блок
+    const mermaidMatch = content.match(/```mermaid\s*([\s\S]*?)```/i);
+    if (mermaidMatch) {
+        result.mermaid = mermaidMatch[1].trim();
+    }
+
+    // Извлекаем SVG блок
+    const svgMatch = content.match(/```(?:svg|xml)?\s*(<svg[\s\S]*?<\/svg>)\s*```/i);
+    if (svgMatch) {
+        result.svg = svgMatch[1].trim();
+    } else {
+        // Пробуем найти SVG без code block
+        const rawSvgMatch = content.match(/<svg[\s\S]*?<\/svg>/i);
+        if (rawSvgMatch) {
+            result.svg = rawSvgMatch[0].trim();
+        }
+    }
+
+    return (result.mermaid || result.svg) ? result : null;
+}
+
+/**
+ * Склеивает текст статьи с визуальными элементами
+ * Вставляет после первого H2 заголовка
+ */
+function mergeContentWithVisuals(textContent, visuals) {
+    if (!visuals || (!visuals.mermaid && !visuals.svg)) {
+        return textContent;
+    }
+
+    // Формируем блок визуализации
+    let visualBlock = '\n\n---\n\n## 📊 Визуальное представление\n\n';
+
+    if (visuals.mermaid) {
+        visualBlock += '### Диаграмма процесса\n\n```mermaid\n' + visuals.mermaid + '\n```\n\n';
+    }
+
+    if (visuals.svg) {
+        visualBlock += '### Инфографика\n\n' + visuals.svg + '\n\n';
+    }
+
+    visualBlock += '---\n\n';
+
+    // Ищем первый H2 заголовок и вставляем после него
+    const h2Match = textContent.match(/(##\s+[^\n]+\n)/);
+    if (h2Match) {
+        const insertPosition = textContent.indexOf(h2Match[0]) + h2Match[0].length;
+        // Находим конец следующего параграфа после H2
+        const afterH2 = textContent.slice(insertPosition);
+        const nextParagraphEnd = afterH2.search(/\n\n/);
+
+        if (nextParagraphEnd > 0) {
+            const finalPosition = insertPosition + nextParagraphEnd + 2;
+            return textContent.slice(0, finalPosition) + visualBlock + textContent.slice(finalPosition);
+        }
+    }
+
+    // Fallback: вставляем в конец, перед FAQ если есть
+    const faqPosition = textContent.search(/##\s+FAQ/i);
+    if (faqPosition > 0) {
+        return textContent.slice(0, faqPosition) + visualBlock + textContent.slice(faqPosition);
+    }
+
+    // Если ничего не нашли - в конец
+    return textContent + visualBlock;
+}
+
+// ==================== FALLBACK SINGLE MODEL GENERATION ====================
+
+/**
+ * Стандартная генерация одной моделью (fallback для multimodal)
+ */
+async function fallbackSingleModelGeneration({
+    apiKey,
+    model,
+    systemMessage,
+    userMessageContent,
+    temperature,
+    websiteName,
+    topic,
+    isGeoMode
+}) {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: getHeaders(apiKey, websiteName),
+        body: JSON.stringify({
+            model: model,
+            messages: [
+                { role: "system", content: systemMessage },
+                { role: "user", content: userMessageContent }
+            ],
+            temperature: temperature
+        })
+    });
+
+    if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(`OpenRouter API Error: ${errData.error?.message || response.statusText} (${response.status})`);
+    }
+
+    const data = await response.json();
+    const rawContent = data.choices?.[0]?.message?.content;
+
+    if (!rawContent) {
+        console.error('>>> GENERATION ERROR: No content in response', JSON.stringify({
+            model,
+            hasChoices: !!data.choices,
+            choicesLength: data.choices?.length,
+            finishReason: data.choices?.[0]?.finish_reason,
+            error: data.error,
+            usage: data.usage
+        }, null, 2));
+        throw new Error(`No content received from AI. Model: ${model}, Finish reason: ${data.choices?.[0]?.finish_reason || 'unknown'}`);
+    }
+
+    return safeParseAIResponse(rawContent, { topic, isGeoMode });
+}
 
 // ==================== SAFE JSON PARSER ====================
 
@@ -560,52 +874,82 @@ Return a valid JSON object:
             userMessageLength: userMessageContent.length
         });
 
-        // Call OpenRouter API
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: getHeaders(apiKey, config.websiteName),
-            body: JSON.stringify({
+        let parsedResult;
+
+        // ==================== MULTIMODAL GEO GENERATION ====================
+        // Используем двухъядерный подход для GEO режима:
+        // - Writer (Gemini/GPT) генерирует текст
+        // - Visualizer (Claude) генерирует Mermaid + SVG
+        const useMultimodal = isGeoMode && config.useMultimodalGeo !== false;
+
+        if (useMultimodal) {
+            console.log('>>> MULTIMODAL GEO MODE ACTIVATED');
+
+            // Определяем модели
+            const writerModel = config.writerModel || config.model || 'gemini-3.0';
+            const visualizerModel = config.visualizerModel || 'claude-sonnet-4.5';
+
+            try {
+                const geoResult = await generateGeoContent({
+                    topic: config.topic,
+                    writerModel,
+                    visualizerModel,
+                    writerPrompt: userMessageContent,
+                    systemMessage,
+                    language: contentLanguage,
+                    apiKey,
+                    siteName: config.websiteName
+                });
+
+                // Парсим результат Writer
+                parsedResult = safeParseAIResponse(geoResult.writerRaw, {
+                    topic: config.topic,
+                    isGeoMode: true
+                });
+
+                // Заменяем контент на merged версию с визуализациями
+                if (geoResult.visuals) {
+                    parsedResult.content = geoResult.content;
+                    parsedResult._multimodal = true;
+                    parsedResult._visuals = {
+                        hasMermaid: !!geoResult.visuals?.mermaid,
+                        hasSvg: !!geoResult.visuals?.svg
+                    };
+                }
+
+                console.log('>>> MULTIMODAL GEO: Complete', {
+                    contentLength: parsedResult.content?.length,
+                    hasVisuals: !!geoResult.visuals
+                });
+
+            } catch (multimodalError) {
+                console.error('>>> MULTIMODAL GEO: Failed, falling back to single-model', multimodalError.message);
+                // Fallback к обычной генерации
+                parsedResult = await fallbackSingleModelGeneration({
+                    apiKey,
+                    model: config.model,
+                    systemMessage,
+                    userMessageContent,
+                    temperature,
+                    websiteName: config.websiteName,
+                    topic: config.topic,
+                    isGeoMode
+                });
+            }
+
+        } else {
+            // ==================== STANDARD SINGLE-MODEL GENERATION ====================
+            parsedResult = await fallbackSingleModelGeneration({
+                apiKey,
                 model: config.model,
-                messages: [
-                    {
-                        role: "system",
-                        content: systemMessage
-                    },
-                    {
-                        role: "user",
-                        content: userMessageContent
-                    }
-                ],
-                temperature: temperature
-            })
-        });
-
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(`OpenRouter API Error: ${errData.error?.message || response.statusText} (${response.status})`);
+                systemMessage,
+                userMessageContent,
+                temperature,
+                websiteName: config.websiteName,
+                topic: config.topic,
+                isGeoMode
+            });
         }
-
-        const data = await response.json();
-        const rawContent = data.choices?.[0]?.message?.content;
-
-        if (!rawContent) {
-            // Log full response for debugging
-            console.error('>>> GENERATION ERROR: No content in response', JSON.stringify({
-                model: config.model,
-                hasChoices: !!data.choices,
-                choicesLength: data.choices?.length,
-                finishReason: data.choices?.[0]?.finish_reason,
-                error: data.error,
-                usage: data.usage
-            }, null, 2));
-            throw new Error(`No content received from AI. Model: ${config.model}, Finish reason: ${data.choices?.[0]?.finish_reason || 'unknown'}`);
-        }
-
-        // Используем надёжный парсер с очисткой и fallback
-        const parsedResult = safeParseAIResponse(rawContent, {
-            topic: config.topic,
-            isGeoMode: isGeoMode
-        });
 
         // Логируем если был использован fallback
         if (parsedResult._fallback) {
