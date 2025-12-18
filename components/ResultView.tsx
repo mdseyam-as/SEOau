@@ -434,12 +434,12 @@ export const ResultView: React.FC<ResultViewProps> = ({
           <GeoArticleRenderer data={result} />
         </ErrorBoundary>
       ) : (
-        /* ==================== LEGACY CONTENT ==================== */
+        /* ==================== SEO CONTENT WITH H1-H3 LABELS ==================== */
         <div className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
           <div className="bg-white/5 px-4 sm:px-6 py-3 sm:py-4 border-b border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 backdrop-blur-sm">
             <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white flex items-center gap-1.5 sm:gap-2">
               <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-brand-green" />
-              Готовый текст
+              SEO-текст
             </h3>
             <button
               onClick={handleCopy}
@@ -449,9 +449,39 @@ export const ResultView: React.FC<ResultViewProps> = ({
               {copied ? 'Скопировано!' : 'Копировать'}
             </button>
           </div>
-          <div className="p-4 sm:p-6 lg:p-8 prose prose-invert prose-sm sm:prose-base lg:prose-lg max-w-none prose-headings:font-bold prose-headings:text-white prose-p:text-slate-300 prose-a:text-brand-green prose-strong:text-white prose-code:text-brand-purple prose-code:bg-white/10 prose-code:px-1 prose-code:rounded prose-table:border-collapse prose-th:bg-white/10 prose-th:border prose-th:border-white/20 prose-th:px-3 prose-th:py-2 prose-td:border prose-td:border-white/10 prose-td:px-3 prose-td:py-2">
+          <div className="p-4 sm:p-6 lg:p-8 prose prose-invert prose-sm sm:prose-base lg:prose-lg max-w-none prose-p:text-slate-300 prose-a:text-brand-green prose-strong:text-white prose-code:text-brand-purple prose-code:bg-white/10 prose-code:px-1 prose-code:rounded prose-table:border-collapse prose-th:bg-white/10 prose-th:border prose-th:border-white/20 prose-th:px-3 prose-th:py-2 prose-td:border prose-td:border-white/10 prose-td:px-3 prose-td:py-2">
             {cleanContent ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{cleanContent}</ReactMarkdown>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({ children }) => (
+                    <h1 className="text-2xl sm:text-3xl font-bold text-white mt-6 mb-4 flex items-start gap-2">
+                      <span className="inline-flex items-center justify-center px-2 py-0.5 bg-brand-green/30 text-brand-green text-xs font-bold rounded shrink-0 mt-1">
+                        H1
+                      </span>
+                      <span>{children}</span>
+                    </h1>
+                  ),
+                  h2: ({ children }) => (
+                    <h2 className="text-xl sm:text-2xl font-bold text-white mt-6 mb-3 flex items-start gap-2">
+                      <span className="inline-flex items-center justify-center px-2 py-0.5 bg-purple-500/30 text-purple-300 text-xs font-bold rounded shrink-0 mt-0.5">
+                        H2
+                      </span>
+                      <span>{children}</span>
+                    </h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="text-lg sm:text-xl font-bold text-white mt-5 mb-2 flex items-start gap-2">
+                      <span className="inline-flex items-center justify-center px-2 py-0.5 bg-cyan-500/30 text-cyan-300 text-xs font-bold rounded shrink-0 mt-0.5">
+                        H3
+                      </span>
+                      <span>{children}</span>
+                    </h3>
+                  ),
+                }}
+              >
+                {cleanContent}
+              </ReactMarkdown>
             ) : (
               <p className="text-slate-400 italic">Контент недоступен</p>
             )}

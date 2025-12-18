@@ -14,7 +14,8 @@
       "Bash(del \"C:\\Users\\Александр\\Desktop\\SEOau\\backend\\routes\\generate-image.js\")",
       "Bash(del \"C:\\Users\\Александр\\Desktop\\SEOau\\components\\InfographicGenerator.tsx\")",
       "Bash(del \"C:\\Users\\Александр\\Desktop\\SEOau\\components\\CoverGenerator.tsx\")",
-      "Bash(node --check:*)"
+      "Bash(node --check:*)",
+      "Bash(npm audit:*)"
     ],
     "deny": [],
     "ask": []
