@@ -672,7 +672,9 @@ function validateGeoStructure(parsed, topic) {
             metaDescription: parsed.seo?.metaDescription || parsed.seo?.description || '',
             keywords: Array.isArray(parsed.seo?.keywords) ? parsed.seo.keywords : [],
             schemaType: parsed.seo?.schemaType || 'Article'
-        }
+        },
+        // CRITICAL: Mark as successfully parsed to prevent fallback warning
+        _parsed: true
     };
 }
 
