@@ -319,9 +319,11 @@ function parseStructuredWriterResponse(rawText, topic) {
     // Попытка парсинга JSON
     try {
         const parsed = JSON.parse(cleanText);
+        console.log('>>> JSON parsed successfully, keys:', Object.keys(parsed));
 
         if (parsed.article && typeof parsed.article === 'object') {
             // Успешный парсинг структурированного ответа
+            console.log('>>> STRICT JSON GEO: Complete');
             return {
                 article: {
                     h1: parsed.article.h1 || topic,
@@ -341,8 +343,12 @@ function parseStructuredWriterResponse(rawText, topic) {
 
         // Fallback: старый формат с content
         if (parsed.content) {
+            console.log('>>> Using legacy format conversion');
             return convertLegacyToStructured(parsed, topic);
         }
+
+        // JSON есть, но нет ни article ни content - пробуем извлечь что можем
+        console.log('>>> JSON parsed but no article/content field, trying to extract');
     } catch (e) {
         console.warn('parseStructuredWriterResponse: JSON parse failed:', e.message);
     }
