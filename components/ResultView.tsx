@@ -403,12 +403,25 @@ export const ResultView: React.FC<ResultViewProps> = ({
       {/* ==================== STRUCTURED GEO CONTENT ==================== */}
       {isStructured && result.article ? (
         <ErrorBoundary
-          fallback={
+          fallbackRender={(error, errorInfo) => (
             <div className="glass-panel p-6 rounded-xl">
               <div className="text-center mb-4">
                 <AlertCircle className="w-12 h-12 text-yellow-400 mx-auto mb-2" />
                 <p className="text-yellow-400 font-bold">Ошибка рендеринга структурированного контента</p>
-                <p className="text-slate-400 text-sm mt-1">Показываем резервный вариант</p>
+
+                {/* Вывод реальной ошибки */}
+                <div className="mt-3 p-3 bg-red-900/30 rounded-lg border border-red-500/30 text-left overflow-auto max-h-48">
+                  <p className="text-red-400 font-mono text-xs break-all">
+                    {error?.toString() || "Неизвестная ошибка"}
+                  </p>
+                  {errorInfo?.componentStack && (
+                    <pre className="mt-2 text-red-300/70 font-mono text-[10px] whitespace-pre-wrap">
+                      {errorInfo.componentStack}
+                    </pre>
+                  )}
+                </div>
+
+                <p className="text-slate-400 text-sm mt-3">Показываем резервный вариант</p>
               </div>
               {result.content && (
                 <div className="prose prose-invert prose-sm max-w-none">
@@ -416,7 +429,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
                 </div>
               )}
             </div>
-          }
+          )}
         >
           <GeoArticleRenderer data={result} />
         </ErrorBoundary>

@@ -4,35 +4,44 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  fallbackRender?: (error: Error | null, errorInfo: ErrorInfo | null) => ReactNode;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
 interface State {
   hasError: boolean;
   error: Error | null;
+  errorInfo: ErrorInfo | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
-    error: null
+    error: null,
+    errorInfo: null
   };
 
-  public static getDerivedStateFromError(error: Error): State {
+  public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    this.setState({ errorInfo });
     this.props.onError?.(error, errorInfo);
   }
 
   private handleRetry = () => {
-    this.setState({ hasError: false, error: null });
+    this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
   public render() {
     if (this.state.hasError) {
+      // Support render prop for custom error display
+      if (this.props.fallbackRender) {
+        return this.props.fallbackRender(this.state.error, this.state.errorInfo);
+      }
+
       if (this.props.fallback) {
         return this.props.fallback;
       }
