@@ -55,23 +55,12 @@ const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
 
 // ==================== SECURITY: Helmet.js ====================
+// CSP disabled for Telegram WebApp compatibility (iframe + inline styles/scripts)
 app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Required for Vite/React
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            imgSrc: ["'self'", "data:", "blob:", "https:"],
-            connectSrc: ["'self'", "https://openrouter.ai", "https://api.openrouter.ai", "wss:", "https:"],
-            frameSrc: ["'self'", "https://web.telegram.org", "https://oauth.telegram.org"],
-            objectSrc: ["'none'"],
-            baseUri: ["'self'"],
-            formAction: ["'self'"],
-            upgradeInsecureRequests: []
-        }
-    },
-    crossOriginEmbedderPolicy: false, // Required for some Telegram WebApp features
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: false,
     hsts: {
         maxAge: 31536000,
         includeSubDomains: true,
