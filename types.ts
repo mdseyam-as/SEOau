@@ -266,3 +266,54 @@ export interface FaqGenerationResponse {
   schema: object;
   schemaHtml: string;
 }
+
+
+// ==================== SERP ANALYSIS ====================
+
+export interface SerpCompetitor {
+  position: number;
+  domain: string;
+  title: string;
+  wordCount: number;
+  h2Count: number;
+  hasTable: boolean;
+  hasFaq: boolean;
+  strengths: string[];
+  weaknesses: string[];
+}
+
+export interface SerpAnalysis {
+  avgWordCount: number;
+  avgCharCount: number;
+  avgH2Count: number;
+  avgH3Count: number;
+  avgImagesCount: number;
+  avgTablesCount: number;
+  avgListsCount: number;
+  avgFaqCount: number;
+  keywordDensity: number;
+  topDomains: string[];
+}
+
+export interface SerpRecommendations {
+  targetWordCount: number;
+  targetCharCount: number;
+  targetH2Count: number;
+  targetH3Count: number;
+  mustHaveElements: string[];
+  suggestedH2Titles: string[];
+  keyTopics: string[];
+  lsiKeywords: string[];
+  contentGaps: string[];
+  uniqueAngle: string;
+}
+
+export interface SerpAnalysisResult {
+  success: boolean;
+  query: string;
+  searchEngine: 'google' | 'yandex';
+  analysis: SerpAnalysis;
+  competitors: SerpCompetitor[];
+  recommendations: SerpRecommendations;
+  summary: string;
+}

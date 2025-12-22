@@ -188,3 +188,13 @@ export const historyQuerySchema = z.object({
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(100).default(20)
 });
+
+
+// ==================== SERP Analyzer Schema ====================
+
+export const serpAnalyzerSchema = z.object({
+    query: z.string().min(1, 'Query is required').max(500, 'Query too long'),
+    searchEngine: z.enum(['google', 'yandex']).optional().default('google'),
+    region: z.string().max(50).optional().default('ru'),
+    count: z.number().int().min(3).max(20).optional().default(10)
+});

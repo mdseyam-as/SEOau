@@ -1,4 +1,4 @@
-import { User, SubscriptionPlan, Project, HistoryItem, GenerationConfig, SeoResult } from '../types';
+import { User, SubscriptionPlan, Project, HistoryItem, GenerationConfig, SeoResult, SerpAnalysisResult } from '../types';
 
 // Безопасно читаем переменные окружения Vite через any-каст,
 // чтобы не ломать типы в TypeScript и не требовать глобальных переменных.
@@ -206,6 +206,18 @@ class ApiService {
         return this.request('/generate/humanize', {
             method: 'POST',
             body: JSON.stringify({ content, language, intensity, model })
+        });
+    }
+
+    async serpAnalyze(
+        query: string,
+        searchEngine: 'google' | 'yandex' = 'google',
+        region: string = 'ru',
+        count: number = 10
+    ): Promise<SerpAnalysisResult> {
+        return this.request('/generate/serp-analyze', {
+            method: 'POST',
+            body: JSON.stringify({ query, searchEngine, region, count })
         });
     }
 

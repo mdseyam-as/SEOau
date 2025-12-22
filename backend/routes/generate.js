@@ -1,7 +1,7 @@
 import express from 'express';
 import { prisma } from '../lib/prisma.js';
 import { validate } from '../middleware/validate.js';
-import { generateSchema, spamCheckSchema, fixSpamSchema, optimizeRelevanceSchema, seoAuditSchema, rewriteSchema, humanizeSchema } from '../schemas/index.js';
+import { generateSchema, spamCheckSchema, fixSpamSchema, optimizeRelevanceSchema, seoAuditSchema, rewriteSchema, humanizeSchema, serpAnalyzerSchema } from '../schemas/index.js';
 import { sanitizePromptInput } from '../utils/promptSanitizer.js';
 
 const router = express.Router();
@@ -3114,6 +3114,161 @@ router.post('/humanize', validate(humanizeSchema), async (req, res) => {
     } catch (error) {
         console.error('Humanize error:', error);
         res.status(500).json({ error: error.message || 'Humanization failed' });
+    }
+});
+
+
+// ==================== SERP ANALYZER ====================
+/**
+ * POST /api/generate/serp-analyze
+ * Анализ топ-10 выдачи Google/Yandex для заданного запроса
+ * Возвращает рекомендации по длине, структуре и ключевым словам
+ */
+router.post('/serp-analyze', validate(serpAnalyzerSchema), async (req, res) => {
+    try {
+        const { query, searchEngine, region, count } = req.body;
+
+        // Get API key from settings
+        const settings = await prisma.systemSetting.findUnique({
+            where: { id: 'global' }
+        });
+
+        const apiKey = settings?.openRouterApiKey;
+        if (!apiKey) {
+            return res.status(500).json({ error: 'API key not configured' });
+        }
+
+        console.log(`>>> SERP ANALYZE: "${query}" via ${searchEngine}, region: ${region}, count: ${count}`);
+
+        // Создаем промпт для AI анализа SERP
+        const serpAnalysisPrompt = `Ты — эксперт по SEO-анализу конкурентов уровня SurferSEO и Ahrefs.
+
+### ЗАДАЧА
+Проанализируй топ-${count} результатов поисковой выдачи ${searchEngine === 'google' ? 'Google' : 'Яндекс'} по запросу: "${query}"
+Регион: ${region === 'ru' ? 'Россия' : region === 'kz' ? 'Казахстан' : region}
+
+### ЧТО НУЖНО СДЕЛАТЬ
+1. Представь, что ты видишь реальную выдачу по этому запросу
+2. На основе своих знаний о типичных сайтах в топе по подобным запросам, смоделируй анализ
+3. Дай конкретные рекомендации для создания контента, который обойдет конкурентов
+
+### ФОРМАТ ОТВЕТА (строго JSON)
+{
+  "query": "${query}",
+  "searchEngine": "${searchEngine}",
+  "analysis": {
+    "avgWordCount": <среднее количество слов в статьях топ-10>,
+    "avgCharCount": <среднее количество символов>,
+    "avgH2Count": <среднее количество заголовков H2>,
+    "avgH3Count": <среднее количество заголовков H3>,
+    "avgImagesCount": <среднее количество изображений>,
+    "avgTablesCount": <среднее количество таблиц>,
+    "avgListsCount": <среднее количество списков>,
+    "avgFaqCount": <среднее количество FAQ блоков>,
+    "keywordDensity": <средняя плотность ключевых слов в %>,
+    "topDomains": ["домен1.ru", "домен2.ru", "домен3.ru"]
+  },
+  "competitors": [
+    {
+      "position": 1,
+      "domain": "example.ru",
+      "title": "Заголовок страницы",
+      "wordCount": 5000,
+      "h2Count": 8,
+      "hasTable": true,
+      "hasFaq": true,
+      "strengths": ["Подробный контент", "Хорошая структура"],
+      "weaknesses": ["Устаревшая информация"]
+    }
+  ],
+  "recommendations": {
+    "targetWordCount": <рекомендуемое количество слов (на 20-30% больше среднего)>,
+    "targetCharCount": <рекомендуемое количество символов>,
+    "targetH2Count": <рекомендуемое количество H2>,
+    "targetH3Count": <рекомендуемое количество H3>,
+    "mustHaveElements": ["таблица сравнения", "FAQ блок", "инфографика"],
+    "suggestedH2Titles": [
+      "Предлагаемый заголовок H2 #1",
+      "Предлагаемый заголовок H2 #2",
+      "Предлагаемый заголовок H2 #3"
+    ],
+    "keyTopics": ["тема 1", "тема 2", "тема 3"],
+    "lsiKeywords": ["LSI ключ 1", "LSI ключ 2", "LSI ключ 3"],
+    "contentGaps": ["Что упускают конкуренты #1", "Что упускают конкуренты #2"],
+    "uniqueAngle": "Уникальный угол подачи материала для выделения среди конкурентов"
+  },
+  "summary": "Краткое резюме: чтобы обойти конкурентов по запросу '${query}', нужно написать статью на X слов с Y заголовками H2, добавить таблицу сравнения и FAQ блок. Ключевой фокус на..."
+}
+
+ВАЖНО:
+- Верни ТОЛЬКО валидный JSON без markdown-обертки
+- Все числа должны быть реалистичными для данной ниши
+- Рекомендации должны быть конкретными и actionable
+- Учитывай специфику региона и языка`;
+
+        const headers = {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://seo-generator.app',
+            'X-Title': 'SEO Generator - SERP Analyzer'
+        };
+
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                model: 'google/gemini-3-flash-preview',
+                messages: [
+                    {
+                        role: 'user',
+                        content: serpAnalysisPrompt
+                    }
+                ],
+                temperature: 0.3,
+                max_tokens: 4000
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('SERP Analysis API error:', errorText);
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        let analysisText = data.choices?.[0]?.message?.content || '';
+
+        // Clean up response
+        analysisText = analysisText
+            .replace(/```json\s*/gi, '')
+            .replace(/```\s*/gi, '')
+            .trim();
+
+        // Parse JSON
+        let analysis;
+        try {
+            analysis = JSON.parse(analysisText);
+        } catch (parseError) {
+            console.error('Failed to parse SERP analysis:', parseError);
+            // Try to extract JSON from response
+            const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                analysis = JSON.parse(jsonMatch[0]);
+            } else {
+                throw new Error('Invalid response format from AI');
+            }
+        }
+
+        console.log(`>>> SERP ANALYZE complete for "${query}"`);
+
+        res.json({
+            success: true,
+            ...analysis
+        });
+
+    } catch (error) {
+        console.error('SERP Analyze error:', error);
+        res.status(500).json({ error: error.message || 'SERP analysis failed' });
     }
 });
 
