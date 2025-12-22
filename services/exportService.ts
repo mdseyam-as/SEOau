@@ -6,7 +6,7 @@ export async function exportToPdf(result: SeoResult, filename: string = 'seo-con
 
     // Create HTML content for PDF
     const htmlContent = `
-        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto;">
+        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; background: white;">
             <h1 style="color: #006450; margin-bottom: 20px; font-size: 24px;">SEO Content Export</h1>
             
             ${result.metaTitle ? `
@@ -40,13 +40,23 @@ export async function exportToPdf(result: SeoResult, filename: string = 'seo-con
         </div>
     `;
 
-    // Create temporary container
+    // Create temporary container - must be visible for html2canvas
     const container = document.createElement('div');
     container.innerHTML = htmlContent;
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
-    container.style.top = '0';
+    container.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 210mm;
+        background: white;
+        z-index: -1;
+        opacity: 0;
+        pointer-events: none;
+    `;
     document.body.appendChild(container);
+
+    // Wait for DOM to render
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     // PDF options
     const opt = {
@@ -56,7 +66,8 @@ export async function exportToPdf(result: SeoResult, filename: string = 'seo-con
         html2canvas: { 
             scale: 2,
             useCORS: true,
-            letterRendering: true
+            letterRendering: true,
+            backgroundColor: '#ffffff'
         },
         jsPDF: { 
             unit: 'mm', 
