@@ -1,11 +1,11 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ==================== ПОЛЬЗОВАТЕЛИ ====================
@@ -59,6 +59,8 @@ model Plan {
   canCheckSpam           Boolean  @default(false)
   canOptimizeRelevance   Boolean  @default(false)
   canUseGeoMode          Boolean  @default(false)
+  canGenerateFaq         Boolean  @default(false)
+  canUseSocialPack       Boolean  @default(false)
   
   // Ценообразование
   priceRub               Int      @default(0)

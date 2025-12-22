@@ -7,10 +7,10 @@
     "scripts": {
         "start": "node server.js",
         "dev": "node --watch server.js",
-        "db:generate": "prisma generate --schema=../prisma/schema.prisma",
-        "db:push": "prisma db push --schema=../prisma/schema.prisma",
+        "db:generate": "prisma generate",
+        "db:push": "prisma db push",
         "db:seed": "node ../prisma/seed.js",
-        "postinstall": "prisma generate --schema=../prisma/schema.prisma || echo 'Prisma generate skipped'"
+        "postinstall": "prisma generate || echo 'Prisma generate skipped'"
     },
     "dependencies": {
         "@prisma/client": "^5.22.0",
