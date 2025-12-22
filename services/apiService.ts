@@ -235,6 +235,23 @@ class ApiService {
             body: JSON.stringify({ url, model })
         });
     }
+
+    // FAQ Generation
+    async generateFaq(params: {
+        topic?: string;
+        content?: string;
+        language?: string;
+        count?: number;
+    }): Promise<{
+        faq: Array<{ question: string; answer: string }>;
+        schema: object;
+        schemaHtml: string;
+    }> {
+        return this.request('/generate/faq', {
+            method: 'POST',
+            body: JSON.stringify(params)
+        });
+    }
 }
 
 export const apiService = new ApiService();

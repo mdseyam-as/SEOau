@@ -13,6 +13,8 @@ export interface SubscriptionPlan {
   maxKeywords?: number; // Limit rows from Excel. null or 0 means unlimited
   canCheckSpam?: boolean; // Ability to check and fix spam using Grok
   canOptimizeRelevance?: boolean; // Ability to use "Increase Relevance" feature
+  canUseGeoMode?: boolean; // Ability to use GEO mode
+  canGenerateFaq?: boolean; // Ability to generate FAQ with JSON-LD schema
 }
 
 export interface User {

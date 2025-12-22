@@ -2349,8 +2349,161 @@ function buildSeoAuditPrompt(data, url) {
 Дай конкретные рекомендации по исправлению каждой проблемы.`;
 }
 
+// ==================== FAQ GENERATION ENDPOINT ====================
 
+/**
+ * POST /api/generate/faq
+ * Генерация FAQ на основе темы или существующего контента
+ */
+router.post('/faq', async (req, res) => {
+    try {
+        const user = req.telegramUser;
+        if (!user) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
 
+        // Get user's plan
+        const dbUser = await prisma.user.findUnique({
+            where: { telegramId: BigInt(user.id) }
+        });
+
+        if (!dbUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const plan = await prisma.plan.findUnique({
+            where: { slug: dbUser.planId }
+        });
+
+        // Check if user can generate FAQ
+        if (!plan?.canGenerateFaq && dbUser.role !== 'admin') {
+            return res.status(403).json({ error: 'Генерация FAQ недоступна для вашего тарифа' });
+        }
+
+        const { topic, content, language = 'Russian', count = 5 } = req.body;
+
+        if (!topic && !content) {
+            return res.status(400).json({ error: 'Укажите тему (topic) или контент (content)' });
+        }
+
+        // Sanitize inputs
+        const sanitizedTopic = topic ? sanitizePromptInput(topic) : '';
+        const sanitizedContent = content ? sanitizePromptInput(content.substring(0, 5000)) : '';
+
+        // Get API key
+        const settings = await prisma.systemSetting.findUnique({ where: { id: 'global' } });
+        const apiKey = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
+
+        if (!apiKey) {
+            return res.status(500).json({ error: 'API key not configured' });
+        }
+
+        // Build FAQ generation prompt
+        const systemPrompt = `You are an SEO expert specializing in FAQ schema generation.
+Your task is to generate ${count} high-quality FAQ items that:
+1. Are relevant to the topic/content
+2. Answer real user questions
+3. Are optimized for Google's FAQ rich snippets
+4. Use natural, conversational language
+5. Provide valuable, accurate information
+
+CRITICAL: Write ALL questions and answers in ${language}.
+
+Output ONLY valid JSON array, no markdown:
+[
+  {"question": "Question text?", "answer": "Detailed answer text."},
+  ...
+]`;
+
+        const userPrompt = sanitizedContent 
+            ? `Generate ${count} FAQ items based on this content:\n\n${sanitizedContent}`
+            : `Generate ${count} FAQ items about: "${sanitizedTopic}"`;
+
+        console.log('>>> FAQ Generation:', { topic: sanitizedTopic?.substring(0, 50), hasContent: !!sanitizedContent, count });
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: getHeaders(apiKey, DEFAULT_SITE_NAME),
+            body: JSON.stringify({
+                model: getModelId('gemini-3.0'),
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt }
+                ],
+                temperature: 0.3,
+                response_format: { type: "json_object" }
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(`API Error: ${errData.error?.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+        const rawContent = data.choices?.[0]?.message?.content || '';
+
+        // Parse FAQ response
+        let faqItems = [];
+        try {
+            // Clean markdown wrappers
+            let cleanJson = rawContent.trim()
+                .replace(/^```json\s*/i, '')
+                .replace(/^```\s*/i, '')
+                .replace(/\s*```$/g, '')
+                .trim();
+
+            // Try to find JSON array
+            if (!cleanJson.startsWith('[')) {
+                const match = cleanJson.match(/\[[\s\S]*\]/);
+                if (match) cleanJson = match[0];
+            }
+
+            const parsed = JSON.parse(cleanJson);
+            faqItems = Array.isArray(parsed) ? parsed : (parsed.faq || parsed.items || []);
+        } catch (e) {
+            console.error('FAQ parse error:', e.message);
+            return res.status(500).json({ error: 'Failed to parse FAQ response' });
+        }
+
+        // Validate and normalize FAQ items
+        faqItems = faqItems
+            .filter(item => item.question && item.answer)
+            .map(item => ({
+                question: String(item.question).trim(),
+                answer: String(item.answer).trim()
+            }))
+            .slice(0, count);
+
+        if (faqItems.length === 0) {
+            return res.status(500).json({ error: 'No valid FAQ items generated' });
+        }
+
+        // Generate JSON-LD schema
+        const faqSchema = {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": faqItems.map(item => ({
+                "@type": "Question",
+                "name": item.question,
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": item.answer
+                }
+            }))
+        };
+
+        res.json({
+            faq: faqItems,
+            schema: faqSchema,
+            schemaHtml: `<script type="application/ld+json">\n${JSON.stringify(faqSchema, null, 2)}\n</script>`
+        });
+
+    } catch (error) {
+        console.error('FAQ generation error:', error);
+        res.status(500).json({ error: error.message || 'FAQ generation failed' });
+    }
+});
 
 
 export default router;

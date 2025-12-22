@@ -243,6 +243,22 @@ export interface SubscriptionPlan {
   canCheckSpam: boolean;
   canOptimizeRelevance: boolean;
   canUseGeoMode: boolean;
+  canGenerateFaq: boolean;
   priceRub: number;
   durationDays: number;
+}
+
+// ==================== FAQ GENERATION ====================
+
+export interface FaqGenerationRequest {
+  topic?: string;
+  content?: string;
+  language?: string;
+  count?: number;
+}
+
+export interface FaqGenerationResponse {
+  faq: FaqItem[];
+  schema: object;
+  schemaHtml: string;
 }

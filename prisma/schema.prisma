@@ -59,6 +59,7 @@ model Plan {
   canCheckSpam           Boolean  @default(false)
   canOptimizeRelevance   Boolean  @default(false)
   canUseGeoMode          Boolean  @default(false)
+  canGenerateFaq         Boolean  @default(false)
   
   // Ценообразование
   priceRub               Int      @default(0)
