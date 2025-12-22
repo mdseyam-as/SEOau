@@ -219,7 +219,7 @@ ${schemaString}
    - "article.sections[].table": Include comparison tables where relevant (Markdown format), set to null if not needed
    - "visuals.mermaid": Create a valid Mermaid.js flowchart (flowchart TD, NOT graph TD). Use Latin node IDs (A, B, C), labels in ${language}
    - "visuals.svg": Create a simple, valid SVG infographic (viewBox, no fixed dimensions, standard colors)
-   - "faq": Generate 4-5 relevant Q&A pairs about "${topic}"
+   - "faq": MANDATORY! Generate exactly 4-5 relevant Q&A pairs about "${topic}". Each item MUST have "question" and "answer" fields.
    - "seo.schemaType": Choose the most appropriate Schema.org type (FAQPage, HowTo, Article, FinancialProduct, etc.)
    - "seo.schemaLD": Generate valid JSON-LD structured data object for Schema.org (NOT as string, as actual JSON object)
 
@@ -229,7 +229,15 @@ ${schemaString}
    - Decision: C{Question} -->|Yes| D[Result]
    - NO backticks, NO code blocks - just raw mermaid code
 
-6. DO NOT include any explanations, comments, or text outside the JSON object.`;
+6. FAQ IS REQUIRED! The "faq" array MUST contain 4-5 items. Example:
+   "faq": [
+     {"question": "What is ${topic}?", "answer": "Detailed answer..."},
+     {"question": "How does ${topic} work?", "answer": "Explanation..."},
+     {"question": "Why is ${topic} important?", "answer": "Reasons..."},
+     {"question": "What are the benefits of ${topic}?", "answer": "Benefits..."}
+   ]
+
+7. DO NOT include any explanations, comments, or text outside the JSON object.`;
 }
 
 /**
@@ -956,11 +964,25 @@ async function generateGeoContent({
         svg: parsedWriter.visuals.svg || visualizerVisuals.svg
     };
 
+    // ==================== FAQ FALLBACK ====================
+    // Если FAQ пустой, генерируем его отдельно
+    let finalFaq = parsedWriter.faq;
+    if (!finalFaq || finalFaq.length === 0) {
+        console.log('>>> STRICT JSON GEO: FAQ empty, generating fallback...');
+        try {
+            finalFaq = await generateFallbackFaq(topic, language, apiKey, siteName);
+            console.log('>>> STRICT JSON GEO: Fallback FAQ generated:', finalFaq.length, 'items');
+        } catch (e) {
+            console.warn('>>> STRICT JSON GEO: Fallback FAQ failed:', e.message);
+            finalFaq = [];
+        }
+    }
+
     // ==================== РЕЗУЛЬТАТ ====================
     return {
         article: parsedWriter.article,
         visuals: finalVisuals,
-        faq: parsedWriter.faq,
+        faq: finalFaq,
         seo: parsedWriter.seo,
         _meta: {
             writerModel: modelId,
@@ -968,9 +990,65 @@ async function generateGeoContent({
             jsonMode: supportsJsonMode,
             writerVisualsUsed: !!(parsedWriter.visuals.mermaid || parsedWriter.visuals.svg),
             visualizerVisualsUsed: !!(visualizerVisuals.mermaid || visualizerVisuals.svg),
-            fallback: !parsedWriter._parsed
+            fallback: !parsedWriter._parsed,
+            faqFallback: !parsedWriter.faq || parsedWriter.faq.length === 0
         }
     };
+}
+
+/**
+ * Генерирует FAQ отдельным запросом (fallback)
+ */
+async function generateFallbackFaq(topic, language, apiKey, siteName) {
+    const headers = getHeaders(apiKey, siteName);
+    
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+            model: 'google/gemini-3-flash-preview',
+            messages: [
+                {
+                    role: "system",
+                    content: `You are an FAQ generator. Generate exactly 5 FAQ items about the given topic.
+Output ONLY a JSON array, no markdown:
+[{"question": "...", "answer": "..."}, ...]
+Write in ${language}.`
+                },
+                {
+                    role: "user",
+                    content: `Generate 5 FAQ items about: "${topic}"`
+                }
+            ],
+            temperature: 0.3,
+            max_tokens: 2000
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error('FAQ fallback request failed');
+    }
+
+    const data = await response.json();
+    const rawContent = data.choices?.[0]?.message?.content || '';
+    
+    // Parse JSON array
+    let cleanJson = rawContent.trim()
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/\s*```$/g, '')
+        .trim();
+
+    if (!cleanJson.startsWith('[')) {
+        const match = cleanJson.match(/\[[\s\S]*\]/);
+        if (match) cleanJson = match[0];
+    }
+
+    const parsed = JSON.parse(cleanJson);
+    return Array.isArray(parsed) ? parsed.map(f => ({
+        question: f.question || f.q || '',
+        answer: f.answer || f.a || ''
+    })).filter(f => f.question && f.answer) : [];
 }
 
 /**
