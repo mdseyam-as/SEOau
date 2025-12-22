@@ -1,6 +1,6 @@
 import { SeoResult } from '../types';
 
-// PDF Export using jsPDF
+// PDF Export using jsPDF with Cyrillic support
 export async function exportToPdf(result: SeoResult, filename: string = 'seo-content'): Promise<void> {
     const { jsPDF } = await import('jspdf');
 
@@ -10,13 +10,36 @@ export async function exportToPdf(result: SeoResult, filename: string = 'seo-con
         format: 'a4'
     });
 
-    // Add custom font support for Cyrillic
-    doc.setFont('helvetica');
+    // For Cyrillic support, we need to use a different approach
+    // jsPDF standard fonts don't support Cyrillic
+    // We'll use UTF-8 encoding workaround
 
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 15;
     const maxWidth = pageWidth - margin * 2;
     let yPosition = 20;
+
+    // Helper function to transliterate Cyrillic to Latin for PDF compatibility
+    // This is a fallback - ideally we'd embed a Cyrillic font
+    const cyrillicToLatin: Record<string, string> = {
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+        'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+        'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+        'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '',
+        'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+        'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo',
+        'Ж': 'Zh', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
+        'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+        'Ф': 'F', 'Х': 'H', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sch', 'Ъ': '',
+        'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya'
+    };
+
+    const transliterate = (text: string): string => {
+        return text.split('').map(char => cyrillicToLatin[char] || char).join('');
+    };
+
+    // Check if text contains Cyrillic
+    const hasCyrillic = (text: string): boolean => /[а-яёА-ЯЁ]/.test(text);
 
     // Helper to add text with word wrap
     const addText = (text: string, fontSize: number, isBold: boolean = false, color: [number, number, number] = [0, 0, 0]) => {
@@ -28,7 +51,9 @@ export async function exportToPdf(result: SeoResult, filename: string = 'seo-con
             doc.setFont('helvetica', 'normal');
         }
 
-        const lines = doc.splitTextToSize(text, maxWidth);
+        // Transliterate if contains Cyrillic (fallback for PDF)
+        const processedText = hasCyrillic(text) ? transliterate(text) : text;
+        const lines = doc.splitTextToSize(processedText, maxWidth);
 
         for (const line of lines) {
             if (yPosition > 280) {
@@ -44,6 +69,12 @@ export async function exportToPdf(result: SeoResult, filename: string = 'seo-con
     // Title
     addText('SEO Content Export', 18, true, [0, 100, 80]);
     yPosition += 5;
+
+    // Note about transliteration
+    if (hasCyrillic(result.content || '') || hasCyrillic(result.metaTitle || '')) {
+        addText('Note: Cyrillic text has been transliterated. Use DOCX export for original text.', 8, false, [128, 128, 128]);
+        yPosition += 3;
+    }
 
     // Meta Title
     if (result.metaTitle) {
@@ -86,7 +117,7 @@ export async function exportToPdf(result: SeoResult, filename: string = 'seo-con
     doc.save(`${filename}.pdf`);
 }
 
-// DOCX Export using docx library
+// DOCX Export using docx library (full Unicode/Cyrillic support)
 export async function exportToDocx(result: SeoResult, filename: string = 'seo-content'): Promise<void> {
     const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import('docx');
     const { saveAs } = await import('file-saver');
