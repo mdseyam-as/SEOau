@@ -107,12 +107,43 @@ const checkAdminRole = async (req, res, next) => {
  */
 router.post('/', validateTelegramAuth, checkAdminRole, validate(createPlanSchema), async (req, res) => {
     try {
-        const { id, ...planData } = req.body;
+        // Extract only fields that exist in Prisma schema
+        const {
+            id,
+            currency, features, price, // Ignore these - not in schema
+            name,
+            maxChars,
+            maxGenerationsPerMonth,
+            maxGenerationsPerDay,
+            maxKeywords,
+            allowedModels,
+            canCheckSpam,
+            canOptimizeRelevance,
+            canUseGeoMode,
+            canGenerateFaq,
+            priceRub,
+            durationDays,
+            isDefault,
+            isActive
+        } = req.body;
 
         const plan = await prisma.plan.create({
             data: {
-                slug: id || planData.slug,
-                ...planData
+                slug: id,
+                name: name || id,
+                maxChars: maxChars || 5000,
+                maxGenerationsPerMonth: maxGenerationsPerMonth || 0,
+                maxGenerationsPerDay: maxGenerationsPerDay || 0,
+                maxKeywords: maxKeywords || 0,
+                allowedModels: allowedModels || [],
+                canCheckSpam: canCheckSpam || false,
+                canOptimizeRelevance: canOptimizeRelevance || false,
+                canUseGeoMode: canUseGeoMode || false,
+                canGenerateFaq: canGenerateFaq || false,
+                priceRub: priceRub || 0,
+                durationDays: durationDays || 30,
+                isDefault: isDefault || false,
+                isActive: isActive !== false
             }
         });
 
@@ -138,7 +169,41 @@ router.post('/', validateTelegramAuth, checkAdminRole, validate(createPlanSchema
  */
 router.put('/:id', validateTelegramAuth, checkAdminRole, validate(updatePlanSchema), async (req, res) => {
     try {
-        const { id, slug, ...updateData } = req.body;
+        // Extract only fields that exist in Prisma schema
+        const {
+            id, slug, currency, features, price, // Ignore these - not in schema
+            name,
+            maxChars,
+            maxGenerationsPerMonth,
+            maxGenerationsPerDay,
+            maxKeywords,
+            allowedModels,
+            canCheckSpam,
+            canOptimizeRelevance,
+            canUseGeoMode,
+            canGenerateFaq,
+            priceRub,
+            durationDays,
+            isDefault,
+            isActive
+        } = req.body;
+
+        // Build update data with only valid fields
+        const updateData = {};
+        if (name !== undefined) updateData.name = name;
+        if (maxChars !== undefined) updateData.maxChars = maxChars;
+        if (maxGenerationsPerMonth !== undefined) updateData.maxGenerationsPerMonth = maxGenerationsPerMonth;
+        if (maxGenerationsPerDay !== undefined) updateData.maxGenerationsPerDay = maxGenerationsPerDay;
+        if (maxKeywords !== undefined) updateData.maxKeywords = maxKeywords;
+        if (allowedModels !== undefined) updateData.allowedModels = allowedModels;
+        if (canCheckSpam !== undefined) updateData.canCheckSpam = canCheckSpam;
+        if (canOptimizeRelevance !== undefined) updateData.canOptimizeRelevance = canOptimizeRelevance;
+        if (canUseGeoMode !== undefined) updateData.canUseGeoMode = canUseGeoMode;
+        if (canGenerateFaq !== undefined) updateData.canGenerateFaq = canGenerateFaq;
+        if (priceRub !== undefined) updateData.priceRub = priceRub;
+        if (durationDays !== undefined) updateData.durationDays = durationDays;
+        if (isDefault !== undefined) updateData.isDefault = isDefault;
+        if (isActive !== undefined) updateData.isActive = isActive;
 
         const plan = await prisma.plan.update({
             where: { slug: req.params.id },

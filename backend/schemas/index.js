@@ -110,6 +110,20 @@ export const seoAuditSchema = z.object({
     model: z.string().min(1).max(100).optional().default('google/gemini-2.0-flash-001')
 });
 
+export const rewriteSchema = z.object({
+    // Either URL to fetch content from, or direct text
+    sourceUrl: z.string().url('Invalid URL').max(2000).optional(),
+    sourceText: z.string().max(100000).optional(),
+    // Rewrite settings
+    targetLanguage: z.string().max(50).optional().default('ru'),
+    tone: z.string().max(100).optional().default('Professional'),
+    style: z.string().max(100).optional().default('Informative'),
+    preserveStructure: z.boolean().optional().default(true),
+    model: z.string().min(1).max(100).optional().default('google/gemini-2.0-flash-001')
+}).refine(data => data.sourceUrl || data.sourceText, {
+    message: 'Either sourceUrl or sourceText must be provided'
+});
+
 // ==================== Settings Schemas ====================
 
 export const updateSettingsSchema = z.object({

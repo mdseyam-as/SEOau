@@ -252,6 +252,35 @@ class ApiService {
             body: JSON.stringify(params)
         });
     }
+
+    // Rewrite/Paraphrase
+    async rewrite(params: {
+        sourceUrl?: string;
+        sourceText?: string;
+        targetLanguage?: string;
+        tone?: string;
+        style?: string;
+        preserveStructure?: boolean;
+        model?: string;
+    }): Promise<{
+        original: {
+            text: string;
+            length: number;
+            words: number;
+        };
+        rewritten: {
+            text: string;
+            length: number;
+            words: number;
+        };
+        sourceUrl: string | null;
+        user: User;
+    }> {
+        return this.request('/generate/rewrite', {
+            method: 'POST',
+            body: JSON.stringify(params)
+        });
+    }
 }
 
 export const apiService = new ApiService();

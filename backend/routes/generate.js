@@ -1,7 +1,7 @@
 import express from 'express';
 import { prisma } from '../lib/prisma.js';
 import { validate } from '../middleware/validate.js';
-import { generateSchema, spamCheckSchema, fixSpamSchema, optimizeRelevanceSchema, seoAuditSchema } from '../schemas/index.js';
+import { generateSchema, spamCheckSchema, fixSpamSchema, optimizeRelevanceSchema, seoAuditSchema, rewriteSchema } from '../schemas/index.js';
 import { sanitizePromptInput } from '../utils/promptSanitizer.js';
 
 const router = express.Router();
@@ -2504,6 +2504,229 @@ Output ONLY valid JSON array, no markdown:
         res.status(500).json({ error: error.message || 'FAQ generation failed' });
     }
 });
+
+
+// ==================== REWRITE (PARAPHRASER) ENDPOINT ====================
+
+/**
+ * POST /api/generate/rewrite
+ * Rewrite/paraphrase content from URL or text while preserving meaning
+ */
+router.post('/rewrite', validate(rewriteSchema), async (req, res) => {
+    try {
+        const telegramId = req.telegramUser.id;
+        const { sourceUrl, sourceText, targetLanguage, tone, style, preserveStructure, model } = req.body;
+
+        // Check user limits
+        const limitCheck = await checkUserLimits(telegramId);
+        if (!limitCheck.allowed) {
+            return res.status(403).json({ error: `Limit exceeded: ${limitCheck.reason}` });
+        }
+
+        let contentToRewrite = sourceText || '';
+
+        // If URL provided, fetch the content
+        if (sourceUrl && !sourceText) {
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 15000);
+
+                const pageResponse = await fetch(sourceUrl, {
+                    signal: controller.signal,
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (compatible; SEORewriteBot/1.0)',
+                        'Accept': 'text/html,application/xhtml+xml',
+                        'Accept-Language': 'ru,en;q=0.9'
+                    }
+                });
+
+                clearTimeout(timeout);
+
+                if (!pageResponse.ok) {
+                    return res.status(400).json({ error: `Не удалось загрузить страницу: HTTP ${pageResponse.status}` });
+                }
+
+                const html = await pageResponse.text();
+                contentToRewrite = extractTextFromHtml(html);
+
+                if (!contentToRewrite || contentToRewrite.length < 100) {
+                    return res.status(400).json({ error: 'Не удалось извлечь достаточно текста со страницы' });
+                }
+            } catch (e) {
+                return res.status(400).json({ error: `Ошибка загрузки страницы: ${e.message}` });
+            }
+        }
+
+        if (!contentToRewrite || contentToRewrite.trim().length < 50) {
+            return res.status(400).json({ error: 'Текст слишком короткий для рерайта (минимум 50 символов)' });
+        }
+
+        // Limit content length
+        const maxLength = 50000;
+        if (contentToRewrite.length > maxLength) {
+            contentToRewrite = contentToRewrite.substring(0, maxLength);
+        }
+
+        // Get API key
+        const apiKey = await getApiKey();
+
+        // Build rewrite prompt
+        const rewritePrompt = buildRewritePrompt(contentToRewrite, {
+            targetLanguage,
+            tone,
+            style,
+            preserveStructure
+        });
+
+        // Call OpenRouter for rewriting
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: getHeaders(apiKey, 'SEO Rewriter'),
+            body: JSON.stringify({
+                model: model || 'google/gemini-2.0-flash-001',
+                messages: [
+                    {
+                        role: "system",
+                        content: `Ты профессиональный копирайтер и рерайтер. Твоя задача — переписать текст так, чтобы он был полностью уникальным, но сохранял исходный смысл и ключевую информацию.
+
+ПРАВИЛА:
+1. Полностью перефразируй каждое предложение
+2. Используй синонимы и альтернативные конструкции
+3. Меняй порядок аргументов где это уместно
+4. Сохраняй все факты и цифры
+5. ${preserveStructure ? 'Сохраняй структуру заголовков (H1, H2, H3)' : 'Можешь изменить структуру для лучшей читаемости'}
+6. Избегай плагиата — текст должен быть 100% уникальным
+7. Используй Markdown для форматирования
+8. Тон: ${tone}
+9. Стиль: ${style}
+10. Язык результата: ${targetLanguage === 'ru' ? 'Русский' : targetLanguage === 'en' ? 'English' : targetLanguage}`
+                    },
+                    {
+                        role: "user",
+                        content: rewritePrompt
+                    }
+                ],
+                temperature: 0.7,
+                max_tokens: 8000
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error?.message || 'Rewrite API failed');
+        }
+
+        const aiData = await response.json();
+        const rewrittenContent = aiData.choices?.[0]?.message?.content || '';
+
+        if (!rewrittenContent || rewrittenContent.length < 50) {
+            throw new Error('Не удалось переписать текст');
+        }
+
+        // Increment usage
+        const updatedUser = await incrementUsage(limitCheck.user);
+
+        // Calculate basic stats
+        const originalWords = contentToRewrite.split(/\s+/).length;
+        const rewrittenWords = rewrittenContent.split(/\s+/).length;
+
+        res.json({
+            original: {
+                text: contentToRewrite.substring(0, 500) + (contentToRewrite.length > 500 ? '...' : ''),
+                length: contentToRewrite.length,
+                words: originalWords
+            },
+            rewritten: {
+                text: rewrittenContent,
+                length: rewrittenContent.length,
+                words: rewrittenWords
+            },
+            sourceUrl: sourceUrl || null,
+            user: updatedUser
+        });
+
+    } catch (error) {
+        console.error('Rewrite error:', error);
+        res.status(500).json({ error: error.message || 'Rewrite failed' });
+    }
+});
+
+/**
+ * Extract main text content from HTML
+ */
+function extractTextFromHtml(html) {
+    // Remove scripts, styles, and other non-content elements
+    let text = html
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
+        .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '')
+        .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
+        .replace(/<aside[^>]*>[\s\S]*?<\/aside>/gi, '')
+        .replace(/<!--[\s\S]*?-->/g, '');
+
+    // Try to find main content area
+    const mainMatch = text.match(/<main[^>]*>([\s\S]*?)<\/main>/i) ||
+                      text.match(/<article[^>]*>([\s\S]*?)<\/article>/i) ||
+                      text.match(/<div[^>]*class="[^"]*content[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+
+    if (mainMatch) {
+        text = mainMatch[1];
+    }
+
+    // Convert headings to markdown
+    text = text
+        .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '\n# $1\n')
+        .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '\n## $1\n')
+        .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '\n### $1\n')
+        .replace(/<h4[^>]*>(.*?)<\/h4>/gi, '\n#### $1\n')
+        .replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n')
+        .replace(/<p[^>]*>(.*?)<\/p>/gi, '\n$1\n')
+        .replace(/<br\s*\/?>/gi, '\n');
+
+    // Remove remaining HTML tags
+    text = text.replace(/<[^>]+>/g, ' ');
+
+    // Clean up whitespace
+    text = text
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/\s+/g, ' ')
+        .replace(/\n\s*\n/g, '\n\n')
+        .trim();
+
+    return text;
+}
+
+/**
+ * Build rewrite prompt
+ */
+function buildRewritePrompt(content, options) {
+    const { targetLanguage, tone, style, preserveStructure } = options;
+
+    return `Перепиши следующий текст, сделав его полностью уникальным:
+
+## Исходный текст:
+${content}
+
+## Требования:
+- Язык результата: ${targetLanguage === 'ru' ? 'Русский' : targetLanguage === 'en' ? 'English' : targetLanguage}
+- Тон: ${tone}
+- Стиль: ${style}
+- Структура: ${preserveStructure ? 'Сохранить заголовки и разделы' : 'Можно изменить'}
+
+## Важно:
+1. Каждое предложение должно быть переформулировано
+2. Сохрани все ключевые факты и данные
+3. Используй Markdown форматирование
+4. Результат должен быть готов к публикации
+
+Перепиши текст:`;
+}
 
 
 export default router;

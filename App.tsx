@@ -10,12 +10,13 @@ import { ProjectList } from './components/ProjectList';
 import { HistoryList } from './components/HistoryList';
 import { calculateSeoMetrics } from './services/geminiService';
 import { GenerationConfig, KeywordRow, SeoResult, AIModel, Project, TextTone, TextStyle, GenerationMode, ContentLanguage } from './types';
-import { LayoutDashboard, LogOut, ShieldCheck, Clock, Lock, ExternalLink, ChevronRight, Home, History, Sparkles, Zap, Search } from 'lucide-react';
+import { LayoutDashboard, LogOut, ShieldCheck, Clock, Lock, ExternalLink, ChevronRight, Home, History, Sparkles, Zap, Search, RefreshCw } from 'lucide-react';
 import { User, authService, SubscriptionPlan } from './services/authService';
 import { projectService } from './services/projectService';
 import { apiService } from './services/apiService';
 import { projectConfigService } from './services/projectConfigService';
 import { SeoAuditor } from './components/SeoAuditor';
+import { RewriteMode } from './components/RewriteMode';
 import { useToast } from './components/Toast';
 import { ResultSkeleton } from './components/Skeleton';
 import { GenerationProgress } from './components/GenerationProgress';
@@ -47,7 +48,7 @@ export default function App() {
   // Project State
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
-  const [projectTab, setProjectTab] = useState<'generator' | 'history' | 'audit'>('generator');
+  const [projectTab, setProjectTab] = useState<'generator' | 'history' | 'audit' | 'rewrite'>('generator');
   const [projectHistory, setProjectHistory] = useState<any[]>([]);
 
   // Generator State
@@ -406,6 +407,12 @@ export default function App() {
               <Search className="w-4 h-4" /> <span className="hidden sm:inline">Аудит</span>
             </button>
             <button
+              onClick={() => setProjectTab('rewrite')}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'rewrite' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <RefreshCw className="w-4 h-4" /> <span className="hidden sm:inline">Рерайт</span>
+            </button>
+            <button
               onClick={() => setProjectTab('history')}
               className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'history' ? 'bg-white text-brand-green shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
@@ -418,6 +425,8 @@ export default function App() {
           <HistoryList history={projectHistory} onDelete={handleDeleteHistoryItem} />
         ) : projectTab === 'audit' ? (
           <SeoAuditor onUserUpdate={setUser} />
+        ) : projectTab === 'rewrite' ? (
+          <RewriteMode onUserUpdate={setUser} />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 lg:gap-6 animate-in fade-in slide-in-from-bottom-2">
             {/* Left Sidebar: Inputs */}
