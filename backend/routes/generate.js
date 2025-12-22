@@ -1,7 +1,7 @@
 import express from 'express';
 import { prisma } from '../lib/prisma.js';
 import { validate } from '../middleware/validate.js';
-import { generateSchema, spamCheckSchema, fixSpamSchema, optimizeRelevanceSchema } from '../schemas/index.js';
+import { generateSchema, spamCheckSchema, fixSpamSchema, optimizeRelevanceSchema, seoAuditSchema } from '../schemas/index.js';
 import { sanitizePromptInput } from '../utils/promptSanitizer.js';
 
 const router = express.Router();
@@ -2045,6 +2045,309 @@ ${sanitizedContent}
 });
 
 
+/**
+ * POST /api/generate/seo-audit
+ * Analyze a URL for SEO issues and provide recommendations
+ */
+router.post('/seo-audit', validate(seoAuditSchema), async (req, res) => {
+    try {
+        const telegramId = req.telegramUser.id;
+        const { url, model } = req.body;
+
+        // Check user limits
+        const limitCheck = await checkUserLimits(telegramId);
+        if (!limitCheck.allowed) {
+            return res.status(403).json({ error: `Limit exceeded: ${limitCheck.reason}` });
+        }
+
+        // Fetch the page HTML
+        let pageHtml = '';
+        let fetchError = null;
+
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+
+            const pageResponse = await fetch(url, {
+                signal: controller.signal,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (compatible; SEOAuditBot/1.0)',
+                    'Accept': 'text/html,application/xhtml+xml',
+                    'Accept-Language': 'ru,en;q=0.9'
+                }
+            });
+
+            clearTimeout(timeout);
+
+            if (!pageResponse.ok) {
+                fetchError = `HTTP ${pageResponse.status}`;
+            } else {
+                pageHtml = await pageResponse.text();
+            }
+        } catch (e) {
+            fetchError = e.message || 'Failed to fetch page';
+        }
+
+        if (fetchError) {
+            return res.status(400).json({ error: `Не удалось загрузить страницу: ${fetchError}` });
+        }
+
+        // Extract key SEO elements from HTML
+        const extractedData = extractSeoData(pageHtml, url);
+
+        // Get API key
+        const apiKey = await getApiKey();
+        const settings = await prisma.systemSetting.findUnique({
+            where: { id: 'global' }
+        });
+
+        // Prepare AI analysis prompt
+        const analysisPrompt = buildSeoAuditPrompt(extractedData, url);
+
+        // Call OpenRouter for analysis
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: getHeaders(apiKey, 'SEO Audit'),
+            body: JSON.stringify({
+                model: model || 'google/gemini-2.0-flash-001',
+                messages: [
+                    {
+                        role: "system",
+                        content: `Ты опытный SEO-специалист и технический аудитор. Анализируй страницы на соответствие лучшим практикам SEO.
+Отвечай ТОЛЬКО на русском языке. Давай конкретные, практичные рекомендации.
+Используй следующий JSON формат для ответа:
+{
+  "score": число от 0 до 100,
+  "summary": "краткое резюме аудита",
+  "issues": [
+    {
+      "severity": "critical" | "warning" | "info",
+      "category": "meta" | "content" | "technical" | "schema" | "mobile" | "performance",
+      "title": "название проблемы",
+      "description": "описание проблемы",
+      "recommendation": "как исправить"
+    }
+  ],
+  "positives": ["список положительных моментов"]
+}`
+                    },
+                    {
+                        role: "user",
+                        content: analysisPrompt
+                    }
+                ],
+                temperature: 0.3,
+                response_format: { type: "json_object" }
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error?.message || 'AI analysis failed');
+        }
+
+        const aiData = await response.json();
+        const analysisText = aiData.choices?.[0]?.message?.content || '{}';
+
+        let analysis;
+        try {
+            analysis = JSON.parse(analysisText);
+        } catch (e) {
+            analysis = {
+                score: 50,
+                summary: 'Не удалось распарсить анализ',
+                issues: [],
+                positives: []
+            };
+        }
+
+        // Increment usage
+        const updatedUser = await incrementUsage(limitCheck.user);
+
+        res.json({
+            url,
+            extracted: extractedData,
+            analysis,
+            user: updatedUser
+        });
+
+    } catch (error) {
+        console.error('SEO Audit error:', error);
+        res.status(500).json({ error: error.message || 'Audit failed' });
+    }
+});
+
+/**
+ * Extract SEO data from HTML
+ */
+function extractSeoData(html, url) {
+    const data = {
+        title: '',
+        titleLength: 0,
+        metaDescription: '',
+        metaDescriptionLength: 0,
+        h1: [],
+        h2: [],
+        h3: [],
+        images: { total: 0, withoutAlt: 0 },
+        links: { internal: 0, external: 0, nofollow: 0 },
+        canonical: '',
+        robots: '',
+        ogTags: {},
+        schemaOrg: false,
+        viewport: false,
+        contentLength: 0
+    };
+
+    try {
+        // Extract title
+        const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+        if (titleMatch) {
+            data.title = titleMatch[1].trim();
+            data.titleLength = data.title.length;
+        }
+
+        // Extract meta description
+        const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) ||
+                         html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
+        if (descMatch) {
+            data.metaDescription = descMatch[1].trim();
+            data.metaDescriptionLength = data.metaDescription.length;
+        }
+
+        // Extract headings
+        const h1Matches = html.matchAll(/<h1[^>]*>([^<]*(?:<[^>]+>[^<]*)*)<\/h1>/gi);
+        for (const match of h1Matches) {
+            data.h1.push(match[1].replace(/<[^>]+>/g, '').trim());
+        }
+
+        const h2Matches = html.matchAll(/<h2[^>]*>([^<]*(?:<[^>]+>[^<]*)*)<\/h2>/gi);
+        for (const match of h2Matches) {
+            data.h2.push(match[1].replace(/<[^>]+>/g, '').trim());
+        }
+
+        const h3Matches = html.matchAll(/<h3[^>]*>([^<]*(?:<[^>]+>[^<]*)*)<\/h3>/gi);
+        for (const match of h3Matches) {
+            data.h3.push(match[1].replace(/<[^>]+>/g, '').trim());
+        }
+
+        // Extract images
+        const imgMatches = html.matchAll(/<img[^>]*>/gi);
+        for (const match of imgMatches) {
+            data.images.total++;
+            if (!match[0].includes('alt=') || /alt=["']\s*["']/i.test(match[0])) {
+                data.images.withoutAlt++;
+            }
+        }
+
+        // Extract links
+        const linkMatches = html.matchAll(/<a[^>]*href=["']([^"']*)["'][^>]*>/gi);
+        const urlObj = new URL(url);
+        for (const match of linkMatches) {
+            const href = match[1];
+            if (href.startsWith('#') || href.startsWith('javascript:')) continue;
+
+            try {
+                const linkUrl = new URL(href, url);
+                if (linkUrl.hostname === urlObj.hostname) {
+                    data.links.internal++;
+                } else {
+                    data.links.external++;
+                }
+            } catch {
+                data.links.internal++;
+            }
+
+            if (match[0].includes('rel=') && match[0].includes('nofollow')) {
+                data.links.nofollow++;
+            }
+        }
+
+        // Extract canonical
+        const canonicalMatch = html.match(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["']/i);
+        if (canonicalMatch) {
+            data.canonical = canonicalMatch[1];
+        }
+
+        // Extract robots
+        const robotsMatch = html.match(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["']/i);
+        if (robotsMatch) {
+            data.robots = robotsMatch[1];
+        }
+
+        // Check for Open Graph tags
+        const ogMatches = html.matchAll(/<meta[^>]*property=["'](og:[^"']*)["'][^>]*content=["']([^"']*)["']/gi);
+        for (const match of ogMatches) {
+            data.ogTags[match[1]] = match[2];
+        }
+
+        // Check for Schema.org
+        data.schemaOrg = html.includes('application/ld+json') || html.includes('itemtype="http://schema.org');
+
+        // Check for viewport
+        data.viewport = html.includes('name="viewport"') || html.includes("name='viewport'");
+
+        // Estimate content length (text only)
+        const textContent = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+                               .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+                               .replace(/<[^>]+>/g, ' ')
+                               .replace(/\s+/g, ' ')
+                               .trim();
+        data.contentLength = textContent.length;
+
+    } catch (e) {
+        console.error('HTML parsing error:', e);
+    }
+
+    return data;
+}
+
+/**
+ * Build SEO audit prompt for AI
+ */
+function buildSeoAuditPrompt(data, url) {
+    return `Проанализируй SEO-оптимизацию страницы: ${url}
+
+## Извлеченные данные:
+
+### Meta-теги:
+- Title: "${data.title}" (${data.titleLength} символов)
+- Meta Description: "${data.metaDescription}" (${data.metaDescriptionLength} символов)
+- Canonical: ${data.canonical || 'не указан'}
+- Robots: ${data.robots || 'не указан'}
+
+### Заголовки:
+- H1 (${data.h1.length}): ${data.h1.slice(0, 3).join(', ') || 'не найден'}
+- H2 (${data.h2.length}): ${data.h2.slice(0, 5).join(', ') || 'не найдены'}
+- H3 (${data.h3.length}): ${data.h3.slice(0, 5).join(', ') || 'не найдены'}
+
+### Изображения:
+- Всего: ${data.images.total}
+- Без alt-атрибута: ${data.images.withoutAlt}
+
+### Ссылки:
+- Внутренние: ${data.links.internal}
+- Внешние: ${data.links.external}
+- С nofollow: ${data.links.nofollow}
+
+### Технические аспекты:
+- Schema.org разметка: ${data.schemaOrg ? 'присутствует' : 'отсутствует'}
+- Viewport meta: ${data.viewport ? 'есть' : 'нет'}
+- Open Graph теги: ${Object.keys(data.ogTags).length > 0 ? Object.keys(data.ogTags).join(', ') : 'не найдены'}
+- Примерная длина контента: ${data.contentLength} символов
+
+## Задача:
+Проведи полный SEO-аудит этой страницы. Оцени по шкале 0-100.
+Выяви все проблемы (critical, warning, info) по категориям:
+- meta: мета-теги, заголовки
+- content: качество и структура контента
+- technical: технические аспекты
+- schema: структурированные данные
+- mobile: мобильная оптимизация
+- performance: производительность
+
+Дай конкретные рекомендации по исправлению каждой проблемы.`;
+}
 
 
 

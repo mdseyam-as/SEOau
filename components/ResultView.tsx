@@ -6,12 +6,13 @@ import { SeoResult, AIModel, FaqItem } from '../types';
 import {
   Copy, Check, FileText, Globe, AlertOctagon, Sparkles, RefreshCw,
   ChevronDown, ChevronUp, AlertCircle, Code, GitBranch, ExternalLink,
-  Image, MessageCircleQuestion, Layers
+  Image, MessageCircleQuestion, Layers, Download, FileDown
 } from 'lucide-react';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { SubscriptionPlan, authService } from '../services/authService';
 import { GeoArticleRenderer } from './GeoArticleRenderer';
 import { ErrorBoundary } from './ErrorBoundary';
+import { exportToPdf, exportToDocx } from '../services/exportService';
 
 // ==================== SAFE MERMAID DISPLAY (TEXT ONLY) ====================
 
@@ -208,6 +209,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
     userPlan?.allowedModels?.[0] || AIModel.GROK_CODE_FAST
   );
   const [modelNames, setModelNames] = useState<Record<string, string>>({});
+  const [isExporting, setIsExporting] = useState<'pdf' | 'docx' | null>(null);
 
   // Check if we have structured content
   const isStructured = !!(result._structured && result.article);
@@ -253,6 +255,32 @@ export const ResultView: React.FC<ResultViewProps> = ({
     navigator.clipboard.writeText(result.content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleExportPdf = async () => {
+    setIsExporting('pdf');
+    try {
+      const filename = topic ? `seo-${topic.slice(0, 30).replace(/[^a-zA-Zа-яА-Я0-9]/g, '-')}` : 'seo-content';
+      await exportToPdf(result, filename);
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      alert('Ошибка экспорта в PDF');
+    } finally {
+      setIsExporting(null);
+    }
+  };
+
+  const handleExportDocx = async () => {
+    setIsExporting('docx');
+    try {
+      const filename = topic ? `seo-${topic.slice(0, 30).replace(/[^a-zA-Zа-яА-Я0-9]/g, '-')}` : 'seo-content';
+      await exportToDocx(result, filename);
+    } catch (error) {
+      console.error('DOCX export failed:', error);
+      alert('Ошибка экспорта в DOCX');
+    } finally {
+      setIsExporting(null);
+    }
   };
 
   const getSpamColor = (score: number) => {
@@ -528,15 +556,46 @@ export const ResultView: React.FC<ResultViewProps> = ({
         </div>
       )}
 
-      {/* Copy Full Content Button */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleCopy}
-          className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/10"
-        >
-          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-          {copied ? 'Скопировано!' : 'Копировать весь контент'}
-        </button>
+      {/* Export & Copy Actions */}
+      <div className="glass-panel p-4 rounded-xl flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Download className="w-5 h-5 text-brand-green" />
+          <span className="text-sm font-bold text-white">Экспорт:</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleExportPdf}
+            disabled={isExporting !== null}
+            className="flex items-center gap-2 text-sm font-bold text-white bg-red-600 hover:bg-red-500 disabled:bg-slate-600 disabled:cursor-not-allowed px-4 py-2 rounded-xl transition-all shadow-lg"
+          >
+            {isExporting === 'pdf' ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileDown className="w-4 h-4" />
+            )}
+            PDF
+          </button>
+          <button
+            onClick={handleExportDocx}
+            disabled={isExporting !== null}
+            className="flex items-center gap-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 disabled:cursor-not-allowed px-4 py-2 rounded-xl transition-all shadow-lg"
+          >
+            {isExporting === 'docx' ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileDown className="w-4 h-4" />
+            )}
+            DOCX
+          </button>
+          <div className="w-px h-6 bg-white/20 mx-1 hidden sm:block" />
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/10"
+          >
+            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            {copied ? 'Скопировано!' : 'Копировать'}
+          </button>
+        </div>
       </div>
     </div>
   );

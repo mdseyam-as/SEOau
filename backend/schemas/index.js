@@ -105,6 +105,11 @@ export const optimizeRelevanceSchema = z.object({
     }).optional().default({})
 });
 
+export const seoAuditSchema = z.object({
+    url: z.string().url('Invalid URL').max(2000),
+    model: z.string().min(1).max(100).optional().default('google/gemini-2.0-flash-001')
+});
+
 // ==================== Settings Schemas ====================
 
 export const updateSettingsSchema = z.object({

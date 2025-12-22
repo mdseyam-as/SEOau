@@ -10,11 +10,12 @@ import { ProjectList } from './components/ProjectList';
 import { HistoryList } from './components/HistoryList';
 import { calculateSeoMetrics } from './services/geminiService';
 import { GenerationConfig, KeywordRow, SeoResult, AIModel, Project, TextTone, TextStyle, GenerationMode, ContentLanguage } from './types';
-import { LayoutDashboard, LogOut, ShieldCheck, Clock, Lock, ExternalLink, ChevronRight, Home, History, Sparkles, Zap } from 'lucide-react';
+import { LayoutDashboard, LogOut, ShieldCheck, Clock, Lock, ExternalLink, ChevronRight, Home, History, Sparkles, Zap, Search } from 'lucide-react';
 import { User, authService, SubscriptionPlan } from './services/authService';
 import { projectService } from './services/projectService';
 import { apiService } from './services/apiService';
 import { projectConfigService } from './services/projectConfigService';
+import { SeoAuditor } from './components/SeoAuditor';
 
 const DEFAULT_CONFIG: GenerationConfig = {
   websiteName: '',
@@ -42,7 +43,7 @@ export default function App() {
   // Project State
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
-  const [projectTab, setProjectTab] = useState<'generator' | 'history'>('generator');
+  const [projectTab, setProjectTab] = useState<'generator' | 'history' | 'audit'>('generator');
   const [projectHistory, setProjectHistory] = useState<any[]>([]);
 
   // Generator State
@@ -390,21 +391,29 @@ export default function App() {
           <div className="flex p-1 bg-gray-100 rounded-lg w-full md:w-auto">
             <button
               onClick={() => setProjectTab('generator')}
-              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'generator' ? 'bg-white text-brand-green shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'generator' ? 'bg-white text-brand-green shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              <Sparkles className="w-4 h-4" /> Генератор
+              <Sparkles className="w-4 h-4" /> <span className="hidden sm:inline">Генератор</span>
+            </button>
+            <button
+              onClick={() => setProjectTab('audit')}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'audit' ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Search className="w-4 h-4" /> <span className="hidden sm:inline">Аудит</span>
             </button>
             <button
               onClick={() => setProjectTab('history')}
-              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'history' ? 'bg-white text-brand-green shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'history' ? 'bg-white text-brand-green shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              <History className="w-4 h-4" /> История <span className="text-xs bg-gray-200 px-1.5 py-0.5 rounded-full text-gray-600 ml-1">{projectHistory.length}</span>
+              <History className="w-4 h-4" /> <span className="hidden sm:inline">История</span> <span className="text-xs bg-gray-200 px-1.5 py-0.5 rounded-full text-gray-600 ml-1">{projectHistory.length}</span>
             </button>
           </div>
         </div>
 
         {projectTab === 'history' ? (
           <HistoryList history={projectHistory} onDelete={handleDeleteHistoryItem} />
+        ) : projectTab === 'audit' ? (
+          <SeoAuditor onUserUpdate={setUser} />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 lg:gap-6 animate-in fade-in slide-in-from-bottom-2">
             {/* Left Sidebar: Inputs */}

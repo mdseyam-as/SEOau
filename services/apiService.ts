@@ -196,6 +196,45 @@ class ApiService {
             body: JSON.stringify({ content, missingKeywords, config })
         });
     }
+
+    async seoAudit(url: string, model?: string): Promise<{
+        url: string;
+        extracted: {
+            title: string;
+            titleLength: number;
+            metaDescription: string;
+            metaDescriptionLength: number;
+            h1: string[];
+            h2: string[];
+            h3: string[];
+            images: { total: number; withoutAlt: number };
+            links: { internal: number; external: number; nofollow: number };
+            canonical: string;
+            robots: string;
+            ogTags: Record<string, string>;
+            schemaOrg: boolean;
+            viewport: boolean;
+            contentLength: number;
+        };
+        analysis: {
+            score: number;
+            summary: string;
+            issues: Array<{
+                severity: 'critical' | 'warning' | 'info';
+                category: string;
+                title: string;
+                description: string;
+                recommendation: string;
+            }>;
+            positives: string[];
+        };
+        user: User;
+    }> {
+        return this.request('/generate/seo-audit', {
+            method: 'POST',
+            body: JSON.stringify({ url, model })
+        });
+    }
 }
 
 export const apiService = new ApiService();
