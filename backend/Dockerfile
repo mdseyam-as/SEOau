@@ -15,7 +15,8 @@ COPY prisma ../prisma/
 # Устанавливаем зависимости
 RUN npm ci
 
-# Генерируем Prisma Client
+# Генерируем Prisma Client (force rebuild on schema change)
+# Schema version: 2024-12-22-v2
 RUN npx prisma generate --schema=../prisma/schema.prisma
 
 # Копируем исходный код backend
