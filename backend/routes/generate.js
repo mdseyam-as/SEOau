@@ -1,7 +1,7 @@
 import express from 'express';
 import { prisma } from '../lib/prisma.js';
 import { validate } from '../middleware/validate.js';
-import { generateSchema, spamCheckSchema, fixSpamSchema, optimizeRelevanceSchema, seoAuditSchema, rewriteSchema } from '../schemas/index.js';
+import { generateSchema, spamCheckSchema, fixSpamSchema, optimizeRelevanceSchema, seoAuditSchema, rewriteSchema, humanizeSchema } from '../schemas/index.js';
 import { sanitizePromptInput } from '../utils/promptSanitizer.js';
 
 const router = express.Router();
@@ -2927,6 +2927,175 @@ router.post('/social-pack', async (req, res) => {
     } catch (error) {
         console.error('Social pack error:', error);
         res.status(500).json({ error: error.message || 'Social pack generation failed' });
+    }
+});
+
+// ==================== HUMANIZER PROMPTS ====================
+
+/**
+ * Промпт для "очеловечивания" AI-текста
+ * Цель: обход детекторов AI (ZeroGPT, Originality.ai и т.д.)
+ */
+function getHumanizerPrompt(intensity, language) {
+    const intensityRules = {
+        light: `
+- Make subtle adjustments only
+- Keep 90% of original structure
+- Add minor sentence length variation
+- Insert 1-2 conversational phrases`,
+        medium: `
+- Vary sentence length significantly (mix 5-word and 25-word sentences)
+- Add 3-5 idiomatic expressions or colloquialisms
+- Include 1-2 rhetorical questions
+- Add occasional parenthetical asides (like this one)
+- Use contractions where natural`,
+        strong: `
+- Completely restructure paragraphs
+- Heavy sentence length variation (some very short. Others much, much longer with multiple clauses)
+- Add 5-7 idioms, slang, or regional expressions
+- Include personal anecdotes or hypotheticals ("Imagine you're...")
+- Add em-dashes—like this—for emphasis
+- Use fragmented sentences occasionally. For effect.
+- Include filler words sparingly (well, actually, honestly)
+- Add rhetorical questions throughout`
+    };
+
+    return `You are a HUMANIZER - your job is to make AI-generated text undetectable by AI detection tools (ZeroGPT, Originality.ai, GPTZero, etc.).
+
+LANGUAGE: Write in ${language}. All output must be in ${language}.
+
+YOUR MISSION:
+Transform the text to pass as 100% human-written while preserving the original meaning and SEO value.
+
+HUMANIZATION TECHNIQUES (${intensity.toUpperCase()} intensity):
+${intensityRules[intensity] || intensityRules.medium}
+
+CRITICAL "BURSTINESS" RULES:
+AI text has uniform sentence length. Human text is "bursty" - highly variable.
+- Mix very short sentences (3-7 words) with long complex ones (20-35 words)
+- Never have 3+ sentences of similar length in a row
+- Start some sentences with "And" or "But" (human writers do this)
+- Use occasional one-word sentences. Seriously.
+
+NATURALNESS RULES:
+1. Add subtle imperfections humans make:
+   - Occasional informal transitions ("Now, here's the thing...")
+   - Minor redundancies humans use ("completely eliminate" vs just "eliminate")
+   - Emphatic expressions ("This is huge", "Here's the kicker")
+
+2. Vary paragraph lengths dramatically:
+   - Some very short (1-2 sentences)
+   - Some medium (3-4 sentences)
+   - Some longer (5-6 sentences)
+
+3. Add human "fingerprints":
+   - Personal opinions or slight bias
+   - Hedging language ("It seems like...", "Arguably...")
+   - Occasional tangents that circle back
+
+PRESERVE:
+- All factual information
+- SEO keywords (but vary their forms)
+- Markdown formatting (headers, lists, bold, links)
+- Overall structure and flow
+
+DO NOT:
+- Add false information
+- Remove important content
+- Make grammatical errors
+- Change the core message
+
+OUTPUT:
+Return ONLY the humanized text. No explanations, no "Here's the humanized version:", just the pure humanized content.`;
+}
+
+/**
+ * POST /api/generate/humanize
+ * Humanize AI-generated content to bypass detection
+ */
+router.post('/humanize', validate(humanizeSchema), async (req, res) => {
+    try {
+        const telegramId = req.telegramUser.id;
+
+        // Check user limits
+        const limitCheck = await checkUserLimits(telegramId);
+        if (!limitCheck.allowed) {
+            return res.status(403).json({ error: `Limit exceeded: ${limitCheck.reason}` });
+        }
+
+        const { content, language, intensity, model } = req.body;
+
+        // Sanitize content
+        const sanitizedContent = sanitizePromptInput(content, { maxLength: 100000 });
+
+        // Get API key
+        const apiKey = await getApiKey();
+
+        // Map language codes to full names
+        const languageMap = {
+            'ru': 'Russian (Русский)',
+            'en': 'English',
+            'kk': 'Kazakh (Қазақша)',
+            'uk': 'Ukrainian (Українська)',
+            'de': 'German (Deutsch)',
+            'fr': 'French (Français)',
+            'es': 'Spanish (Español)',
+            'pt': 'Portuguese (Português)',
+            'it': 'Italian (Italiano)',
+            'pl': 'Polish (Polski)',
+            'tr': 'Turkish (Türkçe)',
+            'zh': 'Chinese (中文)',
+            'ja': 'Japanese (日本語)',
+            'ko': 'Korean (한국어)',
+            'ar': 'Arabic (العربية)'
+        };
+
+        const fullLanguage = languageMap[language] || language || 'Russian (Русский)';
+        const systemPrompt = getHumanizerPrompt(intensity || 'medium', fullLanguage);
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: getHeaders(apiKey, DEFAULT_SITE_NAME),
+            body: JSON.stringify({
+                model: model || 'google/gemini-3-flash-preview',
+                messages: [
+                    {
+                        role: "system",
+                        content: systemPrompt
+                    },
+                    {
+                        role: "user",
+                        content: `Humanize this text (${intensity || 'medium'} intensity):\n\n${sanitizedContent}`
+                    }
+                ],
+                temperature: intensity === 'strong' ? 0.9 : intensity === 'light' ? 0.5 : 0.7
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(`Humanization failed: ${errData.error?.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+        const humanizedContent = data.choices?.[0]?.message?.content;
+
+        if (!humanizedContent) {
+            throw new Error('No content received from AI');
+        }
+
+        // Increment usage
+        const updatedUser = await incrementUsage(limitCheck.user);
+
+        res.json({
+            content: humanizedContent,
+            intensity,
+            user: updatedUser
+        });
+
+    } catch (error) {
+        console.error('Humanize error:', error);
+        res.status(500).json({ error: error.message || 'Humanization failed' });
     }
 });
 

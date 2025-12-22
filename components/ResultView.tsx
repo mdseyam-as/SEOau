@@ -6,7 +6,8 @@ import { SeoResult, AIModel, FaqItem } from '../types';
 import {
   Copy, Check, FileText, Globe, AlertOctagon, Sparkles, RefreshCw,
   ChevronDown, ChevronUp, AlertCircle, Code, GitBranch, ExternalLink,
-  Image, MessageCircleQuestion, Layers, Download, FileDown, Share2
+  Image, MessageCircleQuestion, Layers, Download, FileDown, Share2,
+  Wand2, Bot
 } from 'lucide-react';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { SubscriptionPlan, authService } from '../services/authService';
@@ -180,6 +181,8 @@ function sanitizeContent(content: string): { cleanContent: string; jsonLd: strin
 
 // ==================== MAIN COMPONENT ====================
 
+type HumanizeIntensity = 'light' | 'medium' | 'strong';
+
 interface ResultViewProps {
   result: SeoResult;
   onFixSpam?: (content: string, analysis: string, model: string) => void;
@@ -187,6 +190,8 @@ interface ResultViewProps {
   userPlan?: SubscriptionPlan | null;
   onOptimizeRelevance?: (missingKeywords: string[]) => void;
   isOptimizingRelevance?: boolean;
+  onHumanize?: (content: string, intensity: HumanizeIntensity, model: string) => void;
+  isHumanizing?: boolean;
   onUserUpdate?: (user: any) => void;
   topic?: string;
   keywords?: string[];
@@ -200,6 +205,8 @@ export const ResultView: React.FC<ResultViewProps> = ({
   userPlan,
   onOptimizeRelevance,
   isOptimizingRelevance,
+  onHumanize,
+  isHumanizing,
   onUserUpdate,
   topic = '',
   keywords = [],
@@ -213,6 +220,10 @@ export const ResultView: React.FC<ResultViewProps> = ({
   );
   const [modelNames, setModelNames] = useState<Record<string, string>>({});
   const [isExporting, setIsExporting] = useState<'pdf' | 'docx' | null>(null);
+  const [humanizeIntensity, setHumanizeIntensity] = useState<HumanizeIntensity>('medium');
+  const [selectedHumanizeModel, setSelectedHumanizeModel] = useState<string>(
+    userPlan?.allowedModels?.[0] || AIModel.GROK_CODE_FAST
+  );
 
   // Check if we have structured content
   const isStructured = !!(result._structured && result.article);
@@ -562,12 +573,109 @@ export const ResultView: React.FC<ResultViewProps> = ({
       )}
 
       {/* Social Media Pack */}
-      <SocialMediaPack 
-        content={result.content || ''} 
+      <SocialMediaPack
+        content={result.content || ''}
         topic={topic}
         userPlan={userPlan}
         onUserUpdate={onUserUpdate}
       />
+
+      {/* AI Humanizer */}
+      {onHumanize && result.content && (
+        <div className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 lg:gap-6 items-start sm:items-center">
+            {/* Icon */}
+            <div className="relative flex-shrink-0 mx-auto sm:mx-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
+                <Bot className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+              </div>
+            </div>
+
+            <div className="flex-1 w-full">
+              <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-1.5 sm:mb-2 text-white flex items-center gap-1.5 sm:gap-2">
+                <Wand2 className="w-4 h-4 sm:w-5 sm:h-5 text-fuchsia-400" />
+                AI Humanizer
+                <span className="ml-2 text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 text-fuchsia-300 px-2 py-0.5 rounded-full border border-fuchsia-500/30">
+                  Beta
+                </span>
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300 mb-3 sm:mb-4 leading-relaxed">
+                Обход детекторов AI-контента (ZeroGPT, Originality.ai). Добавляет вариативность предложений (Burstiness), идиомы и естественные обороты речи.
+              </p>
+
+              {/* Humanize Control */}
+              <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end bg-white/5 p-4 rounded-xl border border-white/10">
+                {/* Intensity Selector */}
+                <div className="flex-1">
+                  <label className="block text-xs font-bold text-slate-400 mb-1.5">Интенсивность:</label>
+                  <div className="flex gap-1">
+                    {(['light', 'medium', 'strong'] as HumanizeIntensity[]).map((level) => (
+                      <button
+                        key={level}
+                        onClick={() => setHumanizeIntensity(level)}
+                        disabled={isHumanizing}
+                        className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                          humanizeIntensity === level
+                            ? level === 'light'
+                              ? 'bg-green-600 text-white shadow-lg'
+                              : level === 'medium'
+                                ? 'bg-amber-500 text-white shadow-lg'
+                                : 'bg-red-600 text-white shadow-lg'
+                            : 'bg-white/10 text-slate-400 hover:bg-white/15'
+                        }`}
+                      >
+                        {level === 'light' ? 'Лёгкая' : level === 'medium' ? 'Средняя' : 'Сильная'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Model Selector */}
+                <div className="flex-1">
+                  <label className="block text-xs font-bold text-slate-400 mb-1.5">Модель:</label>
+                  <div className="relative">
+                    <select
+                      value={selectedHumanizeModel}
+                      onChange={(e) => setSelectedHumanizeModel(e.target.value)}
+                      disabled={isHumanizing}
+                      className="w-full appearance-none bg-white/10 border border-white/10 text-white py-2.5 px-3 pr-8 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-fuchsia-500 [&>option]:text-slate-900"
+                    >
+                      {userPlan?.allowedModels?.map(modelId => (
+                        <option key={modelId} value={modelId}>
+                          {modelNames[modelId] || modelId.split('/')[1] || modelId}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Humanize Button */}
+                <button
+                  onClick={() => onHumanize(result.content, humanizeIntensity, selectedHumanizeModel)}
+                  disabled={isHumanizing}
+                  className={`w-full sm:w-auto mt-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all shadow-lg h-[42px] ${
+                    isHumanizing
+                      ? 'bg-slate-700 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 hover:shadow-glow-purple active:scale-95'
+                  }`}
+                >
+                  {isHumanizing ? (
+                    <><RefreshCw className="w-4 h-4 animate-spin" /> Обработка...</>
+                  ) : (
+                    <><Wand2 className="w-4 h-4" /> Очеловечить</>
+                  )}
+                </button>
+              </div>
+
+              {/* Info text */}
+              <p className="text-[10px] sm:text-xs text-slate-500 mt-2 italic">
+                💡 Совет: используйте "Сильную" интенсивность для максимального обхода детекторов
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Export & Copy Actions */}
       <div className="glass-panel p-4 rounded-xl flex flex-wrap items-center justify-between gap-3">

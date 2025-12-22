@@ -65,6 +65,9 @@ export default function App() {
   // Relevance Optimization State
   const [isOptimizingRelevance, setIsOptimizingRelevance] = useState(false);
 
+  // Humanizer State
+  const [isHumanizing, setIsHumanizing] = useState(false);
+
   // Admin State
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [telegramLink, setTelegramLink] = useState('');
@@ -310,6 +313,73 @@ export default function App() {
     }
   };
 
+  const handleHumanize = async (content: string, intensity: 'light' | 'medium' | 'strong', model: string) => {
+    if (!result || !user) return;
+
+    setIsHumanizing(true);
+    try {
+      // Get language code from config
+      const languageMap: Record<string, string> = {
+        'Русский': 'ru',
+        'English': 'en',
+        'Қазақша': 'kk',
+        'Українська': 'uk',
+        'Deutsch': 'de',
+        'Français': 'fr',
+        'Español': 'es',
+        'Português': 'pt',
+        'Italiano': 'it',
+        'Polski': 'pl',
+        'Türkçe': 'tr',
+        '中文': 'zh',
+        '日本語': 'ja',
+        '한국어': 'ko',
+        'العربية': 'ar'
+      };
+      const language = languageMap[config.language] || 'ru';
+
+      // Call humanize API
+      const { content: humanizedContent, user: updatedUser } = await apiService.humanize(content, language, intensity, model);
+
+      const updatedResult = { ...result, content: humanizedContent };
+
+      // Recalculate metrics
+      try {
+        updatedResult.metrics = calculateSeoMetrics(humanizedContent, keywords);
+      } catch (e) { console.error("Metrics recalc failed", e); }
+
+      // Re-check spam if available
+      if (userPlan?.canCheckSpam) {
+        try {
+          const spam = await apiService.checkSpam(humanizedContent);
+          updatedResult.spamScore = spam.spamScore;
+          updatedResult.spamAnalysis = spam.spamAnalysis;
+        } catch (e) { console.error("Spam recheck failed", e); }
+      }
+
+      setResult(updatedResult);
+      setUser(updatedUser);
+
+      // Save to history
+      if (currentProject) {
+        await projectService.addToHistory(currentProject.id, { ...config, topic: config.topic + " (Humanized)" }, updatedResult);
+        const history = await projectService.getHistory(currentProject.id);
+        setProjectHistory(history);
+      }
+
+      toast.success("Текст очеловечен", `Интенсивность: ${intensity === 'light' ? 'Лёгкая' : intensity === 'medium' ? 'Средняя' : 'Сильная'}`);
+
+    } catch (err: any) {
+      if (err.message?.includes('Limit exceeded')) {
+        toast.error("Лимит исчерпан", "Humanize недоступен. Обновите подписку.");
+      } else {
+        toast.error("Ошибка Humanizer", err.message || "Не удалось обработать текст");
+      }
+    } finally {
+      setIsHumanizing(false);
+    }
+  };
+
   const handleDeleteHistoryItem = async (id: string) => {
     await projectService.deleteHistoryItem(id);
     if (currentProject) {
@@ -547,6 +617,8 @@ export default function App() {
                     userPlan={userPlan}
                     onOptimizeRelevance={userPlan?.canOptimizeRelevance ? handleOptimizeRelevance : undefined}
                     isOptimizingRelevance={isOptimizingRelevance}
+                    onHumanize={handleHumanize}
+                    isHumanizing={isHumanizing}
                     onUserUpdate={setUser}
                     topic={config.topic}
                     keywords={keywords.map(k => k.keyword)}

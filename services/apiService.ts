@@ -197,6 +197,18 @@ class ApiService {
         });
     }
 
+    async humanize(
+        content: string,
+        language: string,
+        intensity: 'light' | 'medium' | 'strong',
+        model: string
+    ): Promise<{ content: string; intensity: string; user: User }> {
+        return this.request('/generate/humanize', {
+            method: 'POST',
+            body: JSON.stringify({ content, language, intensity, model })
+        });
+    }
+
     async seoAudit(url: string, model?: string): Promise<{
         url: string;
         extracted: {

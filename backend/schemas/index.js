@@ -124,6 +124,15 @@ export const rewriteSchema = z.object({
     message: 'Either sourceUrl or sourceText must be provided'
 });
 
+// ==================== Humanizer Schema ====================
+
+export const humanizeSchema = z.object({
+    content: z.string().min(1, 'Content is required').max(200000, 'Content too long'),
+    language: z.string().max(50).optional().default('ru'),
+    intensity: z.enum(['light', 'medium', 'strong']).optional().default('medium'),
+    model: z.string().min(1).max(100).optional().default('google/gemini-3-flash-preview')
+});
+
 // ==================== Settings Schemas ====================
 
 export const updateSettingsSchema = z.object({
