@@ -1,126 +1,89 @@
 import { SeoResult } from '../types';
 
-// PDF Export using html2pdf.js (supports Cyrillic via HTML rendering)
+// PDF Export using jsPDF with proper text handling
 export async function exportToPdf(result: SeoResult, filename: string = 'seo-content'): Promise<void> {
-    const html2pdf = (await import('html2pdf.js')).default;
+    const { jsPDF } = await import('jspdf');
 
-    // Create HTML content for PDF
-    const htmlContent = `
-        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; background: white;">
-            <h1 style="color: #006450; margin-bottom: 20px; font-size: 24px;">SEO Content Export</h1>
-            
-            ${result.metaTitle ? `
-                <div style="margin-bottom: 15px;">
-                    <strong style="color: #333;">Meta Title:</strong>
-                    <p style="margin: 5px 0; color: #555;">${escapeHtml(result.metaTitle)}</p>
-                </div>
-            ` : ''}
-            
-            ${result.metaDescription ? `
-                <div style="margin-bottom: 20px;">
-                    <strong style="color: #333;">Meta Description:</strong>
-                    <p style="margin: 5px 0; color: #555;">${escapeHtml(result.metaDescription)}</p>
-                </div>
-            ` : ''}
-            
-            <div style="margin-bottom: 15px;">
-                <strong style="color: #333; font-size: 14px;">Content:</strong>
-            </div>
-            
-            <div style="line-height: 1.6; color: #333; font-size: 12px;">
-                ${markdownToHtml(result.content)}
-            </div>
-            
-            ${result.spamScore !== undefined && result.spamScore >= 0 ? `
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <strong style="color: #333;">Spam Score: ${result.spamScore}%</strong>
-                    ${result.spamAnalysis ? `<p style="margin: 10px 0; color: #666; font-size: 11px;">${escapeHtml(result.spamAnalysis)}</p>` : ''}
-                </div>
-            ` : ''}
-        </div>
-    `;
+    const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+    });
 
-    // Create temporary container - must be visible for html2canvas
-    const container = document.createElement('div');
-    container.innerHTML = htmlContent;
-    container.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 210mm;
-        background: white;
-        z-index: -1;
-        opacity: 0;
-        pointer-events: none;
-    `;
-    document.body.appendChild(container);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 15;
+    const maxWidth = pageWidth - margin * 2;
+    let yPosition = 20;
 
-    // Wait for DOM to render
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Helper to add text with word wrap and page breaks
+    const addText = (text: string, fontSize: number, isBold: boolean = false, color: [number, number, number] = [0, 0, 0]) => {
+        doc.setFontSize(fontSize);
+        doc.setTextColor(...color);
+        
+        // Use standard font
+        const fontStyle = isBold ? 'bold' : 'normal';
+        doc.setFont('helvetica', fontStyle);
 
-    // PDF options
-    const opt = {
-        margin: 10,
-        filename: `${filename}.pdf`,
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { 
-            scale: 2,
-            useCORS: true,
-            letterRendering: true,
-            backgroundColor: '#ffffff'
-        },
-        jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'portrait' as const
+        // Split text into lines that fit the page width
+        const lines = doc.splitTextToSize(text, maxWidth);
+
+        for (const line of lines) {
+            // Check if we need a new page
+            if (yPosition > pageHeight - 20) {
+                doc.addPage();
+                yPosition = 20;
+            }
+            doc.text(line, margin, yPosition);
+            yPosition += fontSize * 0.4;
         }
+        yPosition += 2;
     };
 
-    try {
-        await html2pdf().set(opt).from(container).save();
-    } finally {
-        // Cleanup
-        document.body.removeChild(container);
+    // Title
+    addText('SEO Content Export', 18, true, [0, 100, 80]);
+    yPosition += 5;
+
+    // Meta Title
+    if (result.metaTitle) {
+        addText('Meta Title:', 12, true);
+        addText(result.metaTitle, 11);
+        yPosition += 3;
     }
-}
 
-// Helper to escape HTML
-function escapeHtml(text: string): string {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+    // Meta Description
+    if (result.metaDescription) {
+        addText('Meta Description:', 12, true);
+        addText(result.metaDescription, 11);
+        yPosition += 3;
+    }
 
-// Simple markdown to HTML converter
-function markdownToHtml(markdown: string): string {
-    if (!markdown) return '';
-    
-    return markdown
-        // Headers
-        .replace(/^### (.*$)/gim, '<h3 style="font-size: 14px; color: #333; margin: 15px 0 10px;">$1</h3>')
-        .replace(/^## (.*$)/gim, '<h2 style="font-size: 16px; color: #333; margin: 20px 0 10px;">$1</h2>')
-        .replace(/^# (.*$)/gim, '<h1 style="font-size: 18px; color: #333; margin: 25px 0 15px;">$1</h1>')
-        // Bold
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        // Italic
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        // Code
-        .replace(/`(.*?)`/g, '<code style="background: #f4f4f4; padding: 2px 5px; border-radius: 3px;">$1</code>')
-        // Links
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #006450;">$1</a>')
-        // Bullet points
-        .replace(/^[-*] (.*$)/gim, '<li style="margin: 5px 0;">$1</li>')
-        // Wrap lists
-        .replace(/(<li.*<\/li>\n?)+/g, '<ul style="margin: 10px 0; padding-left: 20px;">$&</ul>')
-        // Paragraphs (lines that don't start with HTML tags)
-        .replace(/^(?!<[hulo])(.*$)/gim, (match) => {
-            if (match.trim() && !match.startsWith('<')) {
-                return `<p style="margin: 10px 0;">${match}</p>`;
-            }
-            return match;
-        })
-        // Line breaks
-        .replace(/\n\n/g, '<br/><br/>');
+    // Main Content
+    addText('Content:', 12, true);
+    yPosition += 2;
+
+    // Clean content from markdown
+    const cleanContent = (result.content || '')
+        .replace(/#{1,6}\s/g, '')
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/\*(.*?)\*/g, '$1')
+        .replace(/`(.*?)`/g, '$1')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/[-*]\s/g, '• ');
+
+    addText(cleanContent, 10);
+
+    // Spam Score
+    if (result.spamScore !== undefined && result.spamScore >= 0) {
+        yPosition += 5;
+        addText(`Spam Score: ${result.spamScore}%`, 11, true);
+        if (result.spamAnalysis) {
+            addText(result.spamAnalysis, 10);
+        }
+    }
+
+    // Save the PDF
+    doc.save(`${filename}.pdf`);
 }
 
 // DOCX Export using docx library (full Unicode/Cyrillic support)
@@ -166,7 +129,7 @@ export async function exportToDocx(result: SeoResult, filename: string = 'seo-co
     }
 
     // Parse markdown content to DOCX paragraphs
-    const lines = result.content.split('\n');
+    const lines = (result.content || '').split('\n');
 
     for (const line of lines) {
         if (!line.trim()) {
@@ -216,7 +179,6 @@ export async function exportToDocx(result: SeoResult, filename: string = 'seo-co
         }
         // Regular paragraph
         else {
-            // Handle bold text
             const parts: any[] = [];
             const boldRegex = /\*\*(.*?)\*\*/g;
             let lastIndex = 0;
@@ -250,10 +212,7 @@ export async function exportToDocx(result: SeoResult, filename: string = 'seo-co
     // Spam Score section
     if (result.spamScore !== undefined && result.spamScore >= 0) {
         children.push(
-            new Paragraph({
-                text: '',
-                spacing: { before: 400 }
-            })
+            new Paragraph({ text: '', spacing: { before: 400 } })
         );
         children.push(
             new Paragraph({
@@ -275,10 +234,7 @@ export async function exportToDocx(result: SeoResult, filename: string = 'seo-co
     }
 
     const doc = new Document({
-        sections: [{
-            properties: {},
-            children
-        }]
+        sections: [{ properties: {}, children }]
     });
 
     const blob = await Packer.toBlob(doc);
