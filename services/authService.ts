@@ -15,6 +15,9 @@ export interface SubscriptionPlan {
   canOptimizeRelevance?: boolean; // Ability to use "Increase Relevance" feature
   canUseGeoMode?: boolean; // Ability to use GEO mode
   canGenerateFaq?: boolean; // Ability to generate FAQ with JSON-LD schema
+  canUseSocialPack?: boolean; // Ability to use Social Media Pack
+  priceRub?: number; // Price in rubles
+  durationDays?: number; // Subscription duration in days
 }
 
 export interface User {

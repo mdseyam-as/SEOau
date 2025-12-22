@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { 
     Share2, Twitter, Send, Linkedin, Video, 
     Copy, Check, Sparkles, ChevronDown, ChevronUp,
-    MessageSquare, Hash, Clock
+    MessageSquare, Hash, Lock
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
-import { User } from '../types';
+import { User, SubscriptionPlan } from '../types';
 
 interface SocialMediaPackProps {
     content: string;
     topic: string;
+    userPlan?: SubscriptionPlan | null;
     onUserUpdate?: (user: User) => void;
 }
 
@@ -62,6 +63,7 @@ const PLATFORM_CONFIG: Record<Platform, {
 export const SocialMediaPack: React.FC<SocialMediaPackProps> = ({
     content,
     topic,
+    userPlan,
     onUserUpdate
 }) => {
     const [isGenerating, setIsGenerating] = useState(false);
@@ -70,7 +72,11 @@ export const SocialMediaPack: React.FC<SocialMediaPackProps> = ({
     const [expandedPlatform, setExpandedPlatform] = useState<Platform | null>('twitter');
     const [copiedPlatform, setCopiedPlatform] = useState<string | null>(null);
 
+    const canUseSocialPack = userPlan?.canUseSocialPack;
+
     const handleGenerate = async () => {
+        if (!canUseSocialPack) return;
+        
         if (!content || content.length < 100) {
             setError('Контент слишком короткий для репакинга');
             return;
@@ -116,7 +122,18 @@ export const SocialMediaPack: React.FC<SocialMediaPackProps> = ({
     };
 
     return (
-        <div className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl">
+        <div className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl relative">
+            {/* Locked overlay */}
+            {!canUseSocialPack && (
+                <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm rounded-xl sm:rounded-2xl flex items-center justify-center z-10">
+                    <div className="text-center p-4">
+                        <Lock className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                        <p className="text-slate-300 font-medium">Social Media Pack</p>
+                        <p className="text-slate-500 text-sm">Доступно в Pro тарифе</p>
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white flex items-center gap-2">

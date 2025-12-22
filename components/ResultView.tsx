@@ -565,6 +565,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
       <SocialMediaPack 
         content={result.content || ''} 
         topic={topic}
+        userPlan={userPlan}
         onUserUpdate={onUserUpdate}
       />
 

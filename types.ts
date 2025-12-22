@@ -236,16 +236,17 @@ export interface SubscriptionPlan {
   name: string;
   maxChars: number;
   allowedModels: string[];
-  isDefault: boolean;
-  maxGenerationsPerMonth: number;
-  maxGenerationsPerDay: number;
-  maxKeywords: number;
-  canCheckSpam: boolean;
-  canOptimizeRelevance: boolean;
-  canUseGeoMode: boolean;
-  canGenerateFaq: boolean;
-  priceRub: number;
-  durationDays: number;
+  isDefault?: boolean;
+  maxGenerationsPerMonth?: number;
+  maxGenerationsPerDay?: number;
+  maxKeywords?: number;
+  canCheckSpam?: boolean;
+  canOptimizeRelevance?: boolean;
+  canUseGeoMode?: boolean;
+  canGenerateFaq?: boolean;
+  canUseSocialPack?: boolean;
+  priceRub?: number;
+  durationDays?: number;
 }
 
 // ==================== FAQ GENERATION ====================

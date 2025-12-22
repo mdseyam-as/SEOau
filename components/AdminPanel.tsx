@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Check, Clock, User as UserIcon, Calendar, Settings, Save, Key, FileText, RotateCcw, Users, Edit2, X, Search, Layers, Trash2, UserPlus, CreditCard, Zap, Database, AlertOctagon, Cpu, Box, TrendingUp, Globe, MessageCircleQuestion } from 'lucide-react';
+import { Shield, Plus, Check, Clock, User as UserIcon, Calendar, Settings, Save, Key, FileText, RotateCcw, Users, Edit2, X, Search, Layers, Trash2, UserPlus, CreditCard, Zap, Database, AlertOctagon, Cpu, Box, TrendingUp, Globe, MessageCircleQuestion, Share2 } from 'lucide-react';
 import { authService, User, SubscriptionPlan } from '../services/authService';
 import { DEFAULT_PROMPT_TEMPLATE, GEO_PROMPT_TEMPLATE } from '../services/geminiService';
 import { AIModel, ModelConfig } from '../types';
@@ -197,7 +197,8 @@ export const AdminPanel: React.FC = () => {
       canCheckSpam: false,
       canOptimizeRelevance: false,
       canUseGeoMode: false,
-      canGenerateFaq: false
+      canGenerateFaq: false,
+      canUseSocialPack: false
     };
     setEditingPlan(newPlan);
   };
@@ -705,6 +706,12 @@ export const AdminPanel: React.FC = () => {
                       {plan.canGenerateFaq ? 'Включено' : 'Выключено'}
                     </span>
                   </p>
+                  <p className="flex justify-between items-center">
+                    <span>Social Media Pack:</span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${plan.canUseSocialPack ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {plan.canUseSocialPack ? 'Включено' : 'Выключено'}
+                    </span>
+                  </p>
                   <p className="flex justify-between">
                     <span>Доступно моделей:</span>
                     <span className="font-mono font-bold">{plan.allowedModels.length}</span>
@@ -1060,6 +1067,23 @@ export const AdminPanel: React.FC = () => {
                     </span>
                     <p className="text-xs text-slate-500">
                       Разрешить генерацию FAQ с JSON-LD Schema для rich snippets
+                    </p>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={editingPlan.canUseSocialPack || false}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, canUseSocialPack: e.target.checked })}
+                    className="rounded text-brand-green focus:ring-brand-green w-5 h-5"
+                  />
+                  <div>
+                    <span className="text-sm font-bold text-slate-700 flex items-center gap-1">
+                      <Share2 className="w-4 h-4 text-pink-500" /> Social Media Pack
+                    </span>
+                    <p className="text-xs text-slate-500">
+                      Разрешить репакинг контента для соцсетей (Twitter, Telegram, LinkedIn, Shorts)
                     </p>
                   </div>
                 </label>

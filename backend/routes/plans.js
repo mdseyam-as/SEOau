@@ -121,6 +121,7 @@ router.post('/', validateTelegramAuth, checkAdminRole, validate(createPlanSchema
             canOptimizeRelevance,
             canUseGeoMode,
             canGenerateFaq,
+            canUseSocialPack,
             priceRub,
             durationDays,
             isDefault,
@@ -140,6 +141,7 @@ router.post('/', validateTelegramAuth, checkAdminRole, validate(createPlanSchema
                 canOptimizeRelevance: canOptimizeRelevance || false,
                 canUseGeoMode: canUseGeoMode || false,
                 canGenerateFaq: canGenerateFaq || false,
+                canUseSocialPack: canUseSocialPack || false,
                 priceRub: priceRub || 0,
                 durationDays: durationDays || 30,
                 isDefault: isDefault || false,
@@ -182,6 +184,7 @@ router.put('/:id', validateTelegramAuth, checkAdminRole, validate(updatePlanSche
             canOptimizeRelevance,
             canUseGeoMode,
             canGenerateFaq,
+            canUseSocialPack,
             priceRub,
             durationDays,
             isDefault,
@@ -200,6 +203,7 @@ router.put('/:id', validateTelegramAuth, checkAdminRole, validate(updatePlanSche
         if (canOptimizeRelevance !== undefined) updateData.canOptimizeRelevance = canOptimizeRelevance;
         if (canUseGeoMode !== undefined) updateData.canUseGeoMode = canUseGeoMode;
         if (canGenerateFaq !== undefined) updateData.canGenerateFaq = canGenerateFaq;
+        if (canUseSocialPack !== undefined) updateData.canUseSocialPack = canUseSocialPack;
         if (priceRub !== undefined) updateData.priceRub = priceRub;
         if (durationDays !== undefined) updateData.durationDays = durationDays;
         if (isDefault !== undefined) updateData.isDefault = isDefault;
