@@ -16,6 +16,9 @@ const MODEL_MAPPING = {
     'gemini-3.0': 'google/gemini-3-flash-preview',
     'gemini-3-pro': 'google/gemini-3-flash-preview',
     'google/gemini-3-pro-preview': 'google/gemini-3-flash-preview', // Redirect to working model
+    'google/gemini-2.0-flash-001': 'google/gemini-3-flash-preview', // Old model redirect
+    'google/gemini-2.0-flash-exp': 'google/gemini-3-flash-preview', // Old model redirect
+    'gemini-2.0-flash-exp': 'google/gemini-3-flash-preview', // Old model redirect
     'gpt-5.2': 'openai/gpt-4o',
     'gpt-4.1': 'openai/gpt-4o',
     'openai/gpt-4.1': 'openai/gpt-4o', // Redirect to working model
