@@ -80,7 +80,7 @@ export const SerpAnalyzer: React.FC<SerpAnalyzerProps> = ({ onApplyRecommendatio
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Введите поисковый запрос..."
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm text-slate-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
               onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
             />
           </div>
@@ -88,7 +88,7 @@ export const SerpAnalyzer: React.FC<SerpAnalyzerProps> = ({ onApplyRecommendatio
             <select
               value={searchEngine}
               onChange={(e) => setSearchEngine(e.target.value as 'google' | 'yandex')}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-slate-900 bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
             >
               <option value="google">Google</option>
               <option value="yandex">Яндекс</option>
@@ -96,7 +96,7 @@ export const SerpAnalyzer: React.FC<SerpAnalyzerProps> = ({ onApplyRecommendatio
             <select
               value={region}
               onChange={(e) => setRegion(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-slate-900 bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
             >
               <option value="ru">Россия</option>
               <option value="kz">Казахстан</option>
