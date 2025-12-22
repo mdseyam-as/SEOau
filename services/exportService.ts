@@ -1,120 +1,115 @@
 import { SeoResult } from '../types';
 
-// PDF Export using jsPDF with Cyrillic support
+// PDF Export using html2pdf.js (supports Cyrillic via HTML rendering)
 export async function exportToPdf(result: SeoResult, filename: string = 'seo-content'): Promise<void> {
-    const { jsPDF } = await import('jspdf');
+    const html2pdf = (await import('html2pdf.js')).default;
 
-    const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-    });
+    // Create HTML content for PDF
+    const htmlContent = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto;">
+            <h1 style="color: #006450; margin-bottom: 20px; font-size: 24px;">SEO Content Export</h1>
+            
+            ${result.metaTitle ? `
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #333;">Meta Title:</strong>
+                    <p style="margin: 5px 0; color: #555;">${escapeHtml(result.metaTitle)}</p>
+                </div>
+            ` : ''}
+            
+            ${result.metaDescription ? `
+                <div style="margin-bottom: 20px;">
+                    <strong style="color: #333;">Meta Description:</strong>
+                    <p style="margin: 5px 0; color: #555;">${escapeHtml(result.metaDescription)}</p>
+                </div>
+            ` : ''}
+            
+            <div style="margin-bottom: 15px;">
+                <strong style="color: #333; font-size: 14px;">Content:</strong>
+            </div>
+            
+            <div style="line-height: 1.6; color: #333; font-size: 12px;">
+                ${markdownToHtml(result.content)}
+            </div>
+            
+            ${result.spamScore !== undefined && result.spamScore >= 0 ? `
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <strong style="color: #333;">Spam Score: ${result.spamScore}%</strong>
+                    ${result.spamAnalysis ? `<p style="margin: 10px 0; color: #666; font-size: 11px;">${escapeHtml(result.spamAnalysis)}</p>` : ''}
+                </div>
+            ` : ''}
+        </div>
+    `;
 
-    // For Cyrillic support, we need to use a different approach
-    // jsPDF standard fonts don't support Cyrillic
-    // We'll use UTF-8 encoding workaround
+    // Create temporary container
+    const container = document.createElement('div');
+    container.innerHTML = htmlContent;
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    document.body.appendChild(container);
 
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 15;
-    const maxWidth = pageWidth - margin * 2;
-    let yPosition = 20;
-
-    // Helper function to transliterate Cyrillic to Latin for PDF compatibility
-    // This is a fallback - ideally we'd embed a Cyrillic font
-    const cyrillicToLatin: Record<string, string> = {
-        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
-        'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
-        'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
-        'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '',
-        'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
-        'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo',
-        'Ж': 'Zh', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
-        'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
-        'Ф': 'F', 'Х': 'H', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sch', 'Ъ': '',
-        'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya'
-    };
-
-    const transliterate = (text: string): string => {
-        return text.split('').map(char => cyrillicToLatin[char] || char).join('');
-    };
-
-    // Check if text contains Cyrillic
-    const hasCyrillic = (text: string): boolean => /[а-яёА-ЯЁ]/.test(text);
-
-    // Helper to add text with word wrap
-    const addText = (text: string, fontSize: number, isBold: boolean = false, color: [number, number, number] = [0, 0, 0]) => {
-        doc.setFontSize(fontSize);
-        doc.setTextColor(...color);
-        if (isBold) {
-            doc.setFont('helvetica', 'bold');
-        } else {
-            doc.setFont('helvetica', 'normal');
+    // PDF options
+    const opt = {
+        margin: 10,
+        filename: `${filename}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { 
+            scale: 2,
+            useCORS: true,
+            letterRendering: true
+        },
+        jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait' as const
         }
+    };
 
-        // Transliterate if contains Cyrillic (fallback for PDF)
-        const processedText = hasCyrillic(text) ? transliterate(text) : text;
-        const lines = doc.splitTextToSize(processedText, maxWidth);
+    try {
+        await html2pdf().set(opt).from(container).save();
+    } finally {
+        // Cleanup
+        document.body.removeChild(container);
+    }
+}
 
-        for (const line of lines) {
-            if (yPosition > 280) {
-                doc.addPage();
-                yPosition = 20;
+// Helper to escape HTML
+function escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Simple markdown to HTML converter
+function markdownToHtml(markdown: string): string {
+    if (!markdown) return '';
+    
+    return markdown
+        // Headers
+        .replace(/^### (.*$)/gim, '<h3 style="font-size: 14px; color: #333; margin: 15px 0 10px;">$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2 style="font-size: 16px; color: #333; margin: 20px 0 10px;">$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1 style="font-size: 18px; color: #333; margin: 25px 0 15px;">$1</h1>')
+        // Bold
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Italic
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        // Code
+        .replace(/`(.*?)`/g, '<code style="background: #f4f4f4; padding: 2px 5px; border-radius: 3px;">$1</code>')
+        // Links
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #006450;">$1</a>')
+        // Bullet points
+        .replace(/^[-*] (.*$)/gim, '<li style="margin: 5px 0;">$1</li>')
+        // Wrap lists
+        .replace(/(<li.*<\/li>\n?)+/g, '<ul style="margin: 10px 0; padding-left: 20px;">$&</ul>')
+        // Paragraphs (lines that don't start with HTML tags)
+        .replace(/^(?!<[hulo])(.*$)/gim, (match) => {
+            if (match.trim() && !match.startsWith('<')) {
+                return `<p style="margin: 10px 0;">${match}</p>`;
             }
-            doc.text(line, margin, yPosition);
-            yPosition += fontSize * 0.5;
-        }
-        yPosition += 3;
-    };
-
-    // Title
-    addText('SEO Content Export', 18, true, [0, 100, 80]);
-    yPosition += 5;
-
-    // Note about transliteration
-    if (hasCyrillic(result.content || '') || hasCyrillic(result.metaTitle || '')) {
-        addText('Note: Cyrillic text has been transliterated. Use DOCX export for original text.', 8, false, [128, 128, 128]);
-        yPosition += 3;
-    }
-
-    // Meta Title
-    if (result.metaTitle) {
-        addText('Meta Title:', 12, true);
-        addText(result.metaTitle, 11);
-        yPosition += 3;
-    }
-
-    // Meta Description
-    if (result.metaDescription) {
-        addText('Meta Description:', 12, true);
-        addText(result.metaDescription, 11);
-        yPosition += 3;
-    }
-
-    // Main Content
-    addText('Content:', 12, true);
-    yPosition += 2;
-
-    // Clean content from markdown for PDF
-    const cleanContent = result.content
-        .replace(/#{1,6}\s/g, '')
-        .replace(/\*\*(.*?)\*\*/g, '$1')
-        .replace(/\*(.*?)\*/g, '$1')
-        .replace(/`(.*?)`/g, '$1')
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-
-    addText(cleanContent, 10);
-
-    // Spam Score
-    if (result.spamScore !== undefined && result.spamScore >= 0) {
-        yPosition += 5;
-        addText(`Spam Score: ${result.spamScore}%`, 11, true);
-        if (result.spamAnalysis) {
-            addText(result.spamAnalysis, 10);
-        }
-    }
-
-    // Save
-    doc.save(`${filename}.pdf`);
+            return match;
+        })
+        // Line breaks
+        .replace(/\n\n/g, '<br/><br/>');
 }
 
 // DOCX Export using docx library (full Unicode/Cyrillic support)
