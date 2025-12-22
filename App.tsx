@@ -16,6 +16,9 @@ import { projectService } from './services/projectService';
 import { apiService } from './services/apiService';
 import { projectConfigService } from './services/projectConfigService';
 import { SeoAuditor } from './components/SeoAuditor';
+import { useToast } from './components/Toast';
+import { ResultSkeleton } from './components/Skeleton';
+import { GenerationProgress } from './components/GenerationProgress';
 
 const DEFAULT_CONFIG: GenerationConfig = {
   websiteName: '',
@@ -37,6 +40,7 @@ const DEFAULT_CONFIG: GenerationConfig = {
 };
 
 export default function App() {
+  const toast = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [userPlan, setUserPlan] = useState<SubscriptionPlan | null>(null);
 
@@ -249,9 +253,9 @@ export default function App() {
 
     } catch (err: any) {
       if (err.message?.includes('Limit exceeded')) {
-        alert("Лимит генераций исчерпан. Исправление недоступно.");
+        toast.error("Лимит исчерпан", "Исправление недоступно. Обновите подписку.");
       } else {
-        alert("Не удалось исправить текст: " + err.message);
+        toast.error("Ошибка", err.message || "Не удалось исправить текст");
       }
     } finally {
       setIsFixingSpam(false);
@@ -292,9 +296,9 @@ export default function App() {
       }
     } catch (err: any) {
       if (err.message?.includes('Limit exceeded')) {
-        alert("Лимит генераций исчерпан. Функция недоступна.");
+        toast.error("Лимит исчерпан", "Оптимизация недоступна. Обновите подписку.");
       } else {
-        alert("Ошибка оптимизации: " + err.message);
+        toast.error("Ошибка оптимизации", err.message);
       }
     } finally {
       setIsOptimizingRelevance(false);
@@ -482,17 +486,28 @@ export default function App() {
               )}
 
               {isGenerating && (
-                <div className="flex flex-col items-center justify-center h-64 md:h-96 bg-white rounded-xl shadow-sm border border-gray-200">
-                  <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-brand-green border-t-transparent rounded-full animate-spin mb-4"></div>
-                  <h3 className="text-lg md:text-xl font-semibold text-slate-900">Генерация контента...</h3>
-                  <p className="text-sm md:text-base text-slate-500 mt-2 text-center max-w-xs md:max-w-md px-4">
-                    Анализ {keywords.length} ключевых слов и генерация статьи...
-                  </p>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  <GenerationProgress
+                    keywordsCount={keywords.length}
+                    isGeoMode={config.generationMode === 'geo'}
+                  />
+                  <ResultSkeleton />
                 </div>
               )}
 
               {!isGenerating && !result && (
-                <div className={`flex flex-col items-center justify-center h-64 md:h-96 bg-white rounded-xl shadow-sm border border-gray-200 border-dashed ${isLocked ? 'opacity-60 grayscale-[0.5]' : ''}`}>
+                <div
+                  className={`flex flex-col items-center justify-center h-64 md:h-96 bg-white rounded-xl shadow-sm border border-gray-200 border-dashed relative ${isLocked ? 'pointer-events-none' : ''}`}
+                  aria-disabled={isLocked}
+                >
+                  {isLocked && (
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] rounded-xl flex items-center justify-center z-10">
+                      <div className="text-center p-4">
+                        <Lock className="w-8 h-8 text-white/60 mx-auto mb-2" />
+                        <p className="text-white/80 font-medium text-sm">Доступ ограничен</p>
+                      </div>
+                    </div>
+                  )}
                   <div className="p-4 md:p-6 bg-gray-50 rounded-full mb-4">
                     <LayoutDashboard className="w-8 h-8 md:w-12 md:h-12 text-gray-300" />
                   </div>
@@ -502,7 +517,16 @@ export default function App() {
               )}
 
               {!isGenerating && result && (
-                <div className={isLocked ? 'opacity-60 grayscale-[0.5] pointer-events-none select-none blur-[1px]' : ''}>
+                <div className={`relative ${isLocked ? 'pointer-events-none select-none' : ''}`} aria-disabled={isLocked}>
+                  {isLocked && (
+                    <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-[2px] rounded-xl flex items-center justify-center z-20">
+                      <div className="text-center p-6 bg-slate-800/90 rounded-2xl border border-white/10">
+                        <Lock className="w-10 h-10 text-red-400 mx-auto mb-3" />
+                        <p className="text-white font-bold mb-1">Доступ ограничен</p>
+                        <p className="text-slate-400 text-sm">Обновите подписку для просмотра</p>
+                      </div>
+                    </div>
+                  )}
                   <ResultView
                     result={result}
                     onFixSpam={userPlan?.canCheckSpam ? handleFixSpam : undefined}

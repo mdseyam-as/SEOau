@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { HistoryItem } from '../types';
 import { Clock, FileText, ChevronDown, ChevronUp, Trash2, Copy, Check } from 'lucide-react';
 import { ResultView } from './ResultView';
+import { useToast } from './Toast';
 
 interface HistoryListProps {
   history: HistoryItem[];
@@ -9,6 +10,7 @@ interface HistoryListProps {
 }
 
 export const HistoryList: React.FC<HistoryListProps> = ({ history, onDelete }) => {
+  const toast = useToast();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const toggleExpand = (id: string) => {
@@ -37,12 +39,17 @@ export const HistoryList: React.FC<HistoryListProps> = ({ history, onDelete }) =
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" role="list" aria-label="История генераций">
       {history.map((item) => (
-        <div key={item.id} className="glass-panel rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-glow-sm">
+        <article key={item.id} className="glass-panel rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-glow-sm" role="listitem">
           <div
             className={`p-4 sm:p-5 cursor-pointer flex flex-col sm:flex-row gap-4 justify-between sm:items-center ${expandedId === item.id ? 'bg-white/5' : 'hover:bg-white/5'}`}
             onClick={() => toggleExpand(item.id)}
+            role="button"
+            tabIndex={0}
+            aria-expanded={expandedId === item.id}
+            aria-label={`${item.topic || 'Без темы'}, ${formatDate(item.timestamp)}`}
+            onKeyDown={(e) => e.key === 'Enter' && toggleExpand(item.id)}
           >
             <div className="flex items-start gap-4">
               <div className={`p-2.5 rounded-xl mt-1 md:mt-0 transition-colors ${expandedId === item.id ? 'bg-brand-green/20 text-brand-green' : 'bg-white/5 text-slate-400'}`}>
@@ -72,12 +79,16 @@ export const HistoryList: React.FC<HistoryListProps> = ({ history, onDelete }) =
 
             <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto border-t md:border-t-0 border-white/5 pt-3 md:pt-0 mt-2 md:mt-0">
               <button
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
-                  if (confirm('Удалить эту запись?')) onDelete(item.id);
+                  const confirmed = await toast.confirm('Удалить запись?', 'Это действие нельзя отменить.');
+                  if (confirmed) {
+                    onDelete(item.id);
+                    toast.success('Удалено', 'Запись удалена из истории');
+                  }
                 }}
-                className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                title="Удалить"
+                className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label="Удалить запись из истории"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -122,7 +133,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({ history, onDelete }) =
               </div>
             </div>
           )}
-        </div>
+        </article>
       ))}
     </div>
   );

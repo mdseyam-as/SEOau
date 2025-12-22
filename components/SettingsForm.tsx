@@ -5,6 +5,7 @@ import { Settings2, Type, AlignLeft, Link as LinkIcon, FileText, Upload, X, Glob
 import { parseDocxFile } from '../services/docxParser';
 import { parseExcelToRawText } from '../services/excelParser';
 import { SubscriptionPlan, authService } from '../services/authService';
+import { useToast } from './Toast';
 
 interface SettingsFormProps {
   config: GenerationConfig;
@@ -16,6 +17,7 @@ interface SettingsFormProps {
 }
 
 export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, disabled, isLocked = false, onSubmit, userPlan }) => {
+  const toast = useToast();
   const [docxFileName, setDocxFileName] = useState<string | null>(null);
   const [isDocxLoading, setIsDocxLoading] = useState(false);
 
@@ -75,7 +77,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
     if (!file) return;
 
     if (!file.name.endsWith('.docx')) {
-      alert('Пожалуйста, выберите файл .docx');
+      toast.warning('Неверный формат', 'Пожалуйста, выберите файл .docx');
       return;
     }
 
@@ -84,9 +86,10 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
       const text = await parseDocxFile(file);
       handleChange('exampleContent', text);
       setDocxFileName(file.name);
+      toast.success('Файл загружен', file.name);
     } catch (error) {
       console.error(error);
-      alert('Не удалось прочитать .docx файл');
+      toast.error('Ошибка', 'Не удалось прочитать .docx файл');
     } finally {
       setIsDocxLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -102,7 +105,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
     const isXlsx = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
 
     if (!isDocx && !isXlsx) {
-      alert('Поддерживаются только форматы .docx и .xlsx/.xls');
+      toast.warning('Неверный формат', 'Поддерживаются только .docx и .xlsx/.xls');
       return;
     }
 
@@ -116,10 +119,11 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
       }
 
       setCompetitorFiles(prev => [...prev, { name: file.name, content: text }]);
+      toast.success('Файл добавлен', file.name);
 
     } catch (error) {
       console.error(error);
-      alert('Ошибка чтения файла');
+      toast.error('Ошибка', 'Не удалось прочитать файл');
     } finally {
       setIsFileLoading(false);
       if (competitorFileRef.current) competitorFileRef.current.value = '';

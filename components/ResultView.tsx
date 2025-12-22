@@ -13,6 +13,7 @@ import { SubscriptionPlan, authService } from '../services/authService';
 import { GeoArticleRenderer } from './GeoArticleRenderer';
 import { ErrorBoundary } from './ErrorBoundary';
 import { exportToPdf, exportToDocx } from '../services/exportService';
+import { useToast } from './Toast';
 
 // ==================== SAFE MERMAID DISPLAY (TEXT ONLY) ====================
 
@@ -203,6 +204,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
   keywords = [],
   isGeoMode = false
 }) => {
+  const toast = useToast();
   const [copied, setCopied] = useState(false);
   const [copiedJsonLd, setCopiedJsonLd] = useState(false);
   const [selectedFixModel, setSelectedFixModel] = useState<string>(
@@ -262,9 +264,10 @@ export const ResultView: React.FC<ResultViewProps> = ({
     try {
       const filename = topic ? `seo-${topic.slice(0, 30).replace(/[^a-zA-Zа-яА-Я0-9]/g, '-')}` : 'seo-content';
       await exportToPdf(result, filename);
+      toast.success('PDF создан', 'Файл скачан');
     } catch (error) {
       console.error('PDF export failed:', error);
-      alert('Ошибка экспорта в PDF');
+      toast.error('Ошибка экспорта', 'Не удалось создать PDF');
     } finally {
       setIsExporting(null);
     }
@@ -275,9 +278,10 @@ export const ResultView: React.FC<ResultViewProps> = ({
     try {
       const filename = topic ? `seo-${topic.slice(0, 30).replace(/[^a-zA-Zа-яА-Я0-9]/g, '-')}` : 'seo-content';
       await exportToDocx(result, filename);
+      toast.success('DOCX создан', 'Файл скачан');
     } catch (error) {
       console.error('DOCX export failed:', error);
-      alert('Ошибка экспорта в DOCX');
+      toast.error('Ошибка экспорта', 'Не удалось создать DOCX');
     } finally {
       setIsExporting(null);
     }

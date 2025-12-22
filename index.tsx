@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import { ToastProvider } from './components/Toast';
 
 // ==================== FIX FOR RUSSIAN CHARACTERS IN BTOA ====================
 // btoa() doesn't support UTF-8 (Cyrillic) characters natively
@@ -224,7 +225,9 @@ console.log('🚀 Starting React render...');
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <GlobalErrorBoundary>
-    <App />
+    <ToastProvider>
+      <App />
+    </ToastProvider>
   </GlobalErrorBoundary>
 );
 
