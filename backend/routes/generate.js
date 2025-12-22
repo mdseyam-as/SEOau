@@ -1204,11 +1204,14 @@ async function fallbackSingleModelGeneration({
     topic,
     isGeoMode
 }) {
+    // Apply model mapping to redirect old models to new ones
+    const mappedModel = getModelId(model);
+    
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: getHeaders(apiKey, websiteName),
         body: JSON.stringify({
-            model: model,
+            model: mappedModel,
             messages: [
                 { role: "system", content: systemMessage },
                 { role: "user", content: userMessageContent }
@@ -1227,14 +1230,15 @@ async function fallbackSingleModelGeneration({
 
     if (!rawContent) {
         console.error('>>> GENERATION ERROR: No content in response', JSON.stringify({
-            model,
+            model: mappedModel,
+            originalModel: model,
             hasChoices: !!data.choices,
             choicesLength: data.choices?.length,
             finishReason: data.choices?.[0]?.finish_reason,
             error: data.error,
             usage: data.usage
         }, null, 2));
-        throw new Error(`No content received from AI. Model: ${model}, Finish reason: ${data.choices?.[0]?.finish_reason || 'unknown'}`);
+        throw new Error(`No content received from AI. Model: ${mappedModel}, Finish reason: ${data.choices?.[0]?.finish_reason || 'unknown'}`);
     }
 
     return safeParseAIResponse(rawContent, { topic, isGeoMode });
