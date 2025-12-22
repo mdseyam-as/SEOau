@@ -122,6 +122,9 @@ router.post('/', validateTelegramAuth, checkAdminRole, validate(createPlanSchema
             canUseGeoMode,
             canGenerateFaq,
             canUseSocialPack,
+            canAudit,
+            canRewrite,
+            canHumanize,
             priceRub,
             durationDays,
             isDefault,
@@ -142,6 +145,9 @@ router.post('/', validateTelegramAuth, checkAdminRole, validate(createPlanSchema
                 canUseGeoMode: canUseGeoMode || false,
                 canGenerateFaq: canGenerateFaq || false,
                 canUseSocialPack: canUseSocialPack || false,
+                canAudit: canAudit || false,
+                canRewrite: canRewrite || false,
+                canHumanize: canHumanize || false,
                 priceRub: priceRub || 0,
                 durationDays: durationDays || 30,
                 isDefault: isDefault || false,
@@ -185,6 +191,9 @@ router.put('/:id', validateTelegramAuth, checkAdminRole, validate(updatePlanSche
             canUseGeoMode,
             canGenerateFaq,
             canUseSocialPack,
+            canAudit,
+            canRewrite,
+            canHumanize,
             priceRub,
             durationDays,
             isDefault,
@@ -204,6 +213,9 @@ router.put('/:id', validateTelegramAuth, checkAdminRole, validate(updatePlanSche
         if (canUseGeoMode !== undefined) updateData.canUseGeoMode = canUseGeoMode;
         if (canGenerateFaq !== undefined) updateData.canGenerateFaq = canGenerateFaq;
         if (canUseSocialPack !== undefined) updateData.canUseSocialPack = canUseSocialPack;
+        if (canAudit !== undefined) updateData.canAudit = canAudit;
+        if (canRewrite !== undefined) updateData.canRewrite = canRewrite;
+        if (canHumanize !== undefined) updateData.canHumanize = canHumanize;
         if (priceRub !== undefined) updateData.priceRub = priceRub;
         if (durationDays !== undefined) updateData.durationDays = durationDays;
         if (isDefault !== undefined) updateData.isDefault = isDefault;

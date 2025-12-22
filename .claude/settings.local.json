@@ -16,7 +16,10 @@
       "Bash(del \"C:\\Users\\Александр\\Desktop\\SEOau\\components\\CoverGenerator.tsx\")",
       "Bash(node --check:*)",
       "Bash(npm audit:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(npx prisma generate)",
+      "Bash(npx prisma db push)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []
