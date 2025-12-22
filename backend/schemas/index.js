@@ -140,18 +140,24 @@ export const updateSettingsSchema = z.object({
 export const createPlanSchema = z.object({
     id: z.string().min(1).max(50),
     name: z.string().min(1).max(100),
-    price: z.number().min(0),
-    currency: z.string().min(1).max(10).default('KZT'),
-    durationDays: z.number().int().min(1).max(3650),
-    maxGenerationsPerMonth: z.number().int().min(0),
-    maxGenerationsPerDay: z.number().int().min(0),
-    maxKeywords: z.number().int().min(0).max(10000), // 0 = unlimited
+    durationDays: z.number().int().min(1).max(3650).optional().default(30),
+    maxGenerationsPerMonth: z.number().int().min(0).optional().default(0),
+    maxGenerationsPerDay: z.number().int().min(0).optional().default(0),
+    maxKeywords: z.number().int().min(0).max(10000).optional().default(0), // 0 = unlimited
     maxChars: z.number().int().min(0).max(1000000).optional().default(10000), // 0 = unlimited
-    allowedModels: z.array(z.string().max(100)).min(1),
-    canCheckSpam: z.boolean().default(false),
-    canOptimizeRelevance: z.boolean().default(false),
-    canUseGeoMode: z.boolean().default(false),
-    features: z.array(z.string().max(200)).optional().default([])
+    allowedModels: z.array(z.string().max(100)).optional().default([]),
+    canCheckSpam: z.boolean().optional().default(false),
+    canOptimizeRelevance: z.boolean().optional().default(false),
+    canUseGeoMode: z.boolean().optional().default(false),
+    canGenerateFaq: z.boolean().optional().default(false),
+    canUseSocialPack: z.boolean().optional().default(false),
+    priceRub: z.number().int().min(0).optional().default(0),
+    isDefault: z.boolean().optional().default(false),
+    isActive: z.boolean().optional().default(true),
+    // Legacy fields - ignored but allowed for backward compatibility
+    price: z.number().optional(),
+    currency: z.string().optional(),
+    features: z.array(z.string()).optional()
 });
 
 export const updatePlanSchema = createPlanSchema.partial().omit({ id: true });

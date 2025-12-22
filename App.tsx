@@ -10,13 +10,14 @@ import { ProjectList } from './components/ProjectList';
 import { HistoryList } from './components/HistoryList';
 import { calculateSeoMetrics } from './services/geminiService';
 import { GenerationConfig, KeywordRow, SeoResult, AIModel, Project, TextTone, TextStyle, GenerationMode, ContentLanguage } from './types';
-import { LayoutDashboard, LogOut, ShieldCheck, Clock, Lock, ExternalLink, ChevronRight, Home, History, Sparkles, Zap, Search, RefreshCw } from 'lucide-react';
+import { LayoutDashboard, LogOut, ShieldCheck, Clock, Lock, ExternalLink, ChevronRight, Home, History, Sparkles, Zap, Search, RefreshCw, Crown } from 'lucide-react';
 import { User, authService, SubscriptionPlan } from './services/authService';
 import { projectService } from './services/projectService';
 import { apiService } from './services/apiService';
 import { projectConfigService } from './services/projectConfigService';
 import { SeoAuditor } from './components/SeoAuditor';
 import { RewriteMode } from './components/RewriteMode';
+import { SubscriptionModal } from './components/SubscriptionModal';
 import { useToast } from './components/Toast';
 import { ResultSkeleton } from './components/Skeleton';
 import { GenerationProgress } from './components/GenerationProgress';
@@ -67,6 +68,9 @@ export default function App() {
   // Admin State
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [telegramLink, setTelegramLink] = useState('');
+
+  // Subscription Modal State
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   useEffect(() => {
     const settings = authService.getGlobalSettings();
@@ -589,6 +593,17 @@ export default function App() {
               </button>
             )}
 
+            {/* Subscription Plans Button (For Users) */}
+            {user.role !== 'admin' && (
+              <button
+                onClick={() => setShowSubscriptionModal(true)}
+                className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-full font-medium flex items-center gap-2 transition-all duration-300 whitespace-nowrap bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-white hover:from-purple-500/30 hover:to-pink-500/30 border border-purple-500/30"
+              >
+                <Crown className="w-3 h-3 sm:w-4 sm:h-4 text-amber-400" />
+                <span className="hidden sm:inline">Тарифы</span>
+              </button>
+            )}
+
             {/* Subscription Counter (For Users) - Mobile compact version */}
             {user.role !== 'admin' && (
               <div className="flex sm:hidden items-center gap-1.5">
@@ -672,6 +687,14 @@ export default function App() {
       <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 xl:max-w-7xl">
         {renderContent()}
       </main>
+
+      {/* Subscription Modal */}
+      <SubscriptionModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        currentPlanId={user.planId}
+        telegramLink={telegramLink}
+      />
     </div>
   );
 }
