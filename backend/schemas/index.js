@@ -149,7 +149,7 @@ export const updateSettingsSchema = z.object({
 export const createPlanSchema = z.object({
     id: z.string().min(1).max(50),
     name: z.string().min(1).max(100),
-    durationDays: z.number().int().min(1).max(3650).optional().default(30),
+    durationDays: z.number().int().min(0).max(3650).optional().default(30), // 0 = permanent/unlimited
     maxGenerationsPerMonth: z.number().int().min(0).optional().default(0),
     maxGenerationsPerDay: z.number().int().min(0).optional().default(0),
     maxKeywords: z.number().int().min(0).max(10000).optional().default(0), // 0 = unlimited
