@@ -2807,4 +2807,128 @@ ${content}
 }
 
 
+// ==================== SOCIAL MEDIA PACK ENDPOINT ====================
+
+/**
+ * POST /api/generate/social-pack
+ * Репакинг контента для соцсетей
+ */
+router.post('/social-pack', async (req, res) => {
+    try {
+        const user = req.telegramUser;
+        if (!user) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const { content, topic } = req.body;
+
+        if (!content || content.length < 100) {
+            return res.status(400).json({ error: 'Контент слишком короткий (минимум 100 символов)' });
+        }
+
+        // Get API key
+        const settings = await prisma.systemSetting.findUnique({ where: { id: 'global' } });
+        const apiKey = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
+
+        if (!apiKey) {
+            return res.status(500).json({ error: 'API key not configured' });
+        }
+
+        // Truncate content if too long
+        const truncatedContent = content.substring(0, 10000);
+
+        console.log('>>> Social Pack Generation:', { topic: topic?.substring(0, 50), contentLength: truncatedContent.length });
+
+        const systemPrompt = `Ты эксперт по SMM и контент-маркетингу. Твоя задача — превратить статью в готовые посты для разных соцсетей.
+
+ВАЖНО: Пиши на том же языке, что и исходный контент.
+
+Верни ТОЛЬКО валидный JSON объект (без markdown блоков):
+{
+  "twitter": ["твит 1 (до 280 символов)", "твит 2", "твит 3", "твит 4", "твит 5"],
+  "telegram": "Пост для Telegram канала с эмодзи, форматированием и призывом к действию (500-800 символов)",
+  "linkedin": "Профессиональный пост для LinkedIn с деловым тоном (600-1000 символов)",
+  "videoScript": "Сценарий для YouTube Shorts / TikTok на 60 секунд с таймкодами"
+}
+
+ПРАВИЛА:
+1. Twitter: 5 связанных твитов для треда, каждый до 280 символов, с хештегами в последнем
+2. Telegram: Используй эмодзи, жирный текст (**текст**), призыв подписаться/поставить реакцию
+3. LinkedIn: Деловой тон, начни с хука, добавь личный опыт/мнение, призыв к дискуссии
+4. Video Script: Формат "[0:00-0:05] Хук\\n[0:05-0:15] Проблема\\n..." с конкретным текстом для озвучки`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: getHeaders(apiKey, 'Social Media Pack'),
+            body: JSON.stringify({
+                model: 'google/gemini-3-flash-preview',
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: `Тема: ${topic || 'Не указана'}\n\nСтатья:\n${truncatedContent}` }
+                ],
+                temperature: 0.7,
+                max_tokens: 4000
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(`API Error: ${errData.error?.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+        const rawContent = data.choices?.[0]?.message?.content || '';
+
+        // Parse JSON response
+        let pack;
+        try {
+            let cleanJson = rawContent.trim()
+                .replace(/^```json\s*/i, '')
+                .replace(/^```\s*/i, '')
+                .replace(/\s*```$/g, '')
+                .trim();
+
+            if (!cleanJson.startsWith('{')) {
+                const match = cleanJson.match(/\{[\s\S]*\}/);
+                if (match) cleanJson = match[0];
+            }
+
+            pack = JSON.parse(cleanJson);
+        } catch (e) {
+            console.error('Social pack parse error:', e.message);
+            return res.status(500).json({ error: 'Failed to parse social pack response' });
+        }
+
+        // Validate and normalize
+        const normalizedPack = {
+            twitter: Array.isArray(pack.twitter) ? pack.twitter.slice(0, 5) : [],
+            telegram: pack.telegram || '',
+            linkedin: pack.linkedin || '',
+            videoScript: pack.videoScript || pack.video_script || pack.tiktok || ''
+        };
+
+        if (normalizedPack.twitter.length === 0 && !normalizedPack.telegram) {
+            return res.status(500).json({ error: 'Failed to generate social pack content' });
+        }
+
+        // Get updated user
+        const dbUser = await prisma.user.findUnique({
+            where: { telegramId: BigInt(user.id) }
+        });
+
+        res.json({
+            pack: normalizedPack,
+            user: dbUser ? {
+                ...dbUser,
+                telegramId: dbUser.telegramId.toString()
+            } : null
+        });
+
+    } catch (error) {
+        console.error('Social pack error:', error);
+        res.status(500).json({ error: error.message || 'Social pack generation failed' });
+    }
+});
+
+
 export default router;

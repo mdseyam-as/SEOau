@@ -6,7 +6,7 @@ import { SeoResult, AIModel, FaqItem } from '../types';
 import {
   Copy, Check, FileText, Globe, AlertOctagon, Sparkles, RefreshCw,
   ChevronDown, ChevronUp, AlertCircle, Code, GitBranch, ExternalLink,
-  Image, MessageCircleQuestion, Layers, Download, FileDown
+  Image, MessageCircleQuestion, Layers, Download, FileDown, Share2
 } from 'lucide-react';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { SubscriptionPlan, authService } from '../services/authService';
@@ -14,6 +14,7 @@ import { GeoArticleRenderer } from './GeoArticleRenderer';
 import { ErrorBoundary } from './ErrorBoundary';
 import { exportToPdf, exportToDocx } from '../services/exportService';
 import { useToast } from './Toast';
+import { SocialMediaPack } from './SocialMediaPack';
 
 // ==================== SAFE MERMAID DISPLAY (TEXT ONLY) ====================
 
@@ -559,6 +560,13 @@ export const ResultView: React.FC<ResultViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Social Media Pack */}
+      <SocialMediaPack 
+        content={result.content || ''} 
+        topic={topic}
+        onUserUpdate={onUserUpdate}
+      />
 
       {/* Export & Copy Actions */}
       <div className="glass-panel p-4 rounded-xl flex flex-wrap items-center justify-between gap-3">

@@ -281,6 +281,25 @@ class ApiService {
             body: JSON.stringify(params)
         });
     }
+
+    // Social Media Pack
+    async generateSocialPack(params: {
+        content: string;
+        topic?: string;
+    }): Promise<{
+        pack: {
+            twitter: string[];
+            telegram: string;
+            linkedin: string;
+            videoScript: string;
+        };
+        user: User | null;
+    }> {
+        return this.request('/generate/social-pack', {
+            method: 'POST',
+            body: JSON.stringify(params)
+        });
+    }
 }
 
 export const apiService = new ApiService();
