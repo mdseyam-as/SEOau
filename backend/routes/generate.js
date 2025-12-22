@@ -2138,6 +2138,11 @@ router.post('/seo-audit', validate(seoAuditSchema), async (req, res) => {
             return res.status(403).json({ error: `Limit exceeded: ${limitCheck.reason}` });
         }
 
+        // Check canAudit permission
+        if (!limitCheck.plan?.canAudit && limitCheck.user.role !== 'admin') {
+            return res.status(403).json({ error: 'SEO Аудит недоступен для вашего тарифа' });
+        }
+
         // Fetch the page HTML
         let pageHtml = '';
         let fetchError = null;
@@ -2601,6 +2606,11 @@ router.post('/rewrite', validate(rewriteSchema), async (req, res) => {
             return res.status(403).json({ error: `Limit exceeded: ${limitCheck.reason}` });
         }
 
+        // Check canRewrite permission
+        if (!limitCheck.plan?.canRewrite && limitCheck.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Рерайт недоступен для вашего тарифа' });
+        }
+
         let contentToRewrite = sourceText || '';
 
         // If URL provided, fetch the content
@@ -3021,6 +3031,11 @@ router.post('/humanize', validate(humanizeSchema), async (req, res) => {
         const limitCheck = await checkUserLimits(telegramId);
         if (!limitCheck.allowed) {
             return res.status(403).json({ error: `Limit exceeded: ${limitCheck.reason}` });
+        }
+
+        // Check canHumanize permission
+        if (!limitCheck.plan?.canHumanize && limitCheck.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Humanizer недоступен для вашего тарифа' });
         }
 
         const { content, language, intensity, model } = req.body;

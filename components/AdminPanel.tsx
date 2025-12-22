@@ -198,7 +198,10 @@ export const AdminPanel: React.FC = () => {
       canOptimizeRelevance: false,
       canUseGeoMode: false,
       canGenerateFaq: false,
-      canUseSocialPack: false
+      canUseSocialPack: false,
+      canAudit: false,
+      canRewrite: false,
+      canHumanize: false
     };
     setEditingPlan(newPlan);
   };
@@ -712,6 +715,24 @@ export const AdminPanel: React.FC = () => {
                       {plan.canUseSocialPack ? 'Включено' : 'Выключено'}
                     </span>
                   </p>
+                  <p className="flex justify-between items-center">
+                    <span>SEO Аудит:</span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${plan.canAudit ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {plan.canAudit ? 'Включено' : 'Выключено'}
+                    </span>
+                  </p>
+                  <p className="flex justify-between items-center">
+                    <span>Рерайт:</span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${plan.canRewrite ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {plan.canRewrite ? 'Включено' : 'Выключено'}
+                    </span>
+                  </p>
+                  <p className="flex justify-between items-center">
+                    <span>Humanizer:</span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${plan.canHumanize ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {plan.canHumanize ? 'Включено' : 'Выключено'}
+                    </span>
+                  </p>
                   <p className="flex justify-between">
                     <span>Доступно моделей:</span>
                     <span className="font-mono font-bold">{plan.allowedModels.length}</span>
@@ -1110,6 +1131,57 @@ export const AdminPanel: React.FC = () => {
                     </span>
                     <p className="text-xs text-slate-500">
                       Разрешить репакинг контента для соцсетей (Twitter, Telegram, LinkedIn, Shorts)
+                    </p>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={editingPlan.canAudit || false}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, canAudit: e.target.checked })}
+                    className="rounded text-brand-green focus:ring-brand-green w-5 h-5"
+                  />
+                  <div>
+                    <span className="text-sm font-bold text-slate-700 flex items-center gap-1">
+                      <FileText className="w-4 h-4 text-amber-500" /> SEO Аудит
+                    </span>
+                    <p className="text-xs text-slate-500">
+                      Разрешить анализ страниц: мета-теги, заголовки, изображения, ссылки
+                    </p>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={editingPlan.canRewrite || false}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, canRewrite: e.target.checked })}
+                    className="rounded text-brand-green focus:ring-brand-green w-5 h-5"
+                  />
+                  <div>
+                    <span className="text-sm font-bold text-slate-700 flex items-center gap-1">
+                      <RotateCcw className="w-4 h-4 text-blue-500" /> Рерайт
+                    </span>
+                    <p className="text-xs text-slate-500">
+                      Разрешить рерайт текстов из URL или напрямую с сохранением структуры
+                    </p>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-2 p-3 bg-violet-50 border border-violet-200 rounded-lg cursor-pointer hover:bg-violet-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={editingPlan.canHumanize || false}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, canHumanize: e.target.checked })}
+                    className="rounded text-violet-600 focus:ring-violet-500 w-5 h-5"
+                  />
+                  <div>
+                    <span className="text-sm font-bold text-slate-700 flex items-center gap-1">
+                      <Cpu className="w-4 h-4 text-violet-500" /> AI Humanizer
+                    </span>
+                    <p className="text-xs text-slate-500">
+                      Разрешить очеловечивание AI-текста для обхода детекторов (ZeroGPT, Originality.ai)
                     </p>
                   </div>
                 </label>

@@ -16,6 +16,9 @@ export interface SubscriptionPlan {
   canUseGeoMode?: boolean; // Ability to use GEO mode
   canGenerateFaq?: boolean; // Ability to generate FAQ with JSON-LD schema
   canUseSocialPack?: boolean; // Ability to use Social Media Pack
+  canAudit?: boolean; // Ability to use SEO Audit
+  canRewrite?: boolean; // Ability to use Rewrite/Paraphrase
+  canHumanize?: boolean; // Ability to use AI Humanizer
   priceRub?: number; // Price in rubles
   durationDays?: number; // Subscription duration in days
 }

@@ -245,6 +245,9 @@ export interface SubscriptionPlan {
   canUseGeoMode?: boolean;
   canGenerateFaq?: boolean;
   canUseSocialPack?: boolean;
+  canAudit?: boolean;
+  canRewrite?: boolean;
+  canHumanize?: boolean;
   priceRub?: number;
   durationDays?: number;
 }

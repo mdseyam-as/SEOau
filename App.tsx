@@ -498,9 +498,31 @@ export default function App() {
         {projectTab === 'history' ? (
           <HistoryList history={projectHistory} onDelete={handleDeleteHistoryItem} />
         ) : projectTab === 'audit' ? (
-          <SeoAuditor onUserUpdate={setUser} />
+          userPlan?.canAudit || user?.role === 'admin' ? (
+            <SeoAuditor onUserUpdate={setUser} />
+          ) : (
+            <div className="glass-panel p-8 rounded-2xl text-center">
+              <Lock className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-white mb-2">SEO Аудит недоступен</h3>
+              <p className="text-slate-400 text-sm mb-4">Эта функция недоступна для вашего тарифа. Обновите подписку для доступа к SEO аудиту.</p>
+              <button onClick={() => setShowSubscriptionModal(true)} className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold transition-colors">
+                Обновить тариф
+              </button>
+            </div>
+          )
         ) : projectTab === 'rewrite' ? (
-          <RewriteMode onUserUpdate={setUser} />
+          userPlan?.canRewrite || user?.role === 'admin' ? (
+            <RewriteMode onUserUpdate={setUser} />
+          ) : (
+            <div className="glass-panel p-8 rounded-2xl text-center">
+              <Lock className="w-12 h-12 text-pink-400 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-white mb-2">Рерайт недоступен</h3>
+              <p className="text-slate-400 text-sm mb-4">Эта функция недоступна для вашего тарифа. Обновите подписку для доступа к рерайту.</p>
+              <button onClick={() => setShowSubscriptionModal(true)} className="px-6 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-lg font-bold transition-colors">
+                Обновить тариф
+              </button>
+            </div>
+          )
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 lg:gap-6 animate-in fade-in slide-in-from-bottom-2">
             {/* Left Sidebar: Inputs */}
@@ -617,7 +639,7 @@ export default function App() {
                     userPlan={userPlan}
                     onOptimizeRelevance={userPlan?.canOptimizeRelevance ? handleOptimizeRelevance : undefined}
                     isOptimizingRelevance={isOptimizingRelevance}
-                    onHumanize={handleHumanize}
+                    onHumanize={userPlan?.canHumanize ? handleHumanize : undefined}
                     isHumanizing={isHumanizing}
                     onUserUpdate={setUser}
                     topic={config.topic}

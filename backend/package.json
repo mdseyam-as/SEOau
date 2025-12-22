@@ -5,7 +5,7 @@
     "description": "Backend API for SEO Generator Telegram WebApp",
     "main": "server.js",
     "scripts": {
-        "start": "node server.js",
+        "start": "prisma generate && node server.js",
         "dev": "node --watch server.js",
         "db:generate": "prisma generate",
         "db:push": "prisma db push",

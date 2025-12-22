@@ -61,6 +61,9 @@ model Plan {
   canUseGeoMode          Boolean  @default(false)
   canGenerateFaq         Boolean  @default(false)
   canUseSocialPack       Boolean  @default(false)
+  canAudit               Boolean  @default(false)
+  canRewrite             Boolean  @default(false)
+  canHumanize            Boolean  @default(false)
   
   // Ценообразование
   priceRub               Int      @default(0)
