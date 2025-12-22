@@ -189,7 +189,7 @@ export const AdminPanel: React.FC = () => {
       id: 'plan_' + Math.random().toString(36).substr(2, 6),
       name: 'Новый тариф',
       maxChars: 5000,
-      allowedModels: [models[0]?.id || AIModel.GEMINI_2_0_FLASH],
+      allowedModels: [models[0]?.id || AIModel.GEMINI_3_FLASH],
       isDefault: false,
       maxGenerationsPerMonth: 0, // 0 = Unlimited
       maxGenerationsPerDay: 0, // 0 = Unlimited

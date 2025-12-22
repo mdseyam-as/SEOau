@@ -35,7 +35,7 @@ const DEFAULT_CONFIG: GenerationConfig = {
   maxChars: 5000,
   minParas: 3,
   maxParas: 12,
-  model: AIModel.GEMINI_2_0_FLASH,
+  model: AIModel.GEMINI_3_FLASH,
   generationMode: 'seo' as GenerationMode,
   language: ContentLanguage.RUSSIAN,
 };

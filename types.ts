@@ -6,7 +6,7 @@ export interface KeywordRow {
 
 export enum AIModel {
   // Google
-  GEMINI_2_0_FLASH = 'google/gemini-2.0-flash-001',
+  GEMINI_3_FLASH = 'google/gemini-3-flash-preview',
   GEMINI_2_0_PRO_EXP = 'google/gemini-2.0-pro-exp-02-05',
   GEMINI_1_5_PRO = 'google/gemini-pro-1.5',
   GEMINI_3_PRO_PREVIEW = 'google/gemini-3-pro-preview',
@@ -52,7 +52,7 @@ export enum AIModel {
 }
 
 export interface ModelConfig {
-  id: string; // The API string (e.g. 'google/gemini-2.0-flash-001')
+  id: string; // The API string (e.g. 'google/gemini-3-flash-preview')
   name: string; // Display name
   provider: string; // Grouping (Google, OpenAI, etc.)
 }

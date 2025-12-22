@@ -77,7 +77,7 @@ export const generateSchema = z.object({
         maxChars: z.number().int().min(100).max(100000).optional().default(5000),
         minParas: z.number().int().min(1).max(100).optional().default(3),
         maxParas: z.number().int().min(1).max(100).optional().default(12),
-        model: z.string().min(1).max(100).optional().default('google/gemini-2.0-flash-001'),
+        model: z.string().min(1).max(100).optional().default('google/gemini-3-flash-preview'),
         // Generation mode: 'seo' for classic SEO, 'geo' for AI search engines
         generationMode: z.enum(['seo', 'geo']).optional().default('seo')
     }),
@@ -92,7 +92,7 @@ export const spamCheckSchema = z.object({
 export const fixSpamSchema = z.object({
     content: z.string().min(1).max(200000),
     analysis: z.string().min(1).max(10000),
-    model: z.string().min(1).max(100).optional().default('google/gemini-2.0-flash-001')
+    model: z.string().min(1).max(100).optional().default('google/gemini-3-flash-preview')
 });
 
 export const optimizeRelevanceSchema = z.object({
@@ -107,7 +107,7 @@ export const optimizeRelevanceSchema = z.object({
 
 export const seoAuditSchema = z.object({
     url: z.string().url('Invalid URL').max(2000),
-    model: z.string().min(1).max(100).optional().default('google/gemini-2.0-flash-001')
+    model: z.string().min(1).max(100).optional().default('google/gemini-3-flash-preview')
 });
 
 export const rewriteSchema = z.object({
@@ -119,7 +119,7 @@ export const rewriteSchema = z.object({
     tone: z.string().max(100).optional().default('Professional'),
     style: z.string().max(100).optional().default('Informative'),
     preserveStructure: z.boolean().optional().default(true),
-    model: z.string().min(1).max(100).optional().default('google/gemini-2.0-flash-001')
+    model: z.string().min(1).max(100).optional().default('google/gemini-3-flash-preview')
 }).refine(data => data.sourceUrl || data.sourceText, {
     message: 'Either sourceUrl or sourceText must be provided'
 });

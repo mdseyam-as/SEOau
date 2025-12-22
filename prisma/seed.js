@@ -14,7 +14,7 @@ async function main() {
       maxGenerationsPerMonth: 5,
       maxGenerationsPerDay: 2,
       maxKeywords: 20,
-      allowedModels: ['google/gemini-2.0-flash-001', 'x-ai/grok-2-1212'],
+      allowedModels: ['google/gemini-3-flash-preview', 'x-ai/grok-2-1212'],
       canCheckSpam: false,
       canOptimizeRelevance: false,
       canUseGeoMode: false,
@@ -31,7 +31,7 @@ async function main() {
       maxGenerationsPerDay: 20,
       maxKeywords: 50,
       allowedModels: [
-        'google/gemini-2.0-flash-001',
+        'google/gemini-3-flash-preview',
         'google/gemini-pro-1.5',
         'openai/gpt-4o',
         'openai/gpt-4o-mini',
@@ -54,7 +54,7 @@ async function main() {
       maxGenerationsPerDay: 0, // unlimited
       maxKeywords: 0, // unlimited
       allowedModels: [
-        'google/gemini-2.0-flash-001',
+        'google/gemini-3-flash-preview',
         'google/gemini-pro-1.5',
         'google/gemini-2.0-pro-exp-02-05',
         'openai/gpt-4o',

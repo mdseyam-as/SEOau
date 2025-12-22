@@ -13,9 +13,9 @@ const DEFAULT_SITE_NAME = 'SeoGenerator';
 // Маппинг моделей для мультимодальной генерации
 const MODEL_MAPPING = {
     // Writer models (для текста)
-    'gemini-3.0': 'google/gemini-2.0-flash-001',
-    'gemini-3-pro': 'google/gemini-2.0-flash-001',
-    'google/gemini-3-pro-preview': 'google/gemini-2.0-flash-001', // Redirect to working model
+    'gemini-3.0': 'google/gemini-3-flash-preview',
+    'gemini-3-pro': 'google/gemini-3-flash-preview',
+    'google/gemini-3-pro-preview': 'google/gemini-3-flash-preview', // Redirect to working model
     'gpt-5.2': 'openai/gpt-4o',
     'gpt-4.1': 'openai/gpt-4o',
     'openai/gpt-4.1': 'openai/gpt-4o', // Redirect to working model
@@ -26,7 +26,7 @@ const MODEL_MAPPING = {
     'anthropic/claude-sonnet-4': 'anthropic/claude-sonnet-4',
 
     // Fallback/default
-    'default-writer': 'google/gemini-2.0-flash-001',
+    'default-writer': 'google/gemini-3-flash-preview',
     'default-visualizer': 'anthropic/claude-sonnet-4'
 };
 
@@ -2109,7 +2109,7 @@ router.post('/seo-audit', validate(seoAuditSchema), async (req, res) => {
             method: "POST",
             headers: getHeaders(apiKey, 'SEO Audit'),
             body: JSON.stringify({
-                model: model || 'google/gemini-2.0-flash-001',
+                model: model || 'google/gemini-3-flash-preview',
                 messages: [
                     {
                         role: "system",
@@ -2583,7 +2583,7 @@ router.post('/rewrite', validate(rewriteSchema), async (req, res) => {
             method: "POST",
             headers: getHeaders(apiKey, 'SEO Rewriter'),
             body: JSON.stringify({
-                model: model || 'google/gemini-2.0-flash-001',
+                model: model || 'google/gemini-3-flash-preview',
                 messages: [
                     {
                         role: "system",

@@ -55,7 +55,7 @@ const MODELS_STORAGE_KEY = 'seo_gen_models';
 // Initialize default models from the Enum for backward compatibility
 const DEFAULT_MODELS_LIST: ModelConfig[] = [
   { id: AIModel.GEMINI_3_PRO_PREVIEW, name: 'Google Gemini 3 Pro Preview', provider: 'Google' },
-  { id: AIModel.GEMINI_2_0_FLASH, name: 'Google Gemini 2.0 Flash', provider: 'Google' },
+  { id: AIModel.GEMINI_3_FLASH, name: 'Google Gemini 3 Flash', provider: 'Google' },
   { id: AIModel.GEMINI_2_0_PRO_EXP, name: 'Google Gemini 2.0 Pro Exp', provider: 'Google' },
   { id: AIModel.GEMINI_1_5_PRO, name: 'Google Gemini 1.5 Pro', provider: 'Google' },
 
@@ -97,7 +97,7 @@ const DEFAULT_PLANS: SubscriptionPlan[] = [
     id: 'basic',
     name: 'Базовый',
     maxChars: 3500,
-    allowedModels: [AIModel.GEMINI_2_0_FLASH, AIModel.GPT_4O_MINI, AIModel.GROK_4_1_FAST_FREE],
+    allowedModels: [AIModel.GEMINI_3_FLASH, AIModel.GPT_4O_MINI, AIModel.GROK_4_1_FAST_FREE],
     isDefault: false,
     maxGenerationsPerMonth: 50,
     maxGenerationsPerDay: 5,
@@ -110,7 +110,7 @@ const DEFAULT_PLANS: SubscriptionPlan[] = [
     name: 'PRO',
     maxChars: 8000,
     allowedModels: [
-      AIModel.GEMINI_2_0_FLASH, AIModel.GEMINI_2_0_PRO_EXP, AIModel.GEMINI_3_PRO_PREVIEW,
+      AIModel.GEMINI_3_FLASH, AIModel.GEMINI_2_0_PRO_EXP, AIModel.GEMINI_3_PRO_PREVIEW,
       AIModel.GPT_4O_MINI, AIModel.GPT_4O,
       AIModel.CLAUDE_3_5_SONNET, AIModel.CLAUDE_3_5_HAIKU
     ],
