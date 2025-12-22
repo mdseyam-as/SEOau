@@ -1,9 +1,24 @@
 import express from 'express';
 import crypto from 'crypto';
 import { prisma } from '../lib/prisma.js';
-import { grantSubscription, notifySubscriptionActivated } from '../utils/subscriptionManager.js';
+import { grantSubscription, notifySubscriptionActivated, processUpdate } from '../utils/subscriptionManager.js';
 
 const router = express.Router();
+
+/**
+ * POST /api/webhook/telegram
+ * Handle Telegram Bot webhook updates
+ */
+router.post('/telegram', (req, res) => {
+    try {
+        // Process the update through the bot
+        processUpdate(req.body);
+        res.status(200).json({ ok: true });
+    } catch (error) {
+        console.error('Telegram webhook error:', error);
+        res.status(500).json({ error: 'Failed to process update' });
+    }
+});
 
 /**
  * Validates ЮKassa webhook signature

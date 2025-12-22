@@ -4,27 +4,60 @@ import { prisma } from '../lib/prisma.js';
 let bot;
 
 export function initializeBot(token) {
-    bot = new TelegramBot(token, { polling: true });
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    // In production, use webhook instead of polling to avoid 409 conflicts during redeploys
+    // Polling causes issues when multiple instances try to getUpdates simultaneously
+    if (isProduction) {
+        // Create bot without polling - will use webhook
+        bot = new TelegramBot(token, { polling: false });
+        console.log('✅ Telegram Bot initialized (webhook mode - no polling)');
+    } else {
+        // In development, use polling for convenience
+        bot = new TelegramBot(token, { polling: true });
+        console.log('✅ Telegram Bot initialized (polling mode)');
+    }
 
     // Log bot info
     bot.getMe().then(me => {
         console.log('✅ Telegram Bot initialized as:', {
             id: me.id,
             username: me.username,
-            name: `${me.first_name} ${me.last_name || ''}`.trim()
+            name: `@${me.username}`
         });
+        
+        // In production, set up webhook
+        if (isProduction && process.env.WEBAPP_URL) {
+            const webhookUrl = `${process.env.WEBAPP_URL}/api/webhook/telegram`;
+            bot.setWebHook(webhookUrl)
+                .then(() => console.log(`✅ Webhook set to: ${webhookUrl}`))
+                .catch(err => console.error('❌ Failed to set webhook:', err.message));
+        }
+    }).catch(err => {
+        console.error('❌ Failed to get bot info:', err.message);
     });
 
-    // Log all incoming messages for debugging
-    bot.on('message', (msg) => {
-        console.log('📩 Incoming message:', {
-            from: msg.from?.username,
-            chatId: msg.chat.id,
-            text: msg.text
+    // Log all incoming messages for debugging (only in dev with polling)
+    if (!isProduction) {
+        bot.on('message', (msg) => {
+            console.log('📩 Incoming message:', {
+                from: msg.from?.username,
+                chatId: msg.chat.id,
+                text: msg.text
+            });
         });
-    });
+    }
 
     return bot;
+}
+
+/**
+ * Process incoming webhook update from Telegram
+ */
+export function processUpdate(update) {
+    if (bot) {
+        bot.processUpdate(update);
+    }
 }
 
 /**
