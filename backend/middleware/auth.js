@@ -6,8 +6,9 @@ import { validateTelegramWebAppData, extractTelegramUser } from '../utils/telegr
 export function validateTelegramAuth(req, res, next) {
     try {
         // --- DEV BYPASS (for local development without Telegram) ---
-        // Enabled only when NODE_ENV !== 'production' AND DEV_BYPASS_TELEGRAM === 'true'
-        if (process.env.NODE_ENV !== 'production' && process.env.DEV_BYPASS_TELEGRAM === 'true') {
+        // SECURITY: Only enabled when explicitly in development mode
+        const isDevMode = process.env.NODE_ENV === 'development' && process.env.DEV_BYPASS_TELEGRAM === 'true';
+        if (isDevMode) {
             const devIdHeader = req.headers['x-dev-telegram-id'];
             const devIdBody = req.body?.devTelegramId;
             const devIdQuery = req.query?.devTelegramId;

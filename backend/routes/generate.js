@@ -1329,30 +1329,42 @@ async function checkUserLimits(telegramId) {
     return { allowed: true, user, plan };
 }
 
-// Increment usage
+// Increment usage with transaction to prevent race conditions
 async function incrementUsage(user) {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const currentDay = new Date().toISOString().slice(0, 10);
 
-    const updateData = {};
+    // Use transaction for atomic update
+    const updatedUser = await prisma.$transaction(async (tx) => {
+        // Re-fetch user within transaction for consistency
+        const freshUser = await tx.user.findUnique({
+            where: { id: user.id }
+        });
 
-    if (user.lastGenerationMonth !== currentMonth) {
-        updateData.generationsUsed = 1;
-        updateData.lastGenerationMonth = currentMonth;
-    } else {
-        updateData.generationsUsed = (user.generationsUsed || 0) + 1;
-    }
+        if (!freshUser) {
+            throw new Error('User not found');
+        }
 
-    if (user.lastGenerationDate !== currentDay) {
-        updateData.generationsUsedToday = 1;
-        updateData.lastGenerationDate = currentDay;
-    } else {
-        updateData.generationsUsedToday = (user.generationsUsedToday || 0) + 1;
-    }
+        const updateData = {};
 
-    const updatedUser = await prisma.user.update({
-        where: { id: user.id },
-        data: updateData
+        if (freshUser.lastGenerationMonth !== currentMonth) {
+            updateData.generationsUsed = 1;
+            updateData.lastGenerationMonth = currentMonth;
+        } else {
+            updateData.generationsUsed = (freshUser.generationsUsed || 0) + 1;
+        }
+
+        if (freshUser.lastGenerationDate !== currentDay) {
+            updateData.generationsUsedToday = 1;
+            updateData.lastGenerationDate = currentDay;
+        } else {
+            updateData.generationsUsedToday = (freshUser.generationsUsedToday || 0) + 1;
+        }
+
+        return tx.user.update({
+            where: { id: user.id },
+            data: updateData
+        });
     });
 
     // Convert BigInt for JSON response

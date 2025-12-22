@@ -7,8 +7,9 @@ export const paginationSchema = z.object({
     limit: z.coerce.number().int().min(1).max(100).default(20)
 });
 
-export const mongoIdSchema = z.object({
-    id: z.string().regex(/^[a-fA-F0-9]{24}$/, 'Invalid MongoDB ObjectId')
+// UUID schema for PostgreSQL/Prisma
+export const uuidSchema = z.object({
+    id: z.string().uuid('Invalid ID format')
 });
 
 // ==================== Auth Schemas ====================
@@ -146,7 +147,7 @@ export const webhookSchema = z.object({
 // ==================== History Schemas ====================
 
 export const historyQuerySchema = z.object({
-    projectId: z.string().regex(/^[a-fA-F0-9]{24}$/, 'Invalid project ID'),
+    projectId: z.string().uuid('Invalid project ID'),
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(100).default(20)
 });

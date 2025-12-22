@@ -39,7 +39,9 @@ if (process.env.NODE_ENV === 'production') {
     }
 
     if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length < 32) {
-        console.warn('⚠️  WARNING: ENCRYPTION_KEY not set or too short. API key encryption disabled.');
+        console.error('🚨 FATAL: ENCRYPTION_KEY not set or too short (min 32 chars).');
+        console.error('🚨 API keys would be stored unencrypted. Exiting...');
+        process.exit(1);
     }
 }
 
@@ -53,10 +55,22 @@ const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
 
 // ==================== SECURITY: Helmet.js ====================
-// Note: CSP is disabled for now due to Vite/React compatibility issues
-// TODO: Enable strict CSP with nonces in production
 app.use(helmet({
-    contentSecurityPolicy: false, // Disabled - Vite injects inline scripts/styles
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Required for Vite/React
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:", "blob:", "https:"],
+            connectSrc: ["'self'", "https://openrouter.ai", "https://api.openrouter.ai", "wss:", "https:"],
+            frameSrc: ["'self'", "https://web.telegram.org", "https://oauth.telegram.org"],
+            objectSrc: ["'none'"],
+            baseUri: ["'self'"],
+            formAction: ["'self'"],
+            upgradeInsecureRequests: []
+        }
+    },
     crossOriginEmbedderPolicy: false, // Required for some Telegram WebApp features
     hsts: {
         maxAge: 31536000,
