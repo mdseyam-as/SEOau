@@ -1000,6 +1000,32 @@ export const AdminPanel: React.FC = () => {
                   />
                   <p className="text-xs text-gray-600 mt-1">0 = Безлимит (Загрузка всех строк)</p>
                 </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
+                    <CreditCard className="w-3 h-3" /> Цена (₽/мес)
+                  </label>
+                  <input
+                    type="number"
+                    value={editingPlan.priceRub || ''}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, priceRub: parseInt(e.target.value) || 0 })}
+                    placeholder="0 = Бесплатно"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none text-black placeholder-gray-400"
+                  />
+                  <p className="text-xs text-gray-600 mt-1">0 = Бесплатный тариф</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> Срок действия (дней)
+                  </label>
+                  <input
+                    type="number"
+                    value={editingPlan.durationDays || 30}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, durationDays: parseInt(e.target.value) || 30 })}
+                    placeholder="30"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none text-black placeholder-gray-400"
+                  />
+                  <p className="text-xs text-gray-600 mt-1">Стандартно: 30 дней</p>
+                </div>
               </div>
 
               <div className="mb-6 space-y-3">
