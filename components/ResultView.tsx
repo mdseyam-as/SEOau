@@ -221,9 +221,6 @@ export const ResultView: React.FC<ResultViewProps> = ({
   const [modelNames, setModelNames] = useState<Record<string, string>>({});
   const [isExporting, setIsExporting] = useState<'pdf' | 'docx' | null>(null);
   const [humanizeIntensity, setHumanizeIntensity] = useState<HumanizeIntensity>('medium');
-  const [selectedHumanizeModel, setSelectedHumanizeModel] = useState<string>(
-    userPlan?.allowedModels?.[0] || AIModel.GROK_CODE_FAST
-  );
 
   // Check if we have structured content
   const isStructured = !!(result._structured && result.article);
@@ -630,29 +627,9 @@ export const ResultView: React.FC<ResultViewProps> = ({
                   </div>
                 </div>
 
-                {/* Model Selector */}
-                <div className="flex-1">
-                  <label className="block text-xs font-bold text-slate-400 mb-1.5">Модель:</label>
-                  <div className="relative">
-                    <select
-                      value={selectedHumanizeModel}
-                      onChange={(e) => setSelectedHumanizeModel(e.target.value)}
-                      disabled={isHumanizing}
-                      className="w-full appearance-none bg-white/10 border border-white/10 text-white py-2.5 px-3 pr-8 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-fuchsia-500 [&>option]:text-slate-900"
-                    >
-                      {userPlan?.allowedModels?.map(modelId => (
-                        <option key={modelId} value={modelId}>
-                          {modelNames[modelId] || modelId.split('/')[1] || modelId}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                  </div>
-                </div>
-
                 {/* Humanize Button */}
                 <button
-                  onClick={() => onHumanize(result.content, humanizeIntensity, selectedHumanizeModel)}
+                  onClick={() => onHumanize(result.content, humanizeIntensity, 'google/gemini-3-flash-preview')}
                   disabled={isHumanizing}
                   className={`w-full sm:w-auto mt-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all shadow-lg h-[42px] ${
                     isHumanizing
