@@ -787,7 +787,7 @@ export const AdminPanel: React.FC = () => {
                   value={telegramLink}
                   onChange={(e) => setTelegramLink(e.target.value)}
                   placeholder="https://t.me/username"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none text-sm"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none text-sm text-slate-900 placeholder-gray-400"
                 />
               </div>
 
@@ -801,7 +801,7 @@ export const AdminPanel: React.FC = () => {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder="sk-or-..."
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none font-mono text-sm"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none font-mono text-sm text-slate-900 placeholder-gray-400"
                 />
               </div>
 
@@ -815,7 +815,7 @@ export const AdminPanel: React.FC = () => {
               <select
                 value={spamCheckModel}
                 onChange={(e) => setSpamCheckModel(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none text-sm"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none text-sm text-slate-900"
               >
                 {models
                   .filter(m => m.provider.includes('xAI') || m.provider.includes('Grok') || m.provider.includes('Gemini') || m.provider.includes('Claude') || m.provider.includes('GPT'))
