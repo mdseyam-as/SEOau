@@ -10,7 +10,7 @@ import { ProjectList } from './components/ProjectList';
 import { HistoryList } from './components/HistoryList';
 import { calculateSeoMetrics } from './services/geminiService';
 import { GenerationConfig, KeywordRow, SeoResult, AIModel, Project, TextTone, TextStyle, GenerationMode, ContentLanguage } from './types';
-import { LayoutDashboard, LogOut, ShieldCheck, Clock, Lock, ExternalLink, ChevronRight, Home, History, Sparkles, Zap, Search, RefreshCw, Crown, BarChart3 } from 'lucide-react';
+import { Lock, ExternalLink, LayoutDashboard } from 'lucide-react';
 import { User, authService, SubscriptionPlan } from './services/authService';
 import { projectService } from './services/projectService';
 import { apiService } from './services/apiService';
@@ -22,6 +22,12 @@ import { SubscriptionModal } from './components/SubscriptionModal';
 import { useToast } from './components/Toast';
 import { ResultSkeleton } from './components/Skeleton';
 import { GenerationProgress } from './components/GenerationProgress';
+// New design components
+import { Header } from './components/Header';
+import { SubscriptionStatus } from './components/SubscriptionStatus';
+import { ProjectHeader } from './components/ProjectHeader';
+import { EmptyState, GeneratorEmptyState, LockedFeatureEmptyState } from './components/EmptyState';
+import { useTelegramWebApp } from './hooks/useTelegramWebApp';
 
 const DEFAULT_CONFIG: GenerationConfig = {
   websiteName: '',
@@ -44,6 +50,9 @@ const DEFAULT_CONFIG: GenerationConfig = {
 
 export default function App() {
   const toast = useToast();
+  // Telegram WebApp integration
+  const { hapticNotification } = useTelegramWebApp();
+  
   const [user, setUser] = useState<User | null>(null);
   const [userPlan, setUserPlan] = useState<SubscriptionPlan | null>(null);
 
@@ -83,7 +92,7 @@ export default function App() {
 
   // Update plan when user changes
   useEffect(() => {
-    if (user) {
+    if (user && user.planId) {
       const loadPlan = async () => {
         try {
           const { plan } = await apiService.getPlan(user.planId);
@@ -199,6 +208,9 @@ export default function App() {
 
       setResult(data);
       setUser(updatedUser);
+      
+      // Haptic feedback for successful generation
+      hapticNotification('success');
 
       // Save to History if in a project
       if (currentProject) {
@@ -390,6 +402,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    hapticNotification('warning');
     setUser(null);
     setUserPlan(null);
     setResult(null);
@@ -456,51 +469,13 @@ export default function App() {
     return (
       <div className="space-y-4 sm:space-y-5 lg:space-y-6">
         {/* Project Header & Breadcrumbs */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4 bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-gray-200">
-          <div>
-            <div className="flex items-center text-sm text-slate-500 mb-1">
-              <button onClick={() => setCurrentProject(null)} className="hover:text-brand-green flex items-center gap-1">
-                <Home className="w-3 h-3" /> Проекты
-              </button>
-              <ChevronRight className="w-4 h-4 mx-1" />
-              <span className="font-bold text-slate-800">{currentProject.name}</span>
-            </div>
-            <h2 className="text-base sm:text-lg md:text-xl font-bold text-slate-900">{currentProject.name}</h2>
-          </div>
-
-          <div className="flex p-1 bg-gray-100 rounded-lg w-full md:w-auto">
-            <button
-              onClick={() => setProjectTab('generator')}
-              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'generator' ? 'bg-white text-brand-green shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <Sparkles className="w-4 h-4" /> <span className="hidden sm:inline">Генератор</span>
-            </button>
-            <button
-              onClick={() => setProjectTab('audit')}
-              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'audit' ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <Search className="w-4 h-4" /> <span className="hidden sm:inline">Аудит</span>
-            </button>
-            <button
-              onClick={() => setProjectTab('rewrite')}
-              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'rewrite' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <RefreshCw className="w-4 h-4" /> <span className="hidden sm:inline">Рерайт</span>
-            </button>
-            <button
-              onClick={() => setProjectTab('serp')}
-              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'serp' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <BarChart3 className="w-4 h-4" /> <span className="hidden sm:inline">SERP</span>
-            </button>
-            <button
-              onClick={() => setProjectTab('history')}
-              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${projectTab === 'history' ? 'bg-white text-brand-green shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <History className="w-4 h-4" /> <span className="hidden sm:inline">История</span> <span className="text-xs bg-gray-200 px-1.5 py-0.5 rounded-full text-gray-600 ml-1">{projectHistory.length}</span>
-            </button>
-          </div>
-        </div>
+        <ProjectHeader
+          project={currentProject}
+          currentTab={projectTab}
+          onTabChange={setProjectTab}
+          onBackToProjects={() => setCurrentProject(null)}
+          historyCount={projectHistory.length}
+        />
 
         {projectTab === 'history' ? (
           <HistoryList history={projectHistory} onDelete={handleDeleteHistoryItem} />
@@ -508,27 +483,19 @@ export default function App() {
           userPlan?.canAudit || user?.role === 'admin' ? (
             <SeoAuditor onUserUpdate={setUser} />
           ) : (
-            <div className="glass-panel p-8 rounded-2xl text-center">
-              <Lock className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">SEO Аудит недоступен</h3>
-              <p className="text-slate-400 text-sm mb-4">Эта функция недоступна для вашего тарифа. Обновите подписку для доступа к SEO аудиту.</p>
-              <button onClick={() => setShowSubscriptionModal(true)} className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold transition-colors">
-                Обновить тариф
-              </button>
-            </div>
+            <LockedFeatureEmptyState
+              featureName="SEO Аудит"
+              onUpgrade={() => setShowSubscriptionModal(true)}
+            />
           )
         ) : projectTab === 'rewrite' ? (
           userPlan?.canRewrite || user?.role === 'admin' ? (
             <RewriteMode onUserUpdate={setUser} />
           ) : (
-            <div className="glass-panel p-8 rounded-2xl text-center">
-              <Lock className="w-12 h-12 text-pink-400 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Рерайт недоступен</h3>
-              <p className="text-slate-400 text-sm mb-4">Эта функция недоступна для вашего тарифа. Обновите подписку для доступа к рерайту.</p>
-              <button onClick={() => setShowSubscriptionModal(true)} className="px-6 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-lg font-bold transition-colors">
-                Обновить тариф
-              </button>
-            </div>
+            <LockedFeatureEmptyState
+              featureName="Рерайт"
+              onUpgrade={() => setShowSubscriptionModal(true)}
+            />
           )
         ) : projectTab === 'serp' ? (
           <SerpAnalyzer 
@@ -620,10 +587,7 @@ export default function App() {
               )}
 
               {!isGenerating && !result && (
-                <div
-                  className={`flex flex-col items-center justify-center h-64 md:h-96 bg-white rounded-xl shadow-sm border border-gray-200 border-dashed relative ${isLocked ? 'pointer-events-none' : ''}`}
-                  aria-disabled={isLocked}
-                >
+                <div className="relative">
                   {isLocked && (
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] rounded-xl flex items-center justify-center z-10">
                       <div className="text-center p-4">
@@ -632,11 +596,7 @@ export default function App() {
                       </div>
                     </div>
                   )}
-                  <div className="p-4 md:p-6 bg-gray-50 rounded-full mb-4">
-                    <LayoutDashboard className="w-8 h-8 md:w-12 md:h-12 text-gray-300" />
-                  </div>
-                  <p className="text-base md:text-lg text-slate-500 font-medium">Готов к работе</p>
-                  <p className="text-xs md:text-sm text-slate-400 text-center px-4">Загрузите Excel, настройте контекст и параметры.</p>
+                  <GeneratorEmptyState />
                 </div>
               )}
 
@@ -678,124 +638,38 @@ export default function App() {
   return (
     <div className="min-h-screen bg-mesh-animated text-slate-100 font-sans pb-10 md:pb-20 animate-in fade-in duration-700">
       {/* Header */}
-      <header className="glass-panel-dark sticky top-0 z-50 border-b border-white/5 shadow-glass">
-        <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 md:py-4 flex items-center justify-between xl:max-w-7xl">
-          <div className="flex items-center gap-3 sm:gap-4 cursor-pointer min-w-0 group" onClick={() => { setCurrentProject(null); setShowAdminPanel(false); }}>
-            <div className="w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-br from-brand-green to-emerald-600 rounded-xl flex items-center justify-center shadow-glow-sm shrink-0 group-hover:scale-105 transition-transform duration-300">
-              <LayoutDashboard className="text-white w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">SEO Generator</h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-            {/* Admin Toggle */}
-            {user.role === 'admin' && (
-              <button
-                onClick={() => { setShowAdminPanel(!showAdminPanel); setCurrentProject(null); }}
-                className={`
-                  px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-full font-medium flex items-center gap-2 transition-all duration-300 whitespace-nowrap
-                  ${showAdminPanel
-                    ? 'bg-white text-brand-dark shadow-glow'
-                    : 'bg-white/10 text-white hover:bg-white/20 border border-white/10'}
-                `}
-              >
-                <ShieldCheck className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline">{showAdminPanel ? 'Выйти' : 'Админка'}</span>
-              </button>
-            )}
-
-            {/* Subscription Plans Button (For Users) */}
-            {user.role !== 'admin' && (
-              <button
-                onClick={() => setShowSubscriptionModal(true)}
-                className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-full font-medium flex items-center gap-2 transition-all duration-300 whitespace-nowrap bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-white hover:from-purple-500/30 hover:to-pink-500/30 border border-purple-500/30"
-              >
-                <Crown className="w-3 h-3 sm:w-4 sm:h-4 text-amber-400" />
-                <span className="hidden sm:inline">Тарифы</span>
-              </button>
-            )}
-
-            {/* Subscription Counter (For Users) - Mobile compact version */}
-            {user.role !== 'admin' && (
-              <div className="flex sm:hidden items-center gap-1.5">
-                <div className="flex items-center gap-1 bg-white/5 px-2 py-1 rounded-full border border-white/10">
-                  <Zap className="w-3 h-3 text-yellow-400" />
-                  <span className="text-[10px] font-bold text-white">{dailyRemaining}/{monthlyRemaining}</span>
-                </div>
-                {isSubscriptionActive ? (
-                  <div className="flex items-center gap-1 bg-brand-green/10 px-2 py-1 rounded-full border border-brand-green/30">
-                    <Clock className="w-3 h-3 text-brand-green" />
-                    <span className="text-[10px] font-bold text-brand-green">
-                      {user.planId === 'free' ? '∞' : `${daysRemaining}д`}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1 bg-red-500/10 px-2 py-1 rounded-full border border-red-500/30">
-                    <Lock className="w-3 h-3 text-red-400" />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Subscription Counter (For Users) - Desktop version */}
-            {user.role !== 'admin' && (
-              <div className="hidden sm:flex items-center gap-2 md:gap-3">
-                {/* Generation Usage Counter - REMAINING */}
-                <div className="flex items-center gap-2 sm:gap-3 bg-white/5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/10 backdrop-blur-sm" title="Осталось генераций">
-                  <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 shrink-0 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]" />
-                  <div className="flex items-center gap-2 sm:gap-3 text-xs font-medium text-gray-200">
-                    <span title="Осталось на сегодня" className="whitespace-nowrap">
-                      <span className="hidden lg:inline text-gray-400">Сутки: </span>
-                      <span className={`font-bold ${(typeof dailyRemaining === 'number' && dailyRemaining <= 0) ? 'text-red-400' : 'text-white'}`}>{dailyRemaining}</span>
-                    </span>
-                    <span className="text-white/20">|</span>
-                    <span title="Осталось на месяц" className="whitespace-nowrap">
-                      <span className="hidden lg:inline text-gray-400">Всего: </span>
-                      <span className={`font-bold ${(typeof monthlyRemaining === 'number' && monthlyRemaining <= 0) ? 'text-red-400' : 'text-white'}`}>{monthlyRemaining}</span>
-                    </span>
-                  </div>
-                </div>
-
-                {isSubscriptionActive ? (
-                  <div className="flex items-center gap-2 sm:gap-3 bg-brand-green/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-brand-green/30 backdrop-blur-sm">
-                    <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-brand-green shrink-0 drop-shadow-[0_0_8px_rgba(0,220,130,0.5)]" />
-                    {user.planId === 'free' ? (
-                      <span className="text-xs sm:text-sm font-bold text-brand-green whitespace-nowrap">Бессрочно</span>
-                    ) : (
-                      <span className="text-xs sm:text-sm font-bold text-brand-green whitespace-nowrap">
-                        {daysRemaining} дн.
-                      </span>
-                    )}
-                    {userPlan && (
-                      <span className="hidden xl:inline text-xs bg-brand-green/20 px-2 py-0.5 rounded text-brand-green font-medium ml-1">
-                        {userPlan.name}
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 sm:gap-3 bg-red-500/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-red-500/30 backdrop-blur-sm">
-                    <Lock className="w-3 h-3 sm:w-4 sm:h-4 text-red-400 shrink-0" />
-                    <span className="text-xs sm:text-sm font-bold text-red-400 whitespace-nowrap">Нет доступа</span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="hidden lg:block text-xs sm:text-sm text-slate-300 max-w-[120px] xl:max-w-none truncate font-medium">
-              {user.firstName} {user.username ? `(@${user.username})` : ''}
-            </div>
-            <button
-              onClick={handleLogout}
-              className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full transition-all duration-300 text-slate-400 hover:text-white shrink-0 active:scale-95"
-              title="Выйти"
-            >
-              <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header
+        user={user}
+        onLogout={handleLogout}
+        onToggleAdmin={user.role === 'admin' ? () => { setShowAdminPanel(!showAdminPanel); setCurrentProject(null); } : undefined}
+        showAdmin={showAdminPanel}
+        onOpenSubscription={user.role !== 'admin' ? () => setShowSubscriptionModal(true) : undefined}
+      >
+        {/* Subscription Status */}
+        {user.role !== 'admin' && (
+          <SubscriptionStatus
+            userPlan={userPlan}
+            dailyRemaining={dailyRemaining}
+            monthlyRemaining={monthlyRemaining}
+            isSubscriptionActive={isSubscriptionActive}
+            daysRemaining={daysRemaining}
+            userPlanId={user.planId}
+            compact={false}
+          />
+        )}
+        {/* Mobile Subscription Status */}
+        {user.role !== 'admin' && (
+          <SubscriptionStatus
+            userPlan={userPlan}
+            dailyRemaining={dailyRemaining}
+            monthlyRemaining={monthlyRemaining}
+            isSubscriptionActive={isSubscriptionActive}
+            daysRemaining={daysRemaining}
+            userPlanId={user.planId}
+            compact={true}
+          />
+        )}
+      </Header>
 
       <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 xl:max-w-7xl">
         {renderContent()}

@@ -28,12 +28,25 @@ interface TelegramWebAppGlobal {
   version: string;
   platform: string;
   colorScheme: 'light' | 'dark';
-  themeParams: unknown;
+  themeParams: {
+    bg_color?: string;
+    text_color?: string;
+    hint_color?: string;
+    link_color?: string;
+    button_color?: string;
+    button_text_color?: string;
+    secondary_bg_color?: string;
+  };
   isExpanded: boolean;
   viewportHeight: number;
   viewportStableHeight: number;
   headerColor: string;
   backgroundColor: string;
+  HapticFeedback?: {
+    notificationOccurred(type: 'error' | 'success' | 'warning'): void;
+    impactOccurred(style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft'): void;
+    selectionChanged(): void;
+  };
   BackButton: {
     isVisible: boolean;
     onClick(callback: () => void): void;
@@ -57,6 +70,7 @@ interface TelegramWebAppGlobal {
     disable(): void;
     showProgress(leaveActive?: boolean): void;
     hideProgress(): void;
+    setParams?(params: { text?: string; color?: string }): void;
   };
   ready(): void;
   expand(): void;

@@ -9,31 +9,113 @@
 
 /* Mobile-first approach */
 :root {
-  /* Base font sizes */
-  --font-size-xs: 0.75rem;
-  /* 12px */
-  --font-size-sm: 0.875rem;
-  /* 14px */
-  --font-size-base: 1rem;
-  /* 16px */
-  --font-size-lg: 1.125rem;
-  /* 18px */
-  --font-size-xl: 1.25rem;
-  /* 20px */
-  --font-size-2xl: 1.5rem;
-  /* 24px */
-  --font-size-3xl: 1.875rem;
-  /* 30px */
-
-  /* Touch target sizes */
-  --touch-target-min: 44px;
-
-  /* Spacing */
+  /* ============================================
+     Design System Tokens (RGB for opacity support)
+     ============================================ */
+  
+  /* Brand Colors (RGB) */
+  --color-brand: 0 220 130;        /* Brand Green */
+  --color-brand-dark: 11 15 25;   /* Dark Background */
+  --color-brand-blue: 56 189 248;  /* Accent Blue */
+  --color-brand-purple: 147 51 234;
+  --color-brand-pink: 236 72 153;
+  
+  /* Background Colors (RGB) */
+  --bg-primary: 11 15 25;          /* #0B0F19 */
+  --bg-secondary: 21 25 37;       /* #151925 */
+  --bg-tertiary: 26 31 46;         /* #1A1F2E */
+  --bg-elevated: 255 255 255;      /* White */
+  
+  /* Text Colors (RGB) */
+  --text-primary: 255 255 255;
+  --text-secondary: 203 213 225;   /* #CBD5E1 */
+  --text-muted: 148 163 184;       /* #94A3B8 */
+  --text-on-light: 15 23 42;       /* #0F172A */
+  
+  /* Border Colors */
+  --border-light: 255 255 255;
+  --border-subtle: 255 255 255;
+  --border-dark: 71 85 105;        /* #475569 */
+  
+  /* Radius Tokens */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-full: 9999px;
+  
+  /* Shadow Tokens */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(0, 220, 130, 0.3);
+  --shadow-glow-sm: 0 0 10px rgba(0, 220, 130, 0.2);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  
+  /* Typography Scale */
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.875rem;  /* 30px */
+  --font-size-4xl: 2.25rem;   /* 36px */
+  
+  /* Spacing Scale */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  
+  /* Touch target sizes */
+  --touch-target-min: 44px;
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+  
+  /* Z-index Scale */
+  --z-dropdown: 100;
+  --z-sticky: 50;
+  --z-modal: 1000;
+  --z-tooltip: 1100;
+}
+
+/* Light Theme Support */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-primary: 255 255 255;
+    --bg-secondary: 248 250 252;
+    --bg-tertiary: 241 245 249;
+    --text-primary: 15 23 42;
+    --text-secondary: 71 85 105;
+    --text-muted: 100 116 139;
+    --border-subtle: 226 232 240;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) {
+  :root {
+    --font-size-base: 1rem;
+    --font-size-lg: 1.25rem;
+    --font-size-xl: 1.5rem;
+    --font-size-2xl: 1.75rem;
+    --font-size-3xl: 2rem;
+  }
+}
+
+/* Desktop adjustments */
+@media (min-width: 1024px) {
+  :root {
+    --font-size-2xl: 2rem;
+    --font-size-3xl: 2.25rem;
+  }
 }
 
 /* Tablet adjustments */
@@ -505,4 +587,173 @@ html {
 /* Brand Colors */
 .brand-blue {
   color: #38BDF8;
+}
+
+/* ============================================
+   Enhanced Readability
+   ============================================ */
+
+/* Text shadow for better readability on semi-transparent backgrounds */
+.text-readable {
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.text-readable-light {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.text-glow-brand {
+  text-shadow: 0 0 10px rgba(0, 220, 130, 0.5), 0 0 20px rgba(0, 220, 130, 0.3);
+}
+
+/* ============================================
+   Typography System
+   ============================================ */
+
+.text-display {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.text-title {
+  font-size: clamp(1.125rem, 3vw, 1.5rem);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.text-body {
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.text-caption {
+  font-size: clamp(0.75rem, 1.5vw, 0.875rem);
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* ============================================
+   Micro-interactions & Hover Effects
+   ============================================ */
+
+/* Card hover effects */
+.project-card {
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.project-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 220, 130, 0.15);
+}
+
+/* Button micro-interactions */
+.btn-micro {
+  transition: all var(--transition-fast);
+}
+
+.btn-micro:active {
+  transform: scale(0.97);
+}
+
+/* Icon button hover */
+.icon-btn {
+  transition: all var(--transition-base);
+}
+
+.icon-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Focus visible styles for accessibility */
+*:focus-visible {
+  outline: 2px solid rgb(var(--color-brand));
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Focus ring for interactive elements */
+.focus-ring-brand:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(var(--color-brand-dark)), 0 0 0 4px rgb(var(--color-brand));
+}
+
+/* ============================================
+   Animation Optimizations
+   ============================================ */
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  /* Disable animated mesh background */
+  .bg-mesh-animated {
+    animation: none !important;
+    background: linear-gradient(135deg, #0B0F19 0%, #1a1f2e 50%, #0B0F19 100%);
+  }
+  
+  .bg-mesh-animated::before {
+    animation: none !important;
+  }
+  
+  /* Disable hover transforms */
+  .project-card:hover {
+    transform: none;
+  }
+  
+  .btn-micro:active,
+  .icon-btn:hover {
+    transform: none;
+  }
+}
+
+/* ============================================
+   Telegram WebApp Optimizations
+   ============================================ */
+
+/* Safe area insets for notched devices (iPhone) - enhanced */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+    padding-top: max(0px, env(safe-area-inset-top));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Telegram WebApp theme params support */
+.telegram-webapp {
+  /* These will be overridden by Telegram theme params */
+  --tg-theme-bg-color: var(--bg-primary);
+  --tg-theme-text-color: var(--text-primary);
+  --tg-theme-hint-color: var(--text-muted);
+  --tg-theme-link-color: rgb(var(--color-brand));
+  --tg-theme-button-color: rgb(var(--color-brand));
+  --tg-theme-button-text-color: var(--text-primary);
+  --tg-theme-secondary-bg-color: var(--bg-secondary);
+}
+
+/* Haptic feedback visual feedback */
+.haptic-press:active {
+  transform: scale(0.95);
+}
+
+.haptic-success {
+  animation: haptic-success-pulse 0.3s ease-out;
+}
+
+@keyframes haptic-success-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
