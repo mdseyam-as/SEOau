@@ -36,7 +36,6 @@
       "@types/node": "^22.14.0",
       "ts-node": "^10.9.2",
       "typescript": "^5.9.3",
-      "node:test": "^22.0.0",
       "supertest": "^7.0.0",
       "vitest": "^2.1.0"
     }
