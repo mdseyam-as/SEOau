@@ -5,33 +5,39 @@
     "description": "Backend API for SEO Generator Telegram WebApp",
     "main": "server.js",
     "scripts": {
-        "start": "node server.js",
-        "dev": "node --watch server.js",
-        "build": "prisma generate",
-        "db:generate": "prisma generate",
-        "db:push": "prisma db push",
-        "db:seed": "node ../prisma/seed.js",
-        "postinstall": "prisma generate || echo 'Prisma generate skipped'"
+      "start": "node server.js",
+      "dev": "node --watch server.js",
+      "build": "prisma generate",
+      "test": "node --test",
+      "test:watch": "node --test --watch",
+      "test:coverage": "node --test --coverage",
+      "db:generate": "prisma generate",
+      "db:push": "prisma db push",
+      "db:seed": "node ../prisma/seed.js",
+      "postinstall": "prisma generate || echo 'Prisma generate skipped'"
     },
     "dependencies": {
-        "@prisma/client": "^5.22.0",
-        "cookie-parser": "^1.4.7",
-        "cors": "^2.8.5",
-        "crypto": "^1.0.1",
-        "dotenv": "^16.4.7",
-        "express": "^5.1.0",
-        "express-rate-limit": "^7.5.0",
-        "helmet": "^8.1.0",
-        "ioredis": "^5.8.2",
-        "node-telegram-bot-api": "^0.67.0",
-        "prisma": "^5.22.0",
-        "zod": "^4.1.13"
+      "@prisma/client": "^5.22.0",
+      "cookie-parser": "^1.4.7",
+      "cors": "^2.8.5",
+      "crypto": "^1.0.1",
+      "dotenv": "^16.4.7",
+      "express": "^5.1.0",
+      "express-rate-limit": "^7.5.0",
+      "helmet": "^8.1.0",
+      "ioredis": "^5.8.2",
+      "node-telegram-bot-api": "^0.67.0",
+      "prisma": "^5.22.0",
+      "zod": "^4.1.13"
     },
     "devDependencies": {
-        "@types/cors": "^2.8.19",
-        "@types/express": "^5.0.6",
-        "@types/node": "^22.14.0",
-        "ts-node": "^10.9.2",
-        "typescript": "^5.9.3"
+      "@types/cors": "^2.8.19",
+      "@types/express": "^5.0.6",
+      "@types/node": "^22.14.0",
+      "ts-node": "^10.9.2",
+      "typescript": "^5.9.3",
+      "node:test": "^22.0.0",
+      "supertest": "^7.0.0",
+      "vitest": "^2.1.0"
     }
 }

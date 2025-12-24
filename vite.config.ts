@@ -18,6 +18,15 @@ export default defineConfig(({ mode }) => {
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+    },
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      include: ['frontend/tests/**/*.{test,spec}.{ts,tsx}', 'backend/tests/**/*.{test,spec}.{js,ts}'],
+      environmentMatchGlobs: [
+        ['frontend/tests/**', 'jsdom'],
+        ['backend/tests/**', 'node']
+      ]
     }
   };
 });
