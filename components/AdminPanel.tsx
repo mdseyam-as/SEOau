@@ -170,7 +170,7 @@ export const AdminPanel: React.FC = () => {
     try {
       await apiService.updateUser(updatedUser.telegramId, {
         planId: updatedUser.planId,
-        subscriptionExpiry: updatedUser.subscriptionExpiry,
+        subscriptionExpiry: updatedUser.subscriptionExpiry || undefined,
       });
 
       // Reload data to reflect changes
