@@ -149,7 +149,8 @@ export const updateSettingsSchema = z.object({
     systemPrompt: z.string().max(50000).optional(), // Legacy
     seoPrompt: z.string().max(50000).optional(),
     geoPrompt: z.string().max(50000).optional(),
-    telegramLink: z.string().url().max(500).optional(),
+    // Allow both full URL (https://t.me/user) or just username (@user or user)
+    telegramLink: z.string().max(500).optional(),
     spamCheckModel: z.string().max(100).optional()
 });
 
