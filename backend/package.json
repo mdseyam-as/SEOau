@@ -16,6 +16,9 @@
       "db:seed": "node ../prisma/seed.js",
       "postinstall": "prisma generate || echo 'Prisma generate skipped'"
     },
+    "prisma": {
+      "seed": "node ../prisma/seed.js"
+    },
     "dependencies": {
       "@prisma/client": "^5.22.0",
       "cookie-parser": "^1.4.7",
