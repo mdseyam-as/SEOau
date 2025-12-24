@@ -155,7 +155,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                     'Войти (Dev Mode)'
                   )}
                 </button>
-              </form>    <p className="text-xs text-gray-400">
+              </form>
+              <p className="text-xs text-gray-400">
                 Для добавления администратора, добавьте ID в массив ADMIN_IDS в коде.
               </p>
             </div>

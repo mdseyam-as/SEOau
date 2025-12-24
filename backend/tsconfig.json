@@ -20,6 +20,6 @@
     "noUnusedParameters": false,
     "allowSyntheticDefaultImports": true
   },
-  "include": ["src/**/*"],
+  "include": ["**/*.js", "**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

@@ -43,8 +43,11 @@ export function initRedis() {
         });
 
         // Connect asynchronously
-        redis.connect().catch(err => {
+        redis.connect().then(() => {
+            isConnected = true;
+        }).catch(err => {
             console.error('Redis connection failed:', err.message);
+            isConnected = false;
             redis = null;
         });
 

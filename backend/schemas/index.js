@@ -61,6 +61,11 @@ const keywordSchema = z.object({
     frequency: z.number().min(0).default(1)
 });
 
+export const competitorFileSchema = z.object({
+    name: z.string().min(1).max(200),
+    content: z.string().max(20000)
+});
+
 export const generateSchema = z.object({
     config: z.object({
         websiteName: z.string().min(1, 'Website name is required').max(200),
@@ -69,6 +74,7 @@ export const generateSchema = z.object({
         topic: z.string().max(1000).optional().default(''),
         lsiKeywords: z.string().max(5000).optional().default(''),
         competitorUrls: z.string().max(5000).optional().default(''),
+        competitorFiles: z.array(competitorFileSchema).optional().default([]),
         exampleContent: z.string().max(50000).optional().default(''),
         // Accept any string for tone/style - frontend uses localized display values
         tone: z.string().max(100).optional().default('Professional & Trustworthy'),
@@ -78,6 +84,9 @@ export const generateSchema = z.object({
         minParas: z.number().int().min(1).max(100).optional().default(3),
         maxParas: z.number().int().min(1).max(100).optional().default(12),
         model: z.string().min(1).max(100).optional().default('google/gemini-3-flash-preview'),
+        writerModel: z.string().min(1).max(100).optional(),
+        visualizerModel: z.string().min(1).max(100).optional(),
+        useMultimodalGeo: z.boolean().optional().default(true),
         // Generation mode: 'seo' for classic SEO, 'geo' for AI search engines
         generationMode: z.enum(['seo', 'geo']).optional().default('seo')
     }),
