@@ -9,7 +9,7 @@ WORKDIR /app
 RUN apk add --no-cache openssl
 
 # ==================== FRONTEND BUILD ====================
-# Копируем package.json корня
+# Копируем package.json и lock файл
 COPY package*.json ./
 
 # Устанавливаем зависимости для frontend
@@ -17,10 +17,11 @@ RUN npm ci
 
 # Копируем исходники frontend
 COPY index.html vite.config.ts tsconfig.json ./
-COPY index.tsx index.css types.ts App.tsx ./
+COPY index.tsx index.css types.ts App.tsx vite-env.d.ts ./
 COPY components ./components/
 COPY hooks ./hooks/
 COPY services ./services/
+COPY types ./types/
 
 # Копируем Prisma схему
 COPY prisma ./prisma/
