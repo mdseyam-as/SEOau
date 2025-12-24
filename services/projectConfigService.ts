@@ -44,6 +44,7 @@ export const projectConfigService = {
                 maxParas: config.maxParas,
                 model: config.model,
                 generationMode: config.generationMode || 'seo',
+                language: config.language,
                 // competitorFiles не сохраняем, т.к. они занимают много места
             };
 

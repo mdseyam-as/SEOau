@@ -40,7 +40,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       // Передаём initData в apiService, чтобы оно ушло в заголовке X-Telegram-Init-Data
       apiService.setInitData(tg.initData);
 
-      // Логинимся через бэкенд (создаёт/находит юзера в Mongo)
+      // Логинимся через бэкенд (создаёт/находит юзера в PostgreSQL)
       const { user } = await apiService.login();
       onLogin(user);
     } catch (err: any) {

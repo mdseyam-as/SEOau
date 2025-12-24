@@ -166,7 +166,7 @@ export const AdminPanel: React.FC = () => {
       updatedUser.subscriptionExpiry = expiry.toISOString();
     }
 
-    // И ОБЯЗАТЕЛЬНО — обновляем запись в Mongo через API
+    // Обновляем запись в БД через API
     try {
       await apiService.updateUser(updatedUser.telegramId, {
         planId: updatedUser.planId,

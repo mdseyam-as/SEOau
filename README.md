@@ -18,11 +18,14 @@
 ```
 SEOau/
 ├── backend/              # Node.js + Express API
-│   ├── models/          # MongoDB модели
 │   ├── routes/          # API маршруты
 │   ├── middleware/      # Middleware (валидация Telegram)
 │   ├── utils/           # Утилиты (подписки, Telegram auth)
+│   ├── lib/             # Prisma клиент
 │   └── server.js        # Главный файл сервера
+│
+├── prisma/               # Prisma ORM
+│   └── schema.prisma    # Схема БД (PostgreSQL)
 │
 ├── hooks/               # React hooks
 │   └── useTelegram.ts   # Hook для Telegram WebApp API
@@ -49,8 +52,12 @@ npm install
 cp .env.example .env
 # Отредактируйте .env файл с вашими настройками
 
-# Инициализируйте БД
-node initDb.js
+# Сгенерируйте Prisma клиент и примените миграции
+npx prisma generate
+npx prisma db push
+
+# Заполните БД начальными данными
+npm run db:seed
 
 # Запустите сервер
 npm start
@@ -75,19 +82,18 @@ Frontend будет доступен на `http://localhost:5173`
 
 ## 📚 Документация
 
-- **[AMVERA_QUICKSTART.md](./AMVERA_QUICKSTART.md) - Быстрый старт деплоя на Amvera** ⚡
-- [DEPLOYMENT.md](./DEPLOYMENT.md) - Детальное руководство по деплою
 - [TELEGRAM_BOT_INTEGRATION.md](./TELEGRAM_BOT_INTEGRATION.md) - Интеграция с Telegram ботом
-- [DATABASE_SETUP.md](./DATABASE_SETUP.md) - Настройка MongoDB
+- [MIGRATION_TO_POSTGRESQL.md](./MIGRATION_TO_POSTGRESQL.md) - Миграция на PostgreSQL
 
 ## 🔑 Переменные окружения
 
 ### Backend (.env)
 
 ```env
-MONGODB_URI=mongodb://localhost:27017/seo-generator
+DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT].supabase.co:5432/postgres
 BOT_TOKEN=your_telegram_bot_token
 ADMIN_TELEGRAM_IDS=11,22,33
+OPENROUTER_API_KEY=your_openrouter_key
 YUKASSA_SHOP_ID=your_shop_id
 YUKASSA_SECRET_KEY=your_secret_key
 YUKASSA_WEBHOOK_SECRET=your_webhook_secret
