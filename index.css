@@ -1011,3 +1011,28 @@ html {
   50% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
+
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Extra small breakpoint for very small screens */
+@media (min-width: 375px) {
+  .xs\:inline {
+    display: inline !important;
+  }
+  .xs\:hidden {
+    display: none !important;
+  }
+}

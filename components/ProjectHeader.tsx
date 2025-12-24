@@ -89,14 +89,18 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       </div>
 
       {/* Tabs */}
-      <div className="flex p-1 bg-gray-100 rounded-lg w-full md:w-auto" role="tablist" aria-label="Вкладки проекта">
+      <div 
+        className="flex p-1 bg-gray-100 rounded-lg w-full md:w-auto overflow-x-auto scrollbar-hide" 
+        role="tablist" 
+        aria-label="Вкладки проекта"
+      >
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={`
-              flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all btn-micro
-              ${currentTab === tab.id ? tab.bgClass : 'text-gray-500 hover:text-gray-700'}
+              flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all btn-micro whitespace-nowrap
+              ${currentTab === tab.id ? tab.bgClass : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}
             `}
             role="tab"
             aria-selected={currentTab === tab.id}
@@ -104,9 +108,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             aria-label={tab.label}
           >
             {tab.icon}
-            <span className="hidden sm:inline">{tab.label}</span>
+            <span className="hidden xs:inline">{tab.label}</span>
             {tab.id === 'history' && historyCount > 0 && (
-              <span className="text-xs bg-gray-200 px-1.5 py-0.5 rounded-full text-gray-600 ml-1">
+              <span className="text-[10px] sm:text-xs bg-gray-200 px-1 sm:px-1.5 py-0.5 rounded-full text-gray-600">
                 {historyCount}
               </span>
             )}
