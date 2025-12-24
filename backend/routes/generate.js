@@ -2910,9 +2910,39 @@ router.post('/social-pack', async (req, res) => {
                 if (match) cleanJson = match[0];
             }
 
-            pack = JSON.parse(cleanJson);
+            // Fix common JSON issues from AI
+            cleanJson = cleanJson
+                .replace(/,\s*]/g, ']')  // Remove trailing commas in arrays
+                .replace(/,\s*}/g, '}')  // Remove trailing commas in objects
+                .replace(/[\x00-\x1F\x7F]/g, ' ') // Remove control characters
+                .replace(/\n/g, '\\n')   // Escape newlines in strings
+                .replace(/\r/g, '');     // Remove carriage returns
+
+            // Try to fix unescaped quotes in strings
+            try {
+                pack = JSON.parse(cleanJson);
+            } catch (firstError) {
+                // Try more aggressive cleanup
+                cleanJson = rawContent.trim()
+                    .replace(/^```json\s*/i, '')
+                    .replace(/^```\s*/i, '')
+                    .replace(/\s*```$/g, '')
+                    .trim();
+                
+                const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    cleanJson = jsonMatch[0];
+                }
+                
+                // Replace problematic characters
+                cleanJson = cleanJson
+                    .replace(/,\s*]/g, ']')
+                    .replace(/,\s*}/g, '}');
+                
+                pack = JSON.parse(cleanJson);
+            }
         } catch (e) {
-            console.error('Social pack parse error:', e.message);
+            console.error('Social pack parse error:', e.message, 'Raw:', rawContent.substring(0, 500));
             return res.status(500).json({ error: 'Failed to parse social pack response' });
         }
 
