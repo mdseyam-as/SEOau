@@ -50,25 +50,25 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <div
-      className={`flex flex-col items-center justify-center h-64 md:h-96 bg-white rounded-xl shadow-sm border border-gray-200 border-dashed ${className}`}
+      className={`flex flex-col items-center justify-center h-64 md:h-96 bg-white rounded-xl shadow-sm border border-gray-200 border-dashed animate-fade-in-scale ${className}`}
       role="status"
       aria-live="polite"
     >
-      <div className={`p-4 md:p-6 ${styles.iconBg} rounded-full mb-4`}>
-        <div className={styles.iconColor}>
+      <div className={`p-4 md:p-6 ${styles.iconBg} rounded-full mb-4 float-animation`}>
+        <div className={`${styles.iconColor} icon-bounce`}>
           {icon || defaultIcon}
         </div>
       </div>
-      <h3 className="text-base md:text-lg text-slate-900 font-medium mb-2">
+      <h3 className="text-base md:text-lg text-slate-900 font-medium mb-2 text-title">
         {title}
       </h3>
       {description && (
-        <p className="text-xs md:text-sm text-slate-500 text-center px-4 mb-6 max-w-md">
+        <p className="text-xs md:text-sm text-slate-500 text-center px-4 mb-6 max-w-md text-body">
           {description}
         </p>
       )}
       {action && (
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 stagger-children">
           {action}
         </div>
       )}

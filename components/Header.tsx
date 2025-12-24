@@ -28,11 +28,11 @@ export const Header: React.FC<HeaderProps> = ({
             onToggleAdmin?.();
           }}
         >
-          <div className="w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-br from-brand-green to-emerald-600 rounded-xl flex items-center justify-center shadow-glow-sm shrink-0 group-hover:scale-105 transition-transform duration-300">
-            <LayoutDashboard className="text-white w-5 h-5 sm:w-6 sm:h-6" />
+          <div className="w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-br from-brand-green to-emerald-600 rounded-xl flex items-center justify-center shadow-glow-sm shrink-0 float-animation">
+            <LayoutDashboard className="text-white w-5 h-5 sm:w-6 sm:h-6 icon-bounce" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate text-white text-readable">
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate text-white text-glow-brand">
               SEO Generator
             </h1>
           </div>
@@ -44,14 +44,14 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onToggleAdmin}
               className={`
-                px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-full font-medium flex items-center gap-2 transition-all duration-300 whitespace-nowrap focus-ring-brand
+                px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-full font-medium flex items-center gap-2 transition-all duration-300 whitespace-nowrap btn-magnetic btn-ripple
                 ${showAdmin
-                  ? 'bg-white text-brand-dark shadow-glow'
+                  ? 'bg-white text-brand-dark shadow-glow animate-pulse-glow'
                   : 'bg-white/10 text-white hover:bg-white/20 border border-white/10'}
               `}
               aria-label={showAdmin ? 'Выйти из админки' : 'Открыть админку'}
             >
-              <ShieldCheck className="w-3 h-3 sm:w-4 sm:h-4" />
+              <ShieldCheck className="w-3 h-3 sm:w-4 sm:h-4 icon-bounce" />
               <span className="hidden xs:inline">{showAdmin ? 'Выйти' : 'Админка'}</span>
             </button>
           )}
