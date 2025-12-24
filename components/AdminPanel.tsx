@@ -356,7 +356,7 @@ export const AdminPanel: React.FC = () => {
                 <select
                   value={manualPlanId}
                   onChange={(e) => setManualPlanId(e.target.value)}
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-green outline-none"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-brand-green outline-none"
                 >
                   {plans.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
@@ -368,7 +368,7 @@ export const AdminPanel: React.FC = () => {
                 <select
                   value={manualDays}
                   onChange={(e) => setManualDays(Number(e.target.value))}
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-green outline-none"
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-brand-green outline-none"
                 >
                   <option value={7}>7 дней</option>
                   <option value={30}>1 месяц (30 дней)</option>
