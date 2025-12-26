@@ -1,19 +1,35 @@
 /**
  * BullMQ Configuration
  * Конфигурация для очередей задач
+ * 
+ * ВАЖНО: Очереди создаются лениво только при наличии Redis
  */
 
 import { Queue, Worker } from 'bullmq';
-import { redis } from '../utils/cache.js';
+
+// Проверка наличия Redis
+const REDIS_URL = process.env.REDIS_URL;
+const REDIS_AVAILABLE = !!REDIS_URL;
 
 // Конфигурация Redis для BullMQ
-const connection = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD || undefined,
-  db: parseInt(process.env.REDIS_DB || '0'),
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
+const getConnection = () => {
+  if (!REDIS_AVAILABLE) {
+    return null;
+  }
+  
+  // Parse Redis URL or use individual env vars
+  if (REDIS_URL) {
+    return REDIS_URL;
+  }
+  
+  return {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379'),
+    password: process.env.REDIS_PASSWORD || undefined,
+    db: parseInt(process.env.REDIS_DB || '0'),
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false,
+  };
 };
 
 // Конфигурация очередей
@@ -33,7 +49,7 @@ export const QUEUE_CONFIG = {
       age: 86400, // 24 часа
     },
   },
-  connection,
+  connection: getConnection(),
 };
 
 // Имена очередей
@@ -45,17 +61,43 @@ export const QUEUE_NAMES = {
   BACKGROUND_TASKS: 'background-tasks',
 };
 
+// Кэш для ленивой инициализации очередей
+const queueCache = new Map();
+
 /**
- * Создание очереди
+ * Создание очереди (ленивая инициализация)
  */
 export function createQueue(name) {
+  if (!REDIS_AVAILABLE) {
+    console.warn(`[Queue] Redis not available, queue "${name}" disabled`);
+    return null;
+  }
   return new Queue(name, QUEUE_CONFIG);
+}
+
+/**
+ * Получение или создание очереди
+ */
+function getOrCreateQueue(name) {
+  if (!REDIS_AVAILABLE) {
+    return null;
+  }
+  
+  if (!queueCache.has(name)) {
+    queueCache.set(name, createQueue(name));
+  }
+  return queueCache.get(name);
 }
 
 /**
  * Создание воркера
  */
 export function createWorker(name, processor, options = {}) {
+  if (!REDIS_AVAILABLE) {
+    console.warn(`[Worker] Redis not available, worker "${name}" disabled`);
+    return null;
+  }
+  
   return new Worker(
     name,
     processor,
@@ -67,19 +109,29 @@ export function createWorker(name, processor, options = {}) {
   );
 }
 
-// Создание очередей
-// Примечание: QueueScheduler был удалён в BullMQ v4+, его функциональность встроена в Worker
-export const generationQueue = createQueue(QUEUE_NAMES.GENERATION);
-export const seoAuditQueue = createQueue(QUEUE_NAMES.SEO_AUDIT);
-export const faqGenerationQueue = createQueue(QUEUE_NAMES.FAQ_GENERATION);
-export const contentRewriteQueue = createQueue(QUEUE_NAMES.CONTENT_REWRITE);
-export const backgroundTasksQueue = createQueue(QUEUE_NAMES.BACKGROUND_TASKS);
+// Ленивые геттеры для очередей (создаются только при первом обращении)
+export const generationQueue = { get: () => getOrCreateQueue(QUEUE_NAMES.GENERATION) };
+export const seoAuditQueue = { get: () => getOrCreateQueue(QUEUE_NAMES.SEO_AUDIT) };
+export const faqGenerationQueue = { get: () => getOrCreateQueue(QUEUE_NAMES.FAQ_GENERATION) };
+export const contentRewriteQueue = { get: () => getOrCreateQueue(QUEUE_NAMES.CONTENT_REWRITE) };
+export const backgroundTasksQueue = { get: () => getOrCreateQueue(QUEUE_NAMES.BACKGROUND_TASKS) };
+
+/**
+ * Проверка доступности Redis/очередей
+ */
+export function isQueueAvailable() {
+  return REDIS_AVAILABLE;
+}
 
 /**
  * Добавление задачи в очередь
  */
 export async function addJob(queueName, jobName, data, options = {}) {
-  const queue = getQueue(queueName);
+  if (!REDIS_AVAILABLE) {
+    throw new Error('Queue system not available (Redis not configured)');
+  }
+  
+  const queue = getOrCreateQueue(queueName);
   if (!queue) {
     throw new Error(`Queue ${queueName} not found`);
   }
@@ -88,25 +140,14 @@ export async function addJob(queueName, jobName, data, options = {}) {
 }
 
 /**
- * Получение очереди по имени
- */
-function getQueue(name) {
-  const queues = {
-    [QUEUE_NAMES.GENERATION]: generationQueue,
-    [QUEUE_NAMES.SEO_AUDIT]: seoAuditQueue,
-    [QUEUE_NAMES.FAQ_GENERATION]: faqGenerationQueue,
-    [QUEUE_NAMES.CONTENT_REWRITE]: contentRewriteQueue,
-    [QUEUE_NAMES.BACKGROUND_TASKS]: backgroundTasksQueue,
-  };
-  
-  return queues[name];
-}
-
-/**
  * Получение статистики очереди
  */
 export async function getQueueStats(queueName) {
-  const queue = getQueue(queueName);
+  if (!REDIS_AVAILABLE) {
+    return { waiting: 0, active: 0, completed: 0, failed: 0, delayed: 0, available: false };
+  }
+  
+  const queue = getOrCreateQueue(queueName);
   if (!queue) {
     throw new Error(`Queue ${queueName} not found`);
   }
@@ -125,6 +166,7 @@ export async function getQueueStats(queueName) {
     completed,
     failed,
     delayed,
+    available: true,
   };
 }
 
@@ -132,7 +174,11 @@ export async function getQueueStats(queueName) {
  * Очистка очереди
  */
 export async function cleanQueue(queueName, grace = 5000) {
-  const queue = getQueue(queueName);
+  if (!REDIS_AVAILABLE) {
+    return;
+  }
+  
+  const queue = getOrCreateQueue(queueName);
   if (!queue) {
     throw new Error(`Queue ${queueName} not found`);
   }
@@ -145,11 +191,16 @@ export async function cleanQueue(queueName, grace = 5000) {
  * Закрытие всех очередей
  */
 export async function closeAllQueues() {
-  await Promise.all([
-    generationQueue.close(),
-    seoAuditQueue.close(),
-    faqGenerationQueue.close(),
-    contentRewriteQueue.close(),
-    backgroundTasksQueue.close(),
-  ]);
+  if (!REDIS_AVAILABLE) {
+    return;
+  }
+  
+  const closePromises = [];
+  for (const queue of queueCache.values()) {
+    if (queue) {
+      closePromises.push(queue.close());
+    }
+  }
+  await Promise.all(closePromises);
+  queueCache.clear();
 }

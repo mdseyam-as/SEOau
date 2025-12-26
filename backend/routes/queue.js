@@ -8,18 +8,41 @@ import {
   addJob, 
   getQueueStats, 
   cleanQueue,
-  QUEUE_NAMES 
+  QUEUE_NAMES,
+  isQueueAvailable
 } from '../config/queue.js';
 import { createApiError, ERROR_CODES } from '../utils/errors.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
 
+// Middleware для проверки доступности очередей
+function requireQueue(req, res, next) {
+  if (!isQueueAvailable()) {
+    return res.status(503).json({
+      error: 'Queue system not available (Redis not configured)',
+      code: 5030
+    });
+  }
+  next();
+}
+
+/**
+ * GET /api/queue/status
+ * Проверка статуса системы очередей
+ */
+router.get('/status', (req, res) => {
+  res.json({
+    available: isQueueAvailable(),
+    message: isQueueAvailable() ? 'Queue system is available' : 'Queue system disabled (Redis not configured)'
+  });
+});
+
 /**
  * POST /api/queue/generation
  * Добавление задачи генерации в очередь
  */
-router.post('/generation', async (req, res) => {
+router.post('/generation', requireQueue, async (req, res) => {
   try {
     const { 
       projectId, 
@@ -92,7 +115,7 @@ router.post('/generation', async (req, res) => {
  * GET /api/queue/stats/:queueName
  * Получение статистики очереди
  */
-router.get('/stats/:queueName', async (req, res) => {
+router.get('/stats/:queueName', requireQueue, async (req, res) => {
   try {
     const { queueName } = req.params;
     
@@ -127,7 +150,7 @@ router.get('/stats/:queueName', async (req, res) => {
  * GET /api/queue/stats
  * Получение статистики всех очередей
  */
-router.get('/stats', async (req, res) => {
+router.get('/stats', requireQueue, async (req, res) => {
   try {
     const queueNames = Object.values(QUEUE_NAMES);
     const stats = {};
@@ -154,7 +177,7 @@ router.get('/stats', async (req, res) => {
  * POST /api/queue/clean/:queueName
  * Очистка очереди
  */
-router.post('/clean/:queueName', async (req, res) => {
+router.post('/clean/:queueName', requireQueue, async (req, res) => {
   try {
     const { queueName } = req.params;
     const { grace } = req.body;

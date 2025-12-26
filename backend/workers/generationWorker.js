@@ -1,11 +1,12 @@
 /**
  * Generation Worker
  * Воркер для обработки задач генерации контента
+ * 
+ * ВАЖНО: Воркер создаётся только при наличии Redis
  */
 
-import { createWorker, QUEUE_NAMES } from '../config/queue.js';
+import { createWorker, QUEUE_NAMES, isQueueAvailable } from '../config/queue.js';
 import logger from '../utils/logger.js';
-import { getPrompt } from '../prompts/seoPrompt.js';
 import { prisma } from '../lib/prisma.js';
 
 /**
@@ -31,7 +32,14 @@ async function processGeneration(job) {
     await updateJobStatus(job.id, 'processing', 10);
     
     // Получение промпта
-    const basePrompt = getPrompt(promptType);
+    let basePrompt = '';
+    try {
+      const { getPrompt } = await import('../prompts/seoPrompt.js');
+      basePrompt = getPrompt(promptType);
+    } catch (e) {
+      basePrompt = 'Generate SEO content';
+    }
+    
     const fullPrompt = `${basePrompt}\n\nTopic: ${topic}\nKeywords: ${keywords.join(', ')}\nTone: ${tone}\nLanguage: ${language}`;
     
     await updateJobStatus(job.id, 'processing', 30);
@@ -74,9 +82,6 @@ async function processGeneration(job) {
  * Генерация с AI API
  */
 async function generateWithAI(model, prompt, onProgress) {
-  // Здесь должна быть интеграция с реальным AI API
-  // Для примера - эмуляция генерации
-  
   return new Promise((resolve, reject) => {
     try {
       let progress = 40;
@@ -111,11 +116,6 @@ function generateRandomChunk() {
     'Качественный контент должен быть полезным для пользователей.',
     'Структура текста играет важную роль в SEO.',
     'Мета-теги и заголовки должны быть оптимизированы.',
-    'Внутренние ссылки помогают улучшить навигацию и SEO.',
-    'Мобильная оптимизация становится всё более важной.',
-    'Скорость загрузки страницы влияет на пользовательский опыт и SEO.',
-    'Регулярное обновление контента помогает поддерживать актуальность.',
-    'Аналитика данных помогает отслеживать эффективность SEO стратегий.'
   ];
   
   const numSentences = Math.floor(Math.random() * 3) + 2;
@@ -165,25 +165,37 @@ async function saveGenerationResult(projectId, data) {
 }
 
 /**
- * Создание воркера
+ * Создание воркера (только если Redis доступен)
  */
-export const generationWorker = createWorker(
-  QUEUE_NAMES.GENERATION,
-  processGeneration,
-  {
-    concurrency: 2, // Обработка 2 задач одновременно
+let generationWorker = null;
+
+if (isQueueAvailable()) {
+  generationWorker = createWorker(
+    QUEUE_NAMES.GENERATION,
+    processGeneration,
+    {
+      concurrency: 2,
+    }
+  );
+
+  if (generationWorker) {
+    // Обработка событий воркера
+    generationWorker.on('completed', (job) => {
+      logger.info({ jobId: job.id }, 'Generation job completed');
+    });
+
+    generationWorker.on('failed', (job, error) => {
+      logger.error({ jobId: job?.id, error: error.message }, 'Generation job failed');
+    });
+
+    generationWorker.on('error', (error) => {
+      logger.error({ error: error.message }, 'Generation worker error');
+    });
+    
+    logger.info('Generation worker started');
   }
-);
+} else {
+  logger.warn('Generation worker disabled (Redis not available)');
+}
 
-// Обработка событий воркера
-generationWorker.on('completed', (job) => {
-  logger.info({ jobId: job.id }, 'Generation job completed');
-});
-
-generationWorker.on('failed', (job, error) => {
-  logger.error({ jobId: job?.id, error: error.message }, 'Generation job failed');
-});
-
-generationWorker.on('error', (error) => {
-  logger.error({ error: error.message }, 'Generation worker error');
-});
+export { generationWorker };
