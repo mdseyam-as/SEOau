@@ -45,8 +45,9 @@ describe('errorHandler middleware', () => {
     errorHandler(genericError, mockReq, mockRes, mockNext);
     
     expect(mockRes.status).toHaveBeenCalledWith(500);
+    // В dev режиме возвращается сообщение ошибки, в production - 'Внутренняя ошибка'
     expect(mockRes.json).toHaveBeenCalledWith({
-      error: 'Внутренняя ошибка',
+      error: 'Generic error',
       code: 5000,
       requestId: mockReq.id
     });
@@ -93,20 +94,25 @@ describe('notFoundHandler', () => {
 });
 
 describe('asyncHandler', () => {
-  it('should resolve async function', async () => {
-    const asyncFn = vi.fn().mockResolvedValue('result');
-    const wrappedFn = asyncHandler(asyncFn);
-    
-    const result = await wrappedFn(null, null, null);
-    
-    expect(result).toBe('result');
-  });
-
-  it('should reject async function with error', async () => {
+  it('should call async function and pass to next on error', async () => {
     const error = new Error('Test error');
     const asyncFn = vi.fn().mockRejectedValue(error);
+    const mockNext = vi.fn();
     const wrappedFn = asyncHandler(asyncFn);
     
-    await expect(wrappedFn(null, null, null)).rejects.toThrow(error);
+    await wrappedFn({}, {}, mockNext);
+    
+    expect(mockNext).toHaveBeenCalledWith(error);
+  });
+
+  it('should call async function without error', async () => {
+    const asyncFn = vi.fn().mockResolvedValue('result');
+    const mockNext = vi.fn();
+    const wrappedFn = asyncHandler(asyncFn);
+    
+    await wrappedFn({}, {}, mockNext);
+    
+    expect(asyncFn).toHaveBeenCalled();
+    expect(mockNext).not.toHaveBeenCalled();
   });
 });

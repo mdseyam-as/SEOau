@@ -26,7 +26,7 @@ export function validateTelegramAuth(req, res, next) {
         }
 
         // --- PRODUCTION PATH (Telegram WebApp auth) ---
-        const initData = req.headers['x-telegram-init-data'] || req.body.initData;
+        const initData = req.headers['x-telegram-init-data'] || req.body?.initData;
 
         if (!initData) {
             return res.status(401).json({ error: 'Missing Telegram init data' });
