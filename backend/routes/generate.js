@@ -53,7 +53,7 @@ async function insertInternalLinks(content, userId) {
     try {
         // Get user's internal links sorted by priority (highest first)
         const links = await prisma.internalLinks.findMany({
-            where: { userId: BigInt(userId) },
+            where: { userId: String(userId) },
             orderBy: { priority: 'desc' }
         });
 
