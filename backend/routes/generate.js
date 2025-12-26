@@ -39,6 +39,79 @@ function getModelId(modelKey) {
     return MODEL_MAPPING[modelKey] || modelKey;
 }
 
+// ==================== INTERNAL LINKS INSERTION ====================
+
+/**
+ * Insert internal links into content based on user's configured links
+ * @param {string} content - The generated content
+ * @param {number} userId - User's Telegram ID
+ * @returns {Promise<string>} - Content with internal links inserted
+ */
+async function insertInternalLinks(content, userId) {
+    if (!content || !userId) return content;
+
+    try {
+        // Get user's internal links sorted by priority (highest first)
+        const links = await prisma.internalLink.findMany({
+            where: { userId: BigInt(userId) },
+            orderBy: { priority: 'desc' }
+        });
+
+        if (!links || links.length === 0) return content;
+
+        let modifiedContent = content;
+        const usedUrls = new Set(); // Track used URLs to avoid duplicates
+
+        for (const link of links) {
+            // Skip if this URL was already inserted
+            if (usedUrls.has(link.url)) continue;
+
+            // Determine what text to search for
+            const searchTerms = [];
+            
+            // Add anchor text if specified
+            if (link.anchorText) {
+                searchTerms.push(link.anchorText);
+            }
+            
+            // Add keywords
+            if (link.keywords && link.keywords.length > 0) {
+                searchTerms.push(...link.keywords);
+            }
+
+            // Try to find and replace first occurrence of any search term
+            for (const term of searchTerms) {
+                if (!term || term.length < 2) continue;
+                
+                // Case-insensitive search for the term (not already in a link)
+                const regex = new RegExp(
+                    `(?<!\\[)(?<!href=["'])\\b(${escapeRegexForLinks(term)})\\b(?![^\\[]*\\])(?![^<]*<\\/a>)`,
+                    'i'
+                );
+                
+                if (regex.test(modifiedContent)) {
+                    // Replace first occurrence with markdown link
+                    modifiedContent = modifiedContent.replace(
+                        regex,
+                        `[$1](${link.url})`
+                    );
+                    usedUrls.add(link.url);
+                    break; // Move to next link after successful insertion
+                }
+            }
+        }
+
+        return modifiedContent;
+    } catch (error) {
+        console.error('Error inserting internal links:', error);
+        return content; // Return original content on error
+    }
+}
+
+function escapeRegexForLinks(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // ==================== PROMPT TEMPLATES ====================
 
 const DEFAULT_PROMPT_TEMPLATE = `You are a Senior SEO Copywriter and Content Strategist for **{{websiteName}}**.
@@ -1871,6 +1944,23 @@ ${exampleInstruction}
             } catch (e) {
                 console.error("Auto spam check failed", e);
             }
+        }
+
+        // Insert internal links
+        try {
+            if (result.content) {
+                result.content = await insertInternalLinks(result.content, limitCheck.user.telegramId);
+            }
+            // Also process structured article sections
+            if (result.article?.sections) {
+                for (const section of result.article.sections) {
+                    if (section.content) {
+                        section.content = await insertInternalLinks(section.content, limitCheck.user.telegramId);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Internal links insertion failed", e);
         }
 
         // Increment usage

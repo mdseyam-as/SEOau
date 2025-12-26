@@ -55,41 +55,43 @@ export const KeywordHighlighter: React.FC<KeywordHighlighterProps> = ({
   const missingCount = stats.filter(s => !s.used).length;
 
   const highlightedContent = useMemo(() => {
-    if (!showHighlight || validKeywords.length === 0) {
-      return content;
+    if (!showHighlight || validKeywords.length === 0 || !content) {
+      return null;
     }
 
-    let result = content;
-    const usedKeywords = stats.filter(s => s.used).map(s => s.keyword);
+    const usedKeywords = stats.filter(s => s.used).map(s => s.keyword.toLowerCase());
+    if (usedKeywords.length === 0) return null;
 
     // Sort by length (longer first to avoid partial matches)
     const sortedKeywords = [...usedKeywords].sort((a, b) => b.length - a.length);
-
-    for (const keyword of sortedKeywords) {
-      // Case-insensitive replace without word boundary (for Cyrillic support)
-      const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
-      result = result.replace(regex, '{{HIGHLIGHT}}$1{{/HIGHLIGHT}}');
-    }
-
-    return result;
+    
+    // Build regex pattern for all keywords
+    const pattern = sortedKeywords.map(k => escapeRegex(k)).join('|');
+    const regex = new RegExp(`(${pattern})`, 'gi');
+    
+    // Split content by keywords
+    const parts = content.split(regex);
+    
+    return parts;
   }, [content, validKeywords, stats, showHighlight]);
 
   const renderContent = () => {
-    if (!showHighlight) {
+    if (!showHighlight || !highlightedContent) {
       return <span className="text-slate-300">{content}</span>;
     }
 
-    const parts = highlightedContent.split(/(\{\{HIGHLIGHT\}\}.*?\{\{\/HIGHLIGHT\}\})/g);
+    const usedKeywordsLower = stats.filter(s => s.used).map(s => s.keyword.toLowerCase());
 
-    return parts.map((part, index) => {
-      if (part.startsWith('{{HIGHLIGHT}}') && part.endsWith('{{/HIGHLIGHT}}')) {
-        const text = part.replace('{{HIGHLIGHT}}', '').replace('{{/HIGHLIGHT}}', '');
+    return highlightedContent.map((part, index) => {
+      const isKeyword = usedKeywordsLower.includes(part.toLowerCase());
+      
+      if (isKeyword) {
         return (
           <mark
             key={index}
             className="bg-brand-green/30 text-brand-green rounded px-0.5"
           >
-            {text}
+            {part}
           </mark>
         );
       }
