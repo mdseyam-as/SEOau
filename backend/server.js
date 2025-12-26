@@ -11,6 +11,10 @@ import { prisma } from './lib/prisma.js';
 
 // Import middleware
 import { validateTelegramAuth } from './middleware/auth.js';
+import { requestId } from './middleware/requestId.js';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { ipRateLimiter, userRateLimiter, generateRateLimiter, seoAuditRateLimiter } from './middleware/rateLimit.js';
+import logger from './utils/logger.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -26,9 +30,17 @@ import internalLinksRoutes from './routes/internal-links.js';
 import outlineRoutes from './routes/outline.js';
 import tasksRoutes from './routes/tasks.js';
 import exportRoutes from './routes/export.js';
+import streamingRoutes from './routes/streaming.js';
+import queueRoutes from './routes/queue.js';
 
 // Import services
 import { taskQueue } from './services/taskQueueService.js';
+
+// Import Swagger
+import { setupSwagger } from './swagger.js';
+
+// Import workers
+import { generationWorker } from './workers/generationWorker.js';
 
 // Import utilities
 import { initializeBot } from './utils/subscriptionManager.js';
@@ -57,6 +69,9 @@ if (process.env.NODE_ENV === 'production') {
 initRedis();
 
 const app = express();
+
+// Setup Swagger documentation
+setupSwagger(app);
 const PORT = process.env.PORT || 3000;
 
 // Trust proxy (needed for rate limiting behind reverse proxy)
@@ -190,6 +205,8 @@ function validateCsrf(req, res, next) {
     next();
 }
 
+// Apply middleware in correct order
+app.use(requestId); // Generate request ID first
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -197,53 +214,19 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Apply CSRF validation to all routes
 app.use(validateCsrf);
 
-// Rate limiting
-const generalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // 100 requests per 15 minutes
-    message: { error: 'Too many requests, please try again later.' },
-    standardHeaders: true,
-    legacyHeaders: false,
-    keyGenerator: (req) => {
-        // Use Telegram user ID if available, otherwise IP
-        return req.telegramUser?.id?.toString() || req.ip;
-    }
-});
+// Apply rate limiting
+app.use(ipRateLimiter); // IP-based rate limiting for DDoS protection
+app.use(userRateLimiter); // User-based rate limiting
 
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // 20 auth requests per 15 minutes
-    message: { error: 'Too many authentication attempts, please try again later.' },
-    standardHeaders: true,
-    legacyHeaders: false
-});
-
-const generateLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 5, // 5 generation requests per minute
-    message: { error: 'Too many generation requests, please try again later.' },
-    standardHeaders: true,
-    legacyHeaders: false,
-    keyGenerator: (req) => {
-        return req.telegramUser?.id?.toString() || req.ip;
-    }
-});
-
-// Rate limiter for webhooks (15 minutes window)
-const webhookLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 30, // 30 webhook calls per 15 minutes per IP
-    message: { error: 'Too many webhook requests' },
-    standardHeaders: true,
-    legacyHeaders: false
-});
-
-// Apply general rate limit to all requests
-app.use(generalLimiter);
-
-// Request logging
+// Request logging (now uses structured logger)
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    logger.info({
+        requestId: req.id,
+        method: req.method,
+        path: req.path,
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+    }, 'Incoming request');
     next();
 });
 
@@ -295,20 +278,22 @@ app.get('/health', async (req, res) => {
 
 // Public routes (no auth required)
 app.use('/api/plans', planRoutes); // Plans are public for viewing
-app.use('/api/webhook', webhookLimiter, webhookRoutes); // Webhook with rate limiting
+app.use('/api/webhook', seoAuditRateLimiter, webhookRoutes); // Webhook with rate limiting
 
 // Protected routes (require Telegram auth)
-app.use('/api/auth', authLimiter, validateTelegramAuth, authRoutes);
+app.use('/api/auth', validateTelegramAuth, authRoutes);
 app.use('/api/users', validateTelegramAuth, userRoutes);
 app.use('/api/projects', validateTelegramAuth, projectRoutes);
 app.use('/api/history', validateTelegramAuth, historyRoutes);
 app.use('/api/settings', validateTelegramAuth, settingsRoutes);
-app.use('/api/generate', generateLimiter, validateTelegramAuth, generateRoutes);
+app.use('/api/generate', generateRateLimiter, validateTelegramAuth, generateRoutes);
 app.use('/api/knowledge-base', validateTelegramAuth, knowledgeBaseRoutes);
 app.use('/api/internal-links', validateTelegramAuth, internalLinksRoutes);
-app.use('/api/outline', generateLimiter, validateTelegramAuth, outlineRoutes);
+app.use('/api/outline', generateRateLimiter, validateTelegramAuth, outlineRoutes);
 app.use('/api/tasks', validateTelegramAuth, tasksRoutes);
 app.use('/api/export', validateTelegramAuth, exportRoutes);
+app.use('/api/streaming', generateRateLimiter, validateTelegramAuth, streamingRoutes);
+app.use('/api/queue', validateTelegramAuth, queueRoutes);
 
 // Serve Vite-built frontend
 import path from 'path';
@@ -326,11 +311,11 @@ app.get(/.*/, (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
 });
 
-// Error handler
-app.use((err, req, res, next) => {
-    console.error('Server error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-});
+// 404 handler
+app.use(notFoundHandler);
+
+// Error handler (must be last)
+app.use(errorHandler);
 
 // Start server - bind to 0.0.0.0 for container accessibility
 app.listen(PORT, '0.0.0.0', () => {

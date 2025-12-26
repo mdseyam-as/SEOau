@@ -23,8 +23,7 @@ export function encrypt(text) {
     const encryptionKey = process.env.ENCRYPTION_KEY;
 
     if (!encryptionKey || encryptionKey.length < 32) {
-        console.warn('[Encryption] ENCRYPTION_KEY not set or too short. Storing unencrypted.');
-        return text; // Return unencrypted if no key
+      throw new Error('ENCRYPTION_KEY not set or too short. Cannot encrypt data.');
     }
 
     try {
