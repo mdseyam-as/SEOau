@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, FileText, Trash2, AlertCircle, CheckCircle, Database, Search } from 'lucide-react';
+import { Upload, FileText, Trash2, AlertCircle, CheckCircle, Database } from 'lucide-react';
 import type { KnowledgeBaseFile } from '../types';
+import { apiService } from '../services/apiService';
 
 interface KnowledgeBaseUploaderProps {
   onFilesChange?: (files: KnowledgeBaseFile[]) => void;
@@ -19,14 +20,9 @@ export const KnowledgeBaseUploader: React.FC<KnowledgeBaseUploaderProps> = ({ on
 
   const loadFiles = async () => {
     try {
-      const response = await fetch('/api/knowledge-base', {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setFiles(data.files || []);
-        onFilesChange?.(data.files || []);
-      }
+      const data = await apiService.getKnowledgeBase();
+      setFiles(data.files || []);
+      onFilesChange?.(data.files || []);
     } catch (err) {
       console.error('Failed to load knowledge base files:', err);
     }
@@ -38,28 +34,14 @@ export const KnowledgeBaseUploader: React.FC<KnowledgeBaseUploaderProps> = ({ on
     setSuccess(null);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/knowledge-base/upload', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        const newFiles = [...files, result];
-        setFiles(newFiles);
-        onFilesChange?.(newFiles);
-        setSuccess(`Файл "${result.fileName}" успешно загружен`);
-        setTimeout(() => setSuccess(null), 3000);
-      } else {
-        const data = await response.json();
-        setError(data.error || 'Ошибка загрузки файла');
-      }
-    } catch (err) {
-      setError('Не удалось загрузить файл');
+      const result = await apiService.uploadKnowledgeBaseFile(file);
+      const newFiles = [...files, result];
+      setFiles(newFiles);
+      onFilesChange?.(newFiles);
+      setSuccess(`Файл "${result.fileName}" успешно загружен`);
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Ошибка загрузки файла');
       console.error('Upload failed:', err);
     } finally {
       setUploading(false);
@@ -71,16 +53,10 @@ export const KnowledgeBaseUploader: React.FC<KnowledgeBaseUploaderProps> = ({ on
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`/api/knowledge-base/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const newFiles = files.filter(f => f.id !== id);
-        setFiles(newFiles);
-        onFilesChange?.(newFiles);
-      }
+      await apiService.deleteKnowledgeBaseFile(id);
+      const newFiles = files.filter(f => f.id !== id);
+      setFiles(newFiles);
+      onFilesChange?.(newFiles);
     } catch (err) {
       console.error('Delete failed:', err);
     }

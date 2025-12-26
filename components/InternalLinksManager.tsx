@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link2, Plus, Trash2, AlertCircle, ChevronDown, ChevronUp, Edit2, Save, X } from 'lucide-react';
+import { Link2, Plus, Trash2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import type { InternalLink } from '../types';
+import { apiService } from '../services/apiService';
 
 interface InternalLinksManagerProps {
   onLinksChange?: (links: InternalLink[]) => void;
@@ -10,7 +11,6 @@ export const InternalLinksManager: React.FC<InternalLinksManagerProps> = ({ onLi
   const [links, setLinks] = useState<InternalLink[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [newLink, setNewLink] = useState({
     url: '',
@@ -25,14 +25,9 @@ export const InternalLinksManager: React.FC<InternalLinksManagerProps> = ({ onLi
 
   const loadLinks = async () => {
     try {
-      const response = await fetch('/api/internal-links', {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setLinks(data.links || []);
-        onLinksChange?.(data.links || []);
-      }
+      const data = await apiService.getInternalLinks();
+      setLinks(data.links || []);
+      onLinksChange?.(data.links || []);
     } catch (err) {
       console.error('Failed to load internal links:', err);
     }
@@ -46,45 +41,28 @@ export const InternalLinksManager: React.FC<InternalLinksManagerProps> = ({ onLi
 
     try {
       setError(null);
-      const response = await fetch('/api/internal-links', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          url: newLink.url,
-          anchorText: newLink.anchorText || null,
-          keywords: newLink.keywords.split(',').map(k => k.trim()).filter(Boolean),
-          priority: newLink.priority
-        })
+      const data = await apiService.addInternalLink({
+        url: newLink.url,
+        anchorText: newLink.anchorText || undefined,
+        keywords: newLink.keywords.split(',').map(k => k.trim()).filter(Boolean),
+        priority: newLink.priority
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const newLinks = [...links, data.link];
-        setLinks(newLinks);
-        onLinksChange?.(newLinks);
-        setNewLink({ url: '', anchorText: '', keywords: '', priority: 0 });
-      } else {
-        const data = await response.json();
-        setError(data.error || 'Ошибка добавления ссылки');
-      }
-    } catch (err) {
-      setError('Не удалось добавить ссылку');
+      const newLinks = [...links, data.link];
+      setLinks(newLinks);
+      onLinksChange?.(newLinks);
+      setNewLink({ url: '', anchorText: '', keywords: '', priority: 0 });
+    } catch (err: any) {
+      setError(err.message || 'Ошибка добавления ссылки');
     }
   };
 
   const handleDeleteLink = async (id: string) => {
     try {
-      const response = await fetch(`/api/internal-links/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const newLinks = links.filter(l => l.id !== id);
-        setLinks(newLinks);
-        onLinksChange?.(newLinks);
-      }
+      await apiService.deleteInternalLink(id);
+      const newLinks = links.filter(l => l.id !== id);
+      setLinks(newLinks);
+      onLinksChange?.(newLinks);
     } catch (err) {
       console.error('Delete failed:', err);
     }
@@ -94,15 +72,9 @@ export const InternalLinksManager: React.FC<InternalLinksManagerProps> = ({ onLi
     if (!confirm('Удалить все внутренние ссылки?')) return;
 
     try {
-      const response = await fetch('/api/internal-links', {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        setLinks([]);
-        onLinksChange?.([]);
-      }
+      await apiService.deleteAllInternalLinks();
+      setLinks([]);
+      onLinksChange?.([]);
     } catch (err) {
       console.error('Clear all failed:', err);
     }

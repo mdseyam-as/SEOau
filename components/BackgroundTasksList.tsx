@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle, XCircle, Loader2, Trash2, RefreshCw, Bell, BellOff, ExternalLink } from 'lucide-react';
 import type { BackgroundTaskListItem } from '../types';
+import { apiService } from '../services/apiService';
 
 interface BackgroundTasksListProps {
   onOpenResult?: (taskId: string) => void;
@@ -22,13 +23,8 @@ export const BackgroundTasksList: React.FC<BackgroundTasksListProps> = ({ onOpen
 
   const loadTasks = async () => {
     try {
-      const response = await fetch('/api/tasks', {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setTasks(data.tasks || []);
-      }
+      const data = await apiService.getTasks();
+      setTasks(data.tasks || []);
     } catch (err) {
       console.error('Failed to load tasks:', err);
     } finally {
@@ -38,13 +34,8 @@ export const BackgroundTasksList: React.FC<BackgroundTasksListProps> = ({ onOpen
 
   const loadNotificationSettings = async () => {
     try {
-      const response = await fetch('/api/tasks/settings/notifications', {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setNotificationsEnabled(data.notificationsEnabled);
-      }
+      const data = await apiService.getTaskNotificationSettings();
+      setNotificationsEnabled(data.notificationsEnabled);
     } catch (err) {
       console.error('Failed to load notification settings:', err);
     }
@@ -52,16 +43,8 @@ export const BackgroundTasksList: React.FC<BackgroundTasksListProps> = ({ onOpen
 
   const toggleNotifications = async () => {
     try {
-      const response = await fetch('/api/tasks/settings/notifications', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ enabled: !notificationsEnabled })
-      });
-
-      if (response.ok) {
-        setNotificationsEnabled(!notificationsEnabled);
-      }
+      await apiService.updateTaskNotificationSettings(!notificationsEnabled);
+      setNotificationsEnabled(!notificationsEnabled);
     } catch (err) {
       console.error('Failed to update notification settings:', err);
     }
@@ -69,14 +52,8 @@ export const BackgroundTasksList: React.FC<BackgroundTasksListProps> = ({ onOpen
 
   const handleDeleteTask = async (taskId: string) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        setTasks(tasks.filter(t => t.id !== taskId));
-      }
+      await apiService.deleteTask(taskId);
+      setTasks(tasks.filter(t => t.id !== taskId));
     } catch (err) {
       console.error('Failed to delete task:', err);
     }

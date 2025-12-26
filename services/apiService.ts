@@ -324,6 +324,82 @@ class ApiService {
             body: JSON.stringify(params)
         });
     }
+
+    // Knowledge Base
+    async getKnowledgeBase(): Promise<{ files: Array<{ id: string; fileName: string; fileType: string; fileSize: number; createdAt: string }> }> {
+        return this.request('/knowledge-base');
+    }
+
+    async uploadKnowledgeBaseFile(file: File): Promise<{ id: string; fileName: string; fileType: string; fileSize: number; createdAt: string }> {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const headers: HeadersInit = {
+            'X-Telegram-Init-Data': this.initData,
+        };
+
+        const env = (typeof import.meta !== 'undefined' ? (import.meta as any).env : {}) || {};
+        if (env.DEV && this.devTelegramId) {
+            (headers as any)['X-Dev-Telegram-Id'] = String(this.devTelegramId);
+        }
+
+        const response = await fetch(`${API_URL}/knowledge-base/upload`, {
+            method: 'POST',
+            headers,
+            body: formData
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ error: 'Upload failed' }));
+            throw new Error(error.error || `HTTP ${response.status}`);
+        }
+
+        return response.json();
+    }
+
+    async deleteKnowledgeBaseFile(id: string): Promise<void> {
+        return this.request(`/knowledge-base/${id}`, { method: 'DELETE' });
+    }
+
+    // Internal Links
+    async getInternalLinks(): Promise<{ links: Array<{ id: string; url: string; anchorText?: string; keywords: string[]; priority: number; createdAt?: string }> }> {
+        return this.request('/internal-links');
+    }
+
+    async addInternalLink(link: { url: string; anchorText?: string; keywords: string[]; priority: number }): Promise<{ link: { id: string; url: string; anchorText?: string; keywords: string[]; priority: number } }> {
+        return this.request('/internal-links', {
+            method: 'POST',
+            body: JSON.stringify(link)
+        });
+    }
+
+    async deleteInternalLink(id: string): Promise<void> {
+        return this.request(`/internal-links/${id}`, { method: 'DELETE' });
+    }
+
+    async deleteAllInternalLinks(): Promise<void> {
+        return this.request('/internal-links', { method: 'DELETE' });
+    }
+
+    // Background Tasks
+    async getTasks(): Promise<{ tasks: Array<{ id: string; type: string; status: string; error?: string; createdAt: string; hasResult: boolean }> }> {
+        return this.request('/tasks');
+    }
+
+    async deleteTask(id: string): Promise<void> {
+        return this.request(`/tasks/${id}`, { method: 'DELETE' });
+    }
+
+    async getTaskNotificationSettings(): Promise<{ notificationsEnabled: boolean }> {
+        return this.request('/tasks/settings/notifications');
+    }
+
+    async updateTaskNotificationSettings(enabled: boolean): Promise<void> {
+        return this.request('/tasks/settings/notifications', {
+            method: 'PUT',
+            body: JSON.stringify({ enabled })
+        });
+    }
 }
 
 export const apiService = new ApiService();
