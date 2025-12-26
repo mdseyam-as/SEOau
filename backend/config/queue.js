@@ -3,7 +3,7 @@
  * Конфигурация для очередей задач
  */
 
-import { Queue, Worker, QueueScheduler } from 'bullmq';
+import { Queue, Worker } from 'bullmq';
 import { redis } from '../utils/cache.js';
 
 // Конфигурация Redis для BullMQ
@@ -67,14 +67,8 @@ export function createWorker(name, processor, options = {}) {
   );
 }
 
-/**
- * Создание планировщика очереди
- */
-export function createScheduler(name) {
-  return new QueueScheduler(name, QUEUE_CONFIG);
-}
-
 // Создание очередей
+// Примечание: QueueScheduler был удалён в BullMQ v4+, его функциональность встроена в Worker
 export const generationQueue = createQueue(QUEUE_NAMES.GENERATION);
 export const seoAuditQueue = createQueue(QUEUE_NAMES.SEO_AUDIT);
 export const faqGenerationQueue = createQueue(QUEUE_NAMES.FAQ_GENERATION);
