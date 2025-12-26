@@ -1,8 +1,8 @@
 import React from 'react';
-import { Home, ChevronRight, Sparkles, Search, RefreshCw, BarChart3, History, ListTree, Clock } from 'lucide-react';
+import { Home, ChevronRight, Sparkles, Search, RefreshCw, BarChart3, History, ListTree } from 'lucide-react';
 import { Project } from '../types';
 
-type ProjectTab = 'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp' | 'tasks';
+type ProjectTab = 'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp';
 
 interface ProjectHeaderProps {
   project: Project;
@@ -10,7 +10,6 @@ interface ProjectHeaderProps {
   onTabChange: (tab: ProjectTab) => void;
   onBackToProjects: () => void;
   historyCount?: number;
-  tasksCount?: number;
 }
 
 interface TabConfig {
@@ -58,13 +57,6 @@ const tabs: TabConfig[] = [
     bgClass: 'bg-white text-indigo-600 shadow-sm',
   },
   {
-    id: 'tasks',
-    label: 'Задачи',
-    icon: <Clock className="w-4 h-4" />,
-    colorClass: 'text-cyan-600',
-    bgClass: 'bg-white text-cyan-600 shadow-sm',
-  },
-  {
     id: 'history',
     label: 'История',
     icon: <History className="w-4 h-4" />,
@@ -78,8 +70,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   currentTab,
   onTabChange,
   onBackToProjects,
-  historyCount = 0,
-  tasksCount = 0
+  historyCount = 0
 }) => {
   const activeTab = tabs.find(tab => tab.id === currentTab);
 
@@ -128,11 +119,6 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             {tab.id === 'history' && historyCount > 0 && (
               <span className="text-[10px] sm:text-xs bg-gray-200 px-1 sm:px-1.5 py-0.5 rounded-full text-gray-600">
                 {historyCount}
-              </span>
-            )}
-            {tab.id === 'tasks' && tasksCount > 0 && (
-              <span className="text-[10px] sm:text-xs bg-cyan-100 px-1 sm:px-1.5 py-0.5 rounded-full text-cyan-600">
-                {tasksCount}
               </span>
             )}
           </button>

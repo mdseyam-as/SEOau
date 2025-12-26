@@ -5,6 +5,9 @@ import { z } from 'zod';
 
 const router = express.Router();
 
+// History retention period in days
+const HISTORY_RETENTION_DAYS = 7;
+
 // Schema for projectId param (UUID)
 const projectIdParamSchema = z.object({
     projectId: z.string().uuid('Invalid project ID')
@@ -31,6 +34,34 @@ async function getUserId(telegramId) {
     });
     return user?.id;
 }
+
+/**
+ * Helper: Clean up old history entries (older than HISTORY_RETENTION_DAYS)
+ */
+async function cleanupOldHistory() {
+    try {
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - HISTORY_RETENTION_DAYS);
+
+        const result = await prisma.history.deleteMany({
+            where: {
+                createdAt: {
+                    lt: cutoffDate
+                }
+            }
+        });
+
+        if (result.count > 0) {
+            console.log(`[History Cleanup] Deleted ${result.count} old history entries`);
+        }
+    } catch (error) {
+        console.error('[History Cleanup] Error:', error);
+    }
+}
+
+// Run cleanup on startup and every 6 hours
+cleanupOldHistory();
+setInterval(cleanupOldHistory, 6 * 60 * 60 * 1000);
 
 /**
  * GET /api/history/:projectId

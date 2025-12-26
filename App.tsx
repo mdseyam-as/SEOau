@@ -9,8 +9,8 @@ import { AdminPanel } from './components/AdminPanel';
 import { ProjectList } from './components/ProjectList';
 import { HistoryList } from './components/HistoryList';
 import { calculateSeoMetrics } from './services/geminiService';
-import { GenerationConfig, KeywordRow, SeoResult, AIModel, Project, TextTone, TextStyle, GenerationMode, ContentLanguage } from './types';
-import { Lock, ExternalLink, LayoutDashboard } from 'lucide-react';
+import { GenerationConfig, KeywordRow, SeoResult, AIModel, Project, TextTone, TextStyle, GenerationMode, ContentLanguage, HistoryItem } from './types';
+import { Lock, ExternalLink } from 'lucide-react';
 import { User, authService, SubscriptionPlan } from './services/authService';
 import { projectService } from './services/projectService';
 import { apiService } from './services/apiService';
@@ -19,7 +19,6 @@ import { SeoAuditor } from './components/SeoAuditor';
 import { RewriteMode } from './components/RewriteMode';
 import { SerpAnalyzer } from './components/SerpAnalyzer';
 import { OutlineEditor } from './components/OutlineEditor';
-import { BackgroundTasksList } from './components/BackgroundTasksList';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { useToast } from './components/Toast';
 import { ResultSkeleton } from './components/Skeleton';
@@ -61,7 +60,7 @@ export default function App() {
   // Project State
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
-  const [projectTab, setProjectTab] = useState<'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp' | 'tasks'>('generator');
+  const [projectTab, setProjectTab] = useState<'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp'>('generator');
   const [projectHistory, setProjectHistory] = useState<any[]>([]);
 
   // Generator State
@@ -480,7 +479,17 @@ export default function App() {
         />
 
         {projectTab === 'history' ? (
-          <HistoryList history={projectHistory} onDelete={handleDeleteHistoryItem} />
+          <HistoryList 
+            history={projectHistory} 
+            onDelete={handleDeleteHistoryItem}
+            onOpen={(item) => {
+              // Load config and result from history item
+              setConfig(item.config);
+              setResult(item.result);
+              setProjectTab('generator');
+              toast.success('Загружено', 'Генерация загружена из истории');
+            }}
+          />
         ) : projectTab === 'audit' ? (
           userPlan?.canAudit || user?.role === 'admin' ? (
             <SeoAuditor onUserUpdate={setUser} />
@@ -511,15 +520,6 @@ export default function App() {
               setProjectTab('generator');
             }}
           />
-        ) : projectTab === 'tasks' ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <BackgroundTasksList
-              onOpenResult={(taskId) => {
-                // TODO: Load task result and show in ResultView
-                console.log('Open task result:', taskId);
-              }}
-            />
-          </div>
         ) : projectTab === 'outline' ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <OutlineEditor

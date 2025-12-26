@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { HistoryItem } from '../types';
-import { Clock, FileText, ChevronDown, ChevronUp, Trash2, Copy, Check } from 'lucide-react';
+import { Clock, FileText, ChevronDown, ChevronUp, Trash2, ExternalLink } from 'lucide-react';
 import { ResultView } from './ResultView';
 import { useToast } from './Toast';
 
 interface HistoryListProps {
   history: HistoryItem[];
   onDelete: (itemId: string) => void;
+  onOpen?: (item: HistoryItem) => void;
 }
 
-export const HistoryList: React.FC<HistoryListProps> = ({ history, onDelete }) => {
+export const HistoryList: React.FC<HistoryListProps> = ({ history, onDelete, onOpen }) => {
   const toast = useToast();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -77,7 +78,21 @@ export const HistoryList: React.FC<HistoryListProps> = ({ history, onDelete }) =
               </div>
             </div>
 
-            <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto border-t md:border-t-0 border-white/5 pt-3 md:pt-0 mt-2 md:mt-0">
+            <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-auto border-t md:border-t-0 border-white/5 pt-3 md:pt-0 mt-2 md:mt-0">
+              {onOpen && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpen(item);
+                  }}
+                  className="p-2 text-brand-green hover:bg-brand-green/10 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  aria-label="Открыть в генераторе"
+                  title="Открыть в генераторе"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </button>
+              )}
+              
               <button
                 onClick={async (e) => {
                   e.stopPropagation();
@@ -130,6 +145,16 @@ export const HistoryList: React.FC<HistoryListProps> = ({ history, onDelete }) =
                     <span className="text-brand-blue underline truncate block max-w-full">{item.config.competitorUrls || 'Нет'}</span>
                   </div>
                 </div>
+                
+                {onOpen && (
+                  <button
+                    onClick={() => onOpen(item)}
+                    className="mt-4 w-full py-3 bg-brand-green/20 hover:bg-brand-green/30 text-brand-green font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Открыть в генераторе
+                  </button>
+                )}
               </div>
             </div>
           )}
