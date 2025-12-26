@@ -6,8 +6,7 @@ import { SeoResult, AIModel, FaqItem } from '../types';
 import {
   Copy, Check, FileText, Globe, AlertOctagon, Sparkles, RefreshCw,
   ChevronDown, ChevronUp, AlertCircle, Code, GitBranch, ExternalLink,
-  Image, MessageCircleQuestion, Layers, Download, FileDown, Share2,
-  Wand2, Bot
+  Download, FileDown, Wand2, Bot
 } from 'lucide-react';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { SubscriptionPlan, authService } from '../services/authService';
@@ -17,6 +16,7 @@ import { exportToPdf, exportToDocx } from '../services/exportService';
 import { useToast } from './Toast';
 import { SocialMediaPack } from './SocialMediaPack';
 import { HtmlExportButton } from './HtmlExportButton';
+import { KeywordHighlighter } from './KeywordHighlighter';
 
 // ==================== SAFE MERMAID DISPLAY (TEXT ONLY) ====================
 
@@ -577,6 +577,14 @@ export const ResultView: React.FC<ResultViewProps> = ({
         userPlan={userPlan}
         onUserUpdate={onUserUpdate}
       />
+
+      {/* Keyword Highlighter */}
+      {keywords && keywords.length > 0 && result.content && (
+        <KeywordHighlighter
+          content={result.content}
+          keywords={keywords}
+        />
+      )}
 
       {/* AI Humanizer */}
       {onHumanize && result.content && (

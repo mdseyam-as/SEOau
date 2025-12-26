@@ -1,11 +1,13 @@
 
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { GenerationConfig, TextTone, TextStyle, GenerationMode, ContentLanguage } from '../types';
 import { Settings2, Type, AlignLeft, Link as LinkIcon, FileText, Upload, X, Globe, Feather, Mic, Plus, Trash2, FileSpreadsheet, Sparkles, Search, Lock } from 'lucide-react';
 import { parseDocxFile } from '../services/docxParser';
 import { parseExcelToRawText } from '../services/excelParser';
-import { SubscriptionPlan, authService } from '../services/authService';
+import { SubscriptionPlan } from '../services/authService';
 import { useToast } from './Toast';
+import { KnowledgeBaseUploader } from './KnowledgeBaseUploader';
+import { InternalLinksManager } from './InternalLinksManager';
 
 interface SettingsFormProps {
   config: GenerationConfig;
@@ -642,6 +644,12 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Knowledge Base & Internal Links */}
+        <div className="space-y-3 sm:space-y-4">
+          <KnowledgeBaseUploader />
+          <InternalLinksManager />
         </div>
 
         {/* Generate Button */}

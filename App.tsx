@@ -19,6 +19,7 @@ import { SeoAuditor } from './components/SeoAuditor';
 import { RewriteMode } from './components/RewriteMode';
 import { SerpAnalyzer } from './components/SerpAnalyzer';
 import { OutlineEditor } from './components/OutlineEditor';
+import { BackgroundTasksList } from './components/BackgroundTasksList';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { useToast } from './components/Toast';
 import { ResultSkeleton } from './components/Skeleton';
@@ -60,7 +61,7 @@ export default function App() {
   // Project State
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
-  const [projectTab, setProjectTab] = useState<'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp'>('generator');
+  const [projectTab, setProjectTab] = useState<'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp' | 'tasks'>('generator');
   const [projectHistory, setProjectHistory] = useState<any[]>([]);
 
   // Generator State
@@ -510,6 +511,15 @@ export default function App() {
               setProjectTab('generator');
             }}
           />
+        ) : projectTab === 'tasks' ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <BackgroundTasksList
+              onOpenResult={(taskId) => {
+                // TODO: Load task result and show in ResultView
+                console.log('Open task result:', taskId);
+              }}
+            />
+          </div>
         ) : projectTab === 'outline' ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <OutlineEditor
