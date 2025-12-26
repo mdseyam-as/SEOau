@@ -48,7 +48,10 @@ function getModelId(modelKey) {
  * @returns {Promise<string>} - Content with internal links inserted
  */
 async function insertInternalLinks(content, userId) {
-    if (!content || !userId) return content;
+    if (!content || !userId) {
+        console.log('[InternalLinks] Skipped: no content or userId');
+        return content;
+    }
 
     try {
         // Get user's internal links sorted by priority (highest first)
@@ -57,10 +60,13 @@ async function insertInternalLinks(content, userId) {
             orderBy: { priority: 'desc' }
         });
 
+        console.log(`[InternalLinks] Found ${links?.length || 0} links for user ${userId}`);
+
         if (!links || links.length === 0) return content;
 
         let modifiedContent = content;
         const usedUrls = new Set(); // Track used URLs to avoid duplicates
+        let insertedCount = 0;
 
         for (const link of links) {
             // Skip if this URL was already inserted
@@ -79,28 +85,32 @@ async function insertInternalLinks(content, userId) {
                 searchTerms.push(...link.keywords);
             }
 
+            console.log(`[InternalLinks] Searching for terms: ${searchTerms.join(', ')} -> ${link.url}`);
+
             // Try to find and replace first occurrence of any search term
             for (const term of searchTerms) {
                 if (!term || term.length < 2) continue;
                 
-                // Case-insensitive search for the term (not already in a link)
-                const regex = new RegExp(
-                    `(?<!\\[)(?<!href=["'])\\b(${escapeRegexForLinks(term)})\\b(?![^\\[]*\\])(?![^<]*<\\/a>)`,
-                    'i'
-                );
+                // Simple case-insensitive search (works with Cyrillic)
+                const escapedTerm = escapeRegexForLinks(term);
+                const regex = new RegExp(`(${escapedTerm})`, 'i');
                 
                 if (regex.test(modifiedContent)) {
-                    // Replace first occurrence with markdown link
-                    modifiedContent = modifiedContent.replace(
-                        regex,
-                        `[$1](${link.url})`
-                    );
-                    usedUrls.add(link.url);
-                    break; // Move to next link after successful insertion
+                    // Check if not already in a link
+                    const linkCheckRegex = new RegExp(`\\[${escapedTerm}\\]\\(`, 'i');
+                    if (!linkCheckRegex.test(modifiedContent)) {
+                        // Replace first occurrence with markdown link
+                        modifiedContent = modifiedContent.replace(regex, `[$1](${link.url})`);
+                        usedUrls.add(link.url);
+                        insertedCount++;
+                        console.log(`[InternalLinks] Inserted link for "${term}" -> ${link.url}`);
+                        break; // Move to next link after successful insertion
+                    }
                 }
             }
         }
 
+        console.log(`[InternalLinks] Total inserted: ${insertedCount} links`);
         return modifiedContent;
     } catch (error) {
         console.error('Error inserting internal links:', error);
