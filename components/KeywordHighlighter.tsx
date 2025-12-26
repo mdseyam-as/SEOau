@@ -33,10 +33,15 @@ export const KeywordHighlighter: React.FC<KeywordHighlighterProps> = ({
     const contentLower = content.toLowerCase();
 
     return validKeywords.map(keyword => {
-      const kw = keyword.toLowerCase();
-      const regex = new RegExp(`\\b${escapeRegex(kw)}\\b`, 'gi');
-      const matches = content.match(regex);
-      const count = matches ? matches.length : 0;
+      const kw = keyword.toLowerCase().trim();
+      // Use simple includes for Russian text (word boundary \b doesn't work with Cyrillic)
+      // Count occurrences manually
+      let count = 0;
+      let pos = 0;
+      while ((pos = contentLower.indexOf(kw, pos)) !== -1) {
+        count++;
+        pos += kw.length;
+      }
 
       return {
         keyword,
@@ -61,12 +66,13 @@ export const KeywordHighlighter: React.FC<KeywordHighlighterProps> = ({
     const sortedKeywords = [...usedKeywords].sort((a, b) => b.length - a.length);
 
     for (const keyword of sortedKeywords) {
-      const regex = new RegExp(`(\\b${escapeRegex(keyword)}\\b)`, 'gi');
+      // Case-insensitive replace without word boundary (for Cyrillic support)
+      const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
       result = result.replace(regex, '{{HIGHLIGHT}}$1{{/HIGHLIGHT}}');
     }
 
     return result;
-  }, [content, keywords, stats, showHighlight]);
+  }, [content, validKeywords, stats, showHighlight]);
 
   const renderContent = () => {
     if (!showHighlight) {
