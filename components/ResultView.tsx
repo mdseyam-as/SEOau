@@ -16,6 +16,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { exportToPdf, exportToDocx } from '../services/exportService';
 import { useToast } from './Toast';
 import { SocialMediaPack } from './SocialMediaPack';
+import { HtmlExportButton } from './HtmlExportButton';
 
 // ==================== SAFE MERMAID DISPLAY (TEXT ONLY) ====================
 
@@ -685,6 +686,14 @@ export const ResultView: React.FC<ResultViewProps> = ({
             )}
             DOCX
           </button>
+          <HtmlExportButton
+            content={result.content}
+            keywords={keywords}
+            meta={{
+              title: result.metaTitle,
+              description: result.metaDescription
+            }}
+          />
           <div className="w-px h-6 bg-white/20 mx-1 hidden sm:block" />
           <button
             onClick={handleCopy}

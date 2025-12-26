@@ -18,6 +18,7 @@ import { projectConfigService } from './services/projectConfigService';
 import { SeoAuditor } from './components/SeoAuditor';
 import { RewriteMode } from './components/RewriteMode';
 import { SerpAnalyzer } from './components/SerpAnalyzer';
+import { OutlineEditor } from './components/OutlineEditor';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { useToast } from './components/Toast';
 import { ResultSkeleton } from './components/Skeleton';
@@ -59,7 +60,7 @@ export default function App() {
   // Project State
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
-  const [projectTab, setProjectTab] = useState<'generator' | 'history' | 'audit' | 'rewrite' | 'serp'>('generator');
+  const [projectTab, setProjectTab] = useState<'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp'>('generator');
   const [projectHistory, setProjectHistory] = useState<any[]>([]);
 
   // Generator State
@@ -509,6 +510,24 @@ export default function App() {
               setProjectTab('generator');
             }}
           />
+        ) : projectTab === 'outline' ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <OutlineEditor
+              config={config}
+              keywords={keywords}
+              onGenerateContent={(outline) => {
+                // Convert outline to topic and generate
+                const outlineText = `H1: ${outline.h1}\n\n${outline.sections.map(s => 
+                  `## ${s.h2}\n${s.h3s.map(h3 => `### ${h3}`).join('\n')}`
+                ).join('\n\n')}`;
+                setConfig(prev => ({ ...prev, topic: outline.h1, exampleContent: outlineText }));
+                setProjectTab('generator');
+                // Auto-trigger generation
+                handleGenerate();
+              }}
+              isGenerating={isGenerating}
+            />
+          </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 lg:gap-6 animate-in fade-in slide-in-from-bottom-2">
             {/* Left Sidebar: Inputs */}

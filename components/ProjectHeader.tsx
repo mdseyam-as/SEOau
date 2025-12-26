@@ -1,8 +1,8 @@
 import React from 'react';
-import { Home, ChevronRight, Sparkles, Search, RefreshCw, BarChart3, History } from 'lucide-react';
+import { Home, ChevronRight, Sparkles, Search, RefreshCw, BarChart3, History, ListTree } from 'lucide-react';
 import { Project } from '../types';
 
-type ProjectTab = 'generator' | 'history' | 'audit' | 'rewrite' | 'serp';
+type ProjectTab = 'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp';
 
 interface ProjectHeaderProps {
   project: Project;
@@ -27,6 +27,13 @@ const tabs: TabConfig[] = [
     icon: <Sparkles className="w-4 h-4" />,
     colorClass: 'text-brand-green',
     bgClass: 'bg-white text-brand-green shadow-sm',
+  },
+  {
+    id: 'outline',
+    label: 'Outline',
+    icon: <ListTree className="w-4 h-4" />,
+    colorClass: 'text-amber-600',
+    bgClass: 'bg-white text-amber-600 shadow-sm',
   },
   {
     id: 'audit',
