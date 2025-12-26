@@ -21,6 +21,14 @@ import planRoutes from './routes/plans.js';
 import webhookRoutes from './routes/webhook.js';
 import settingsRoutes from './routes/settings.js';
 import generateRoutes from './routes/generate.js';
+import knowledgeBaseRoutes from './routes/knowledge-base.js';
+import internalLinksRoutes from './routes/internal-links.js';
+import outlineRoutes from './routes/outline.js';
+import tasksRoutes from './routes/tasks.js';
+import exportRoutes from './routes/export.js';
+
+// Import services
+import { taskQueue } from './services/taskQueueService.js';
 
 // Import utilities
 import { initializeBot } from './utils/subscriptionManager.js';
@@ -296,6 +304,11 @@ app.use('/api/projects', validateTelegramAuth, projectRoutes);
 app.use('/api/history', validateTelegramAuth, historyRoutes);
 app.use('/api/settings', validateTelegramAuth, settingsRoutes);
 app.use('/api/generate', generateLimiter, validateTelegramAuth, generateRoutes);
+app.use('/api/knowledge-base', validateTelegramAuth, knowledgeBaseRoutes);
+app.use('/api/internal-links', validateTelegramAuth, internalLinksRoutes);
+app.use('/api/outline', generateLimiter, validateTelegramAuth, outlineRoutes);
+app.use('/api/tasks', validateTelegramAuth, tasksRoutes);
+app.use('/api/export', validateTelegramAuth, exportRoutes);
 
 // Serve Vite-built frontend
 import path from 'path';
@@ -325,17 +338,22 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`   Health check: http://localhost:${PORT}/health`);
     console.log(`   Listening on: 0.0.0.0:${PORT}`);
+
+    // Start background task queue processor
+    taskQueue.start();
 });
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
     console.log('\n🛑 Shutting down gracefully...');
+    taskQueue.stop();
     await prisma.$disconnect();
     process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
     console.log('\n🛑 Received SIGTERM, shutting down...');
+    taskQueue.stop();
     await prisma.$disconnect();
     process.exit(0);
 });

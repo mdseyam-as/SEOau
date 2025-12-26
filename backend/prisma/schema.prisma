@@ -16,25 +16,31 @@ model User {
   username             String?
   firstName            String
   lastName             String?
-  
+
   // Роль и подписка
   role                 String    @default("user") // "user", "admin"
   planId               String    @default("free")
   subscriptionExpiry   DateTime?
-  
+
   // Лимиты использования
   generationsUsed      Int       @default(0)
   lastGenerationMonth  String?   // Format: "YYYY-MM"
   generationsUsedToday Int       @default(0)
   lastGenerationDate   String?   // Format: "YYYY-MM-DD"
-  
+
+  // Настройки уведомлений
+  notificationsEnabled Boolean   @default(true)
+
   // Timestamps
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
-  
+
   // Relations
   projects             Project[]
-  
+  knowledgeBaseFiles   KnowledgeBase[]
+  internalLinks        InternalLinks[]
+  backgroundTasks      BackgroundTask[]
+
   @@index([telegramId])
   @@index([planId])
 }
@@ -145,24 +151,86 @@ model SystemSetting {
 
 model Payment {
   id              String   @id @default(uuid())
-  
+
   // Связь с пользователем (по telegramId для простоты)
   telegramId      BigInt
-  
+
   // Данные платежа
   yookassaId      String?  @unique // ID платежа в ЮKassa
   planSlug        String   // Какой план покупается
   amount          Int      // Сумма в копейках
   currency        String   @default("RUB")
-  
+
   // Статус
   status          String   @default("pending") // "pending", "succeeded", "canceled"
-  
+
   // Timestamps
   createdAt       DateTime @default(now())
   paidAt          DateTime?
-  
+
   @@index([telegramId])
   @@index([yookassaId])
   @@index([status])
+}
+
+// ==================== БАЗА ЗНАНИЙ (RAG) ====================
+
+model KnowledgeBase {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fileName    String
+  fileType    String   // "pdf" | "docx" | "txt"
+  fileSize    Int      // в байтах
+
+  content     String   @db.Text   // извлечённый текст
+  embeddings  Json?    // векторные представления
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+// ==================== ВНУТРЕННИЕ ССЫЛКИ ====================
+
+model InternalLinks {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  url         String
+  anchorText  String?
+  keywords    String[] // ключевые слова для контекстной вставки
+  priority    Int      @default(0) // приоритет ссылки
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, priority(sort: Desc)])
+}
+
+// ==================== ФОНОВЫЕ ЗАДАЧИ ====================
+
+model BackgroundTask {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type        String    // "generate" | "rewrite" | "humanize"
+  status      String    @default("pending") // "pending" | "processing" | "completed" | "failed"
+  config      Json      // конфигурация задачи
+  result      Json?     // результат выполнения
+  error       String?   // текст ошибки
+
+  createdAt   DateTime  @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  @@index([userId])
+  @@index([status])
+  @@index([userId, createdAt(sort: Desc)])
 }

@@ -20,7 +20,8 @@
       "Bash(npx prisma generate)",
       "Bash(npx prisma db push)",
       "Bash(findstr:*)",
-      "Bash(dir /b \"C:\\Users\\Александр\\Desktop\\SEOau\\backend\")"
+      "Bash(dir /b \"C:\\Users\\Александр\\Desktop\\SEOau\\backend\")",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

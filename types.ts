@@ -317,3 +317,117 @@ export interface SerpAnalysisResult {
   recommendations: SerpRecommendations;
   summary: string;
 }
+
+// ==================== KNOWLEDGE BASE (RAG) ====================
+
+export interface KnowledgeBaseFile {
+  id: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  createdAt: string;
+}
+
+export interface KnowledgeBaseSearchResult {
+  file: {
+    id: string;
+    fileName: string;
+  };
+  similarity: number;
+  snippet: string;
+}
+
+// ==================== ARTICLE OUTLINE ====================
+
+export interface OutlineSection {
+  h2: string;
+  h3s: string[];
+  description?: string;
+}
+
+export interface ArticleOutline {
+  h1: string;
+  sections: OutlineSection[];
+}
+
+// ==================== INTERNAL LINKS ====================
+
+export interface InternalLink {
+  id: string;
+  url: string;
+  anchorText?: string;
+  keywords: string[];
+  priority: number;
+  createdAt?: string;
+}
+
+// ==================== BACKGROUND TASKS ====================
+
+export type BackgroundTaskType = 'generate' | 'rewrite' | 'humanize';
+export type BackgroundTaskStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+export interface BackgroundTask {
+  id: string;
+  type: BackgroundTaskType;
+  status: BackgroundTaskStatus;
+  config: Record<string, unknown>;
+  result?: Record<string, unknown>;
+  error?: string;
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+}
+
+export interface BackgroundTaskListItem {
+  id: string;
+  type: BackgroundTaskType;
+  status: BackgroundTaskStatus;
+  error?: string;
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+  hasResult: boolean;
+}
+
+// ==================== CITATIONS (GEO) ====================
+
+export interface Citation {
+  id: number;
+  url: string;
+  title: string;
+  snippet?: string;
+}
+
+// ==================== HTML EXPORT ====================
+
+export interface HtmlExportOptions {
+  wrapKeywords?: boolean;
+  keywordTag?: string;
+  keywords?: string[];
+  fullDocument?: boolean;
+  meta?: {
+    title?: string;
+    description?: string;
+    keywords?: string;
+    lang?: string;
+  };
+}
+
+export interface KeywordAnalysisItem {
+  keyword: string;
+  count: number;
+  used: boolean;
+  density: string;
+}
+
+export interface KeywordAnalysisResult {
+  analysis: KeywordAnalysisItem[];
+  summary: {
+    total: number;
+    used: number;
+    missing: number;
+    usagePercent: number;
+  };
+  usedKeywords: string[];
+  missingKeywords: string[];
+}
