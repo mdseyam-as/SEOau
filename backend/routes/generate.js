@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma.js';
 import { validate } from '../middleware/validate.js';
 import { generateSchema, spamCheckSchema, fixSpamSchema, optimizeRelevanceSchema, seoAuditSchema, rewriteSchema, humanizeSchema, serpAnalyzerSchema } from '../schemas/index.js';
 import { sanitizePromptInput } from '../utils/promptSanitizer.js';
+import { decrypt } from '../utils/encryption.js';
 
 const router = express.Router();
 
@@ -1340,7 +1341,9 @@ async function getApiKey() {
     const settings = await prisma.systemSetting.findUnique({
         where: { id: 'global' }
     });
-    const key = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
+    // Decrypt the API key (it's stored encrypted in DB)
+    const encryptedKey = settings?.openRouterApiKey;
+    const key = encryptedKey ? decrypt(encryptedKey) : process.env.OPENROUTER_API_KEY;
     if (!key) throw new Error("API ключ не настроен администратором.");
     return key;
 }
@@ -2480,9 +2483,10 @@ router.post('/faq', async (req, res) => {
         const sanitizedTopic = topic ? sanitizePromptInput(topic) : '';
         const sanitizedContent = content ? sanitizePromptInput(content.substring(0, 5000)) : '';
 
-        // Get API key
+        // Get API key (decrypt from DB)
         const settings = await prisma.systemSetting.findUnique({ where: { id: 'global' } });
-        const apiKey = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
+        const encryptedKey = settings?.openRouterApiKey;
+        const apiKey = encryptedKey ? decrypt(encryptedKey) : process.env.OPENROUTER_API_KEY;
 
         if (!apiKey) {
             return res.status(500).json({ error: 'API key not configured' });
@@ -2843,9 +2847,10 @@ router.post('/social-pack', async (req, res) => {
             return res.status(400).json({ error: 'Контент слишком короткий (минимум 100 символов)' });
         }
 
-        // Get API key
+        // Get API key (decrypt from DB)
         const settings = await prisma.systemSetting.findUnique({ where: { id: 'global' } });
-        const apiKey = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
+        const encryptedKey = settings?.openRouterApiKey;
+        const apiKey = encryptedKey ? decrypt(encryptedKey) : process.env.OPENROUTER_API_KEY;
 
         if (!apiKey) {
             return res.status(500).json({ error: 'API key not configured' });
@@ -3162,12 +3167,13 @@ router.post('/serp-analyze', validate(serpAnalyzerSchema), async (req, res) => {
     try {
         const { query, searchEngine, region, count } = req.body;
 
-        // Get API key from settings
+        // Get API key from settings (decrypt from DB)
         const settings = await prisma.systemSetting.findUnique({
             where: { id: 'global' }
         });
 
-        const apiKey = settings?.openRouterApiKey;
+        const encryptedKey = settings?.openRouterApiKey;
+        const apiKey = encryptedKey ? decrypt(encryptedKey) : process.env.OPENROUTER_API_KEY;
         if (!apiKey) {
             return res.status(500).json({ error: 'API key not configured' });
         }
