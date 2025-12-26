@@ -21,10 +21,18 @@ export const KeywordHighlighter: React.FC<KeywordHighlighterProps> = ({
   const [showHighlight, setShowHighlight] = useState(true);
   const [showStats, setShowStats] = useState(false);
 
+  // Ensure keywords is a valid array of strings
+  const validKeywords = useMemo(() => {
+    if (!Array.isArray(keywords)) return [];
+    return keywords.filter(k => typeof k === 'string' && k.trim().length > 0);
+  }, [keywords]);
+
   const stats = useMemo(() => {
+    if (!content || validKeywords.length === 0) return [];
+    
     const contentLower = content.toLowerCase();
 
-    return keywords.map(keyword => {
+    return validKeywords.map(keyword => {
       const kw = keyword.toLowerCase();
       const regex = new RegExp(`\\b${escapeRegex(kw)}\\b`, 'gi');
       const matches = content.match(regex);
@@ -36,13 +44,13 @@ export const KeywordHighlighter: React.FC<KeywordHighlighterProps> = ({
         used: count > 0
       };
     });
-  }, [content, keywords]);
+  }, [content, validKeywords]);
 
   const usedCount = stats.filter(s => s.used).length;
   const missingCount = stats.filter(s => !s.used).length;
 
   const highlightedContent = useMemo(() => {
-    if (!showHighlight || keywords.length === 0) {
+    if (!showHighlight || validKeywords.length === 0) {
       return content;
     }
 
@@ -139,7 +147,7 @@ export const KeywordHighlighter: React.FC<KeywordHighlighterProps> = ({
             ))}
           </div>
 
-          {keywords.length === 0 && (
+          {validKeywords.length === 0 && (
             <p className="text-center text-slate-500 text-sm py-2">
               Нет ключевых слов для анализа
             </p>
@@ -158,8 +166,8 @@ export const KeywordHighlighter: React.FC<KeywordHighlighterProps> = ({
       <div className="p-3 border-t border-slate-700 bg-slate-900/50">
         <div className="flex items-center justify-between text-xs text-slate-400">
           <span>
-            {keywords.length > 0
-              ? `${Math.round((usedCount / keywords.length) * 100)}% ключевых слов использовано`
+            {validKeywords.length > 0
+              ? `${Math.round((usedCount / validKeywords.length) * 100)}% ключевых слов использовано`
               : 'Загрузите ключевые слова для анализа'
             }
           </span>

@@ -578,7 +578,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
         onUserUpdate={onUserUpdate}
       />
 
-      {/* Keyword Highlighter */}
+      {/* Keyword Highlighter - only show if keywords provided */}
       {keywords && keywords.length > 0 && result.content && (
         <KeywordHighlighter
           content={result.content}
