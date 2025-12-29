@@ -259,8 +259,16 @@ if (process.env.BOT_TOKEN) {
     console.warn('⚠️  BOT_TOKEN not set - Telegram notifications disabled');
 }
 
-// Health check
+// Health check - with no-cache headers to prevent Telegram caching
 app.get('/health', async (req, res) => {
+    // Set headers to prevent caching
+    res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Surrogate-Control': 'no-store'
+    });
+    
     let dbStatus = 'disconnected';
     try {
         await prisma.$queryRaw`SELECT 1`;

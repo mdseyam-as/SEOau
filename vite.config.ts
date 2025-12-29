@@ -11,6 +11,10 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: 'http://localhost:3000',
           changeOrigin: true
+        },
+        '/health': {
+          target: 'http://localhost:3000',
+          changeOrigin: true
         }
       }
     },
@@ -18,6 +22,16 @@ export default defineConfig(({ mode }) => {
     define: {
       // API keys should NEVER be exposed to frontend
       // All API calls go through backend
+    },
+    build: {
+      // Add hash to filenames for cache busting
+      rollupOptions: {
+        output: {
+          entryFileNames: 'assets/[name]-[hash].js',
+          chunkFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash].[ext]'
+        }
+      }
     },
     test: {
       globals: true,

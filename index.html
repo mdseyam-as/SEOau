@@ -79,8 +79,127 @@
 </head>
 
 <body style="background: #0B0F19; margin: 0; padding: 0;">
-  <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
+  <!-- Server offline screen (shown before React loads) -->
+  <div id="server-offline" style="display: none; min-height: 100vh; background: linear-gradient(135deg, #0B0F19 0%, #1a1f2e 50%, #0B0F19 100%); display: flex; align-items: center; justify-content: center; padding: 16px; font-family: system-ui, -apple-system, sans-serif;">
+    <div style="max-width: 400px; width: 100%; background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(20px); border-radius: 16px; border: 1px solid rgba(71, 85, 105, 0.5); padding: 32px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+      <div style="width: 80px; height: 80px; margin: 0 auto 24px; background: rgba(239, 68, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(239, 68, 68, 0.2);">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
+        </svg>
+      </div>
+      <h1 style="color: white; font-size: 24px; font-weight: bold; margin: 0 0 8px;">Сервер недоступен</h1>
+      <p style="color: #94a3b8; margin: 0 0 24px; font-size: 14px; line-height: 1.5;">
+        Не удалось подключиться к серверу.<br>
+        Возможно, ведутся технические работы.
+      </p>
+      <button onclick="checkServerAndLoad()" style="width: 100%; padding: 12px 24px; background: #00DC82; color: black; font-weight: 600; border: none; border-radius: 12px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+        </svg>
+        Повторить попытку
+      </button>
+      <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(71, 85, 105, 0.5);">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #64748b; font-size: 12px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="1" x2="23" y1="1" y2="23"/>
+            <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+            <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+            <path d="M10.71 5.05A16 16 0 0 1 22.58 9"/>
+            <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+            <line x1="12" x2="12.01" y1="20" y2="20"/>
+          </svg>
+          <span>Нет соединения с сервером</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading screen -->
+  <div id="loading-screen" style="min-height: 100vh; background: linear-gradient(135deg, #0B0F19 0%, #1a1f2e 50%, #0B0F19 100%); display: flex; align-items: center; justify-content: center; padding: 16px; font-family: system-ui, -apple-system, sans-serif;">
+    <div style="text-align: center;">
+      <div style="width: 64px; height: 64px; margin: 0 auto 16px; position: relative;">
+        <div style="position: absolute; inset: 0; background: rgba(0, 220, 130, 0.2); border-radius: 50%; animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+        <div style="position: relative; width: 64px; height: 64px; background: #1e293b; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid #334155;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00DC82" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: pulse 2s ease-in-out infinite;">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+            <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+            <line x1="12" x2="12.01" y1="20" y2="20"/>
+          </svg>
+        </div>
+      </div>
+      <h2 style="color: white; font-size: 20px; font-weight: bold; margin: 0 0 8px;">Подключение к серверу</h2>
+      <p style="color: #94a3b8; font-size: 14px; margin: 0;">Пожалуйста, подождите...</p>
+    </div>
+  </div>
+  <style>
+    @keyframes ping { 75%, 100% { transform: scale(2); opacity: 0; } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  </style>
+
+  <div id="root" style="display: none;"></div>
+  
+  <script>
+    // Check server health BEFORE loading React app
+    // This prevents cached app from working when server is down
+    async function checkServerAndLoad() {
+      const loadingScreen = document.getElementById('loading-screen');
+      const offlineScreen = document.getElementById('server-offline');
+      const root = document.getElementById('root');
+      
+      // Show loading
+      loadingScreen.style.display = 'flex';
+      offlineScreen.style.display = 'none';
+      root.style.display = 'none';
+      
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        // Add cache-busting parameter
+        const response = await fetch('/health?_=' + Date.now(), {
+          method: 'GET',
+          signal: controller.signal,
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          // Server is online - load React app
+          loadingScreen.style.display = 'none';
+          offlineScreen.style.display = 'none';
+          root.style.display = 'block';
+          
+          // Load React app dynamically
+          if (!window.__reactLoaded) {
+            const script = document.createElement('script');
+            script.type = 'module';
+            script.src = '/index.tsx';
+            document.body.appendChild(script);
+            window.__reactLoaded = true;
+          }
+        } else {
+          throw new Error('Server returned ' + response.status);
+        }
+      } catch (err) {
+        console.error('Server health check failed:', err);
+        // Server is offline - show offline screen
+        loadingScreen.style.display = 'none';
+        offlineScreen.style.display = 'flex';
+        root.style.display = 'none';
+      }
+    }
+    
+    // Run check on page load
+    checkServerAndLoad();
+  </script>
 </body>
 
 </html>
