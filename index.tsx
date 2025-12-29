@@ -6,7 +6,6 @@ import { ToastProvider } from './components/Toast';
 
 // ==================== SERVER HEALTH CHECK ====================
 // CRITICAL: Check server availability before rendering React app
-// This prevents the app from working when server is down (even from Telegram cache)
 
 async function checkServerHealth(): Promise<boolean> {
   try {
@@ -31,14 +30,7 @@ async function checkServerHealth(): Promise<boolean> {
   }
 }
 
-// Check server before proceeding
-const serverOnline = await checkServerHealth();
-
-if (!serverOnline) {
-  // Server is offline - show offline screen and stop React from loading
-  console.error('❌ Server is offline - blocking React app');
-  
-  // Show offline screen (defined in index.html)
+function showOfflineScreen() {
   const loadingScreen = document.getElementById('loading-screen');
   const offlineScreen = document.getElementById('server-offline');
   const root = document.getElementById('root');
@@ -46,12 +38,7 @@ if (!serverOnline) {
   if (loadingScreen) loadingScreen.style.display = 'none';
   if (offlineScreen) offlineScreen.style.display = 'flex';
   if (root) root.style.display = 'none';
-  
-  // Stop execution - don't render React
-  throw new Error('Server offline - app blocked');
 }
-
-console.log('✅ Server is online - proceeding with React app');
 
 // ==================== FIX FOR RUSSIAN CHARACTERS IN BTOA ====================
 // btoa() doesn't support UTF-8 (Cyrillic) characters natively
@@ -257,27 +244,50 @@ if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
   }
 }
 
-// ==================== RENDER ====================
+// ==================== RENDER WITH SERVER CHECK ====================
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  // Safe DOM creation without innerHTML
-  const errorDiv = document.createElement('div');
-  errorDiv.style.cssText = 'padding:20px;color:red;font-family:monospace;';
-  errorDiv.textContent = 'ERROR: Could not find root element';
-  document.body.appendChild(errorDiv);
-  throw new Error("Could not find root element to mount to");
+async function initApp() {
+  // First check if server is online
+  const serverOnline = await checkServerHealth();
+  
+  if (!serverOnline) {
+    console.error('❌ Server is offline - blocking React app');
+    showOfflineScreen();
+    return; // Don't render React
+  }
+  
+  console.log('✅ Server is online - proceeding with React app');
+
+  const rootElement = document.getElementById('root');
+  if (!rootElement) {
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = 'padding:20px;color:red;font-family:monospace;';
+    errorDiv.textContent = 'ERROR: Could not find root element';
+    document.body.appendChild(errorDiv);
+    throw new Error("Could not find root element to mount to");
+  }
+
+  // Hide loading screen, show app
+  const loadingScreen = document.getElementById('loading-screen');
+  if (loadingScreen) loadingScreen.style.display = 'none';
+  rootElement.style.display = 'block';
+
+  console.log('🚀 Starting React render...');
+
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(
+    <GlobalErrorBoundary>
+      <ToastProvider>
+        <App />
+      </ToastProvider>
+    </GlobalErrorBoundary>
+  );
+
+  console.log('✅ React render initiated');
 }
 
-console.log('🚀 Starting React render...');
-
-const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <GlobalErrorBoundary>
-    <ToastProvider>
-      <App />
-    </ToastProvider>
-  </GlobalErrorBoundary>
-);
-
-console.log('✅ React render initiated');
+// Start the app
+initApp().catch(err => {
+  console.error('Failed to initialize app:', err);
+  showOfflineScreen();
+});
