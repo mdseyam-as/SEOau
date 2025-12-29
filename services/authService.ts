@@ -41,7 +41,8 @@ export interface User {
 
 export interface GlobalSettings {
   telegramLink: string;
-  openRouterApiKey?: string;
+  // NOTE: openRouterApiKey is NOT stored on frontend for security
+  // All API calls go through backend which has the key
   systemPrompt?: string; // Legacy - kept for backward compatibility
   seoPrompt?: string;
   geoPrompt?: string;
@@ -142,7 +143,7 @@ const DEFAULT_PLANS: SubscriptionPlan[] = [
 // In-memory cache for global settings loaded from backend
 let cachedGlobalSettings: GlobalSettings = {
   telegramLink: 'https://t.me/bankkz_admin',
-  openRouterApiKey: '',
+  // API key is NOT stored on frontend
   systemPrompt: '', // Legacy
   seoPrompt: '',
   geoPrompt: '',

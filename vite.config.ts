@@ -16,8 +16,8 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [react()],
     define: {
-      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+      // API keys should NEVER be exposed to frontend
+      // All API calls go through backend
     },
     test: {
       globals: true,
