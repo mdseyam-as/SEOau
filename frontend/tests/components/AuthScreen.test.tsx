@@ -1,6 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
+// Mock fetch for server health check
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
 
 // Mock apiService - factory must not reference external variables
 vi.mock('../../../services/apiService', () => ({
@@ -31,6 +35,8 @@ describe('AuthScreen Component', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        // Mock successful server health check
+        mockFetch.mockResolvedValue({ ok: true });
         // Reset Telegram mock
         (window as any).Telegram = {
             WebApp: {
@@ -42,24 +48,48 @@ describe('AuthScreen Component', () => {
         };
     });
 
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
     describe('Rendering', () => {
-        it('should render login form when not in Telegram', () => {
+        it('should render login form when not in Telegram and server is online', async () => {
             render(<AuthScreen onLogin={mockOnLogin} />);
             
-            expect(screen.getByText('Вход в систему')).toBeDefined();
+            // Wait for server check to complete
+            await waitFor(() => {
+                expect(screen.getByText('Вход в систему')).toBeDefined();
+            });
             expect(screen.getByPlaceholderText('Например: 123456789')).toBeDefined();
         });
 
-        it('should render dev mode button', () => {
+        it('should render dev mode button when server is online', async () => {
             render(<AuthScreen onLogin={mockOnLogin} />);
             
-            expect(screen.getByText('Войти (Dev Mode)')).toBeDefined();
+            await waitFor(() => {
+                expect(screen.getByText('Войти (Dev Mode)')).toBeDefined();
+            });
+        });
+
+        it('should show server offline message when server is down', async () => {
+            mockFetch.mockRejectedValue(new Error('Network error'));
+            
+            render(<AuthScreen onLogin={mockOnLogin} />);
+            
+            await waitFor(() => {
+                expect(screen.getByText('Сервер недоступен')).toBeDefined();
+            });
         });
     });
 
     describe('User Interactions', () => {
         it('should handle dev login when form is submitted', async () => {
             render(<AuthScreen onLogin={mockOnLogin} />);
+            
+            // Wait for server check
+            await waitFor(() => {
+                expect(screen.getByPlaceholderText('Например: 123456789')).toBeDefined();
+            });
             
             const input = screen.getByPlaceholderText('Например: 123456789');
             const button = screen.getByText('Войти (Dev Mode)');
@@ -76,6 +106,11 @@ describe('AuthScreen Component', () => {
         it('should call onLogin after successful login', async () => {
             render(<AuthScreen onLogin={mockOnLogin} />);
             
+            // Wait for server check
+            await waitFor(() => {
+                expect(screen.getByPlaceholderText('Например: 123456789')).toBeDefined();
+            });
+            
             const input = screen.getByPlaceholderText('Например: 123456789');
             const button = screen.getByText('Войти (Dev Mode)');
             
@@ -89,7 +124,7 @@ describe('AuthScreen Component', () => {
     });
 
     describe('Telegram WebApp Integration', () => {
-        it('should call Telegram.WebApp.expand on mount', () => {
+        it('should call Telegram.WebApp.expand after server check', async () => {
             const expandMock = vi.fn();
             (window as any).Telegram = {
                 WebApp: {
@@ -102,10 +137,12 @@ describe('AuthScreen Component', () => {
             
             render(<AuthScreen onLogin={mockOnLogin} />);
             
-            expect(expandMock).toHaveBeenCalled();
+            await waitFor(() => {
+                expect(expandMock).toHaveBeenCalled();
+            });
         });
 
-        it('should auto-login when Telegram initData is present', async () => {
+        it('should auto-login when Telegram initData is present and server is online', async () => {
             (window as any).Telegram = {
                 WebApp: {
                     initData: 'test_init_data',

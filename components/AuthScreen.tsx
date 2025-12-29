@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Send, Smartphone, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Send, Smartphone, Loader2, ServerCrash, RefreshCw } from 'lucide-react';
 import { apiService } from '../services/apiService';
 
 interface AuthScreenProps {
@@ -17,17 +17,44 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [devId, setDevId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isTelegramEnv, setIsTelegramEnv] = useState(false);
+  const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
+  // Check server health on mount
   useEffect(() => {
-    // Check if running inside Telegram
-    if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-      setIsTelegramEnv(true);
-      handleTelegramLogin();
-    } else {
-      // Expand WebApp just in case, though mostly for mobile
-      window.Telegram?.WebApp?.expand();
-    }
+    checkServerHealth();
   }, []);
+
+  const checkServerHealth = async () => {
+    setServerStatus('checking');
+    try {
+      // Simple fetch with manual timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch('/api/plans', { 
+        method: 'GET',
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        setServerStatus('online');
+        // Only proceed with Telegram login if server is online
+        if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+          setIsTelegramEnv(true);
+          handleTelegramLogin();
+        } else {
+          window.Telegram?.WebApp?.expand();
+        }
+      } else {
+        setServerStatus('offline');
+      }
+    } catch (err) {
+      console.error('Server health check failed:', err);
+      setServerStatus('offline');
+    }
+  };
 
   const handleTelegramLogin = async () => {
     setIsLoading(true);
@@ -98,68 +125,102 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         {/* Content Area */}
         <div className="p-4 sm:p-6 lg:p-8 bg-white/60 backdrop-blur-md">
 
-          {error && (
-            <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center animate-in fade-in">
-              {error}
+          {/* Server Offline State */}
+          {serverStatus === 'offline' && (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                <ServerCrash className="w-8 h-8 text-red-500" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-800 mb-2">Сервер недоступен</h2>
+              <p className="text-slate-500 text-sm mb-6">
+                Не удалось подключиться к серверу.<br />
+                Пожалуйста, попробуйте позже.
+              </p>
+              <button
+                onClick={checkServerHealth}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Повторить
+              </button>
             </div>
           )}
 
-          {isLoading ? (
+          {/* Server Checking State */}
+          {serverStatus === 'checking' && (
             <div className="flex flex-col items-center justify-center py-8">
               <div className="w-10 h-10 border-4 border-brand-green border-t-transparent rounded-full animate-spin mb-4"></div>
-              <p className="text-slate-600 font-medium">Авторизация...</p>
+              <p className="text-slate-600 font-medium">Проверка сервера...</p>
             </div>
-          ) : isTelegramEnv ? (
-            <div className="text-center py-8">
-              <p className="text-slate-600">Подождите, идет вход через Telegram...</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-xl font-bold text-slate-800 mb-2">Вход в систему</h2>
-                <p className="text-slate-500 text-sm">
-                  Приложение не запущено внутри Telegram. <br />
-                  Используйте симуляцию ID для входа.
-                </p>
-              </div>
+          )}
 
-              <form onSubmit={handleDevLogin} className="space-y-5">
-                <div className="space-y-2">
-                  <label className="block text-sm font-bold text-slate-700 ml-1">Telegram ID (Dev Mode)</label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Smartphone className="h-5 w-5 text-slate-400 group-focus-within:text-brand-green transition-colors" />
-                    </div>
-                    <input
-                      type="number"
-                      value={devId}
-                      onChange={(e) => setDevId(e.target.value)}
-                      className="block w-full pl-10 pr-3 py-3 bg-white/80 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green transition-all shadow-sm group-hover:shadow-md"
-                      placeholder="Например: 123456789"
-                      required
-                    />
-                  </div>
+          {/* Server Online - Show Auth */}
+          {serverStatus === 'online' && (
+            <>
+              {error && (
+                <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center animate-in fade-in">
+                  {error}
                 </div>
+              )}
 
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-gradient-to-r from-brand-green to-emerald-600 hover:from-emerald-500 hover:to-brand-green focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-green disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-glow"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
-                      Вход...
-                    </>
-                  ) : (
-                    'Войти (Dev Mode)'
-                  )}
-                </button>
-              </form>
-              <p className="text-xs text-gray-400">
-                Для добавления администратора, добавьте ID в массив ADMIN_IDS в коде.
-              </p>
-            </div>
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="w-10 h-10 border-4 border-brand-green border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p className="text-slate-600 font-medium">Авторизация...</p>
+                </div>
+              ) : isTelegramEnv ? (
+                <div className="text-center py-8">
+                  <p className="text-slate-600">Подождите, идет вход через Telegram...</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-slate-800 mb-2">Вход в систему</h2>
+                    <p className="text-slate-500 text-sm">
+                      Приложение не запущено внутри Telegram. <br />
+                      Используйте симуляцию ID для входа.
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleDevLogin} className="space-y-5">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-bold text-slate-700 ml-1">Telegram ID (Dev Mode)</label>
+                      <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Smartphone className="h-5 w-5 text-slate-400 group-focus-within:text-brand-green transition-colors" />
+                        </div>
+                        <input
+                          type="number"
+                          value={devId}
+                          onChange={(e) => setDevId(e.target.value)}
+                          className="block w-full pl-10 pr-3 py-3 bg-white/80 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green transition-all shadow-sm group-hover:shadow-md"
+                          placeholder="Например: 123456789"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-gradient-to-r from-brand-green to-emerald-600 hover:from-emerald-500 hover:to-brand-green focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-green disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-glow"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
+                          Вход...
+                        </>
+                      ) : (
+                        'Войти (Dev Mode)'
+                      )}
+                    </button>
+                  </form>
+                  <p className="text-xs text-gray-400">
+                    Для добавления администратора, добавьте ID в массив ADMIN_IDS в коде.
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
