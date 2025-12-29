@@ -311,11 +311,46 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const distPath = path.join(__dirname, '..', 'dist');
 
+// Middleware to add no-cache headers for index.html (critical for Telegram WebApp)
+const noCacheHtml = (req, res, next) => {
+    if (req.path === '/' || req.path.endsWith('.html')) {
+        res.set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'Surrogate-Control': 'no-store'
+        });
+    }
+    next();
+};
+
+// Apply no-cache middleware before static files
+app.use(noCacheHtml);
+
 // Serve static files from dist folder
-app.use(express.static(distPath));
+app.use(express.static(distPath, {
+    etag: false,
+    lastModified: false,
+    setHeaders: (res, filePath) => {
+        // No cache for HTML files
+        if (filePath.endsWith('.html')) {
+            res.set({
+                'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            });
+        }
+    }
+}));
 
 // SPA fallback - все неизвестные маршруты отправляем на index.html
 app.get(/.*/, (req, res) => {
+    // Set no-cache headers for SPA fallback
+    res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    });
     res.sendFile(path.join(distPath, 'index.html'));
 });
 
