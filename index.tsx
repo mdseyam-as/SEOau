@@ -4,6 +4,55 @@ import App from './App';
 import './index.css';
 import { ToastProvider } from './components/Toast';
 
+// ==================== SERVER HEALTH CHECK ====================
+// CRITICAL: Check server availability before rendering React app
+// This prevents the app from working when server is down (even from Telegram cache)
+
+async function checkServerHealth(): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch('/health?t=' + Date.now() + '&r=' + Math.random(), {
+      method: 'GET',
+      signal: controller.signal,
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
+    
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch (e) {
+    console.error('Server health check failed:', e);
+    return false;
+  }
+}
+
+// Check server before proceeding
+const serverOnline = await checkServerHealth();
+
+if (!serverOnline) {
+  // Server is offline - show offline screen and stop React from loading
+  console.error('❌ Server is offline - blocking React app');
+  
+  // Show offline screen (defined in index.html)
+  const loadingScreen = document.getElementById('loading-screen');
+  const offlineScreen = document.getElementById('server-offline');
+  const root = document.getElementById('root');
+  
+  if (loadingScreen) loadingScreen.style.display = 'none';
+  if (offlineScreen) offlineScreen.style.display = 'flex';
+  if (root) root.style.display = 'none';
+  
+  // Stop execution - don't render React
+  throw new Error('Server offline - app blocked');
+}
+
+console.log('✅ Server is online - proceeding with React app');
+
 // ==================== FIX FOR RUSSIAN CHARACTERS IN BTOA ====================
 // btoa() doesn't support UTF-8 (Cyrillic) characters natively
 // This polyfill catches the error and encodes via UTF-8
