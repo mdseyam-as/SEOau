@@ -145,7 +145,7 @@ if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
 
 // ==================== RENDER ====================
 
-const rootElement = document.getElementById('root');
+const rootElement = document.getElementById('app-root') || document.getElementById('root');
 if (!rootElement) {
   const errorDiv = document.createElement('div');
   errorDiv.style.cssText = 'padding:20px;color:red;font-family:monospace;';
