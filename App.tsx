@@ -29,6 +29,7 @@ import { SubscriptionStatus } from './components/SubscriptionStatus';
 import { ProjectHeader } from './components/ProjectHeader';
 import { EmptyState, GeneratorEmptyState, LockedFeatureEmptyState } from './components/EmptyState';
 import { useTelegramWebApp } from './hooks/useTelegramWebApp';
+import { ServerHealthGate } from './components/ServerHealthGate';
 
 const DEFAULT_CONFIG: GenerationConfig = {
   websiteName: '',
@@ -432,7 +433,11 @@ export default function App() {
   };
 
   if (!user) {
-    return <AuthScreen onLogin={handleLogin} />;
+    return (
+      <ServerHealthGate>
+        <AuthScreen onLogin={handleLogin} />
+      </ServerHealthGate>
+    );
   }
 
   const isLocked = !isSubscriptionActive && user.role !== 'admin';
@@ -663,54 +668,56 @@ export default function App() {
     );
   };
 
-  // Render
+  // Render - wrap everything in ServerHealthGate to block app when server is offline
   return (
-    <div className="min-h-screen bg-mesh-animated text-slate-100 font-sans pb-10 md:pb-20 animate-in fade-in duration-700">
-      {/* Header */}
-      <Header
-        user={user}
-        onLogout={handleLogout}
-        onToggleAdmin={user.role === 'admin' ? () => { setShowAdminPanel(!showAdminPanel); setCurrentProject(null); } : undefined}
-        showAdmin={showAdminPanel}
-        onOpenSubscription={user.role !== 'admin' ? () => setShowSubscriptionModal(true) : undefined}
-      >
-        {/* Subscription Status */}
-        {user.role !== 'admin' && (
-          <SubscriptionStatus
-            userPlan={userPlan}
-            dailyRemaining={dailyRemaining}
-            monthlyRemaining={monthlyRemaining}
-            isSubscriptionActive={isSubscriptionActive}
-            daysRemaining={daysRemaining}
-            userPlanId={user.planId}
-            compact={false}
-          />
-        )}
-        {/* Mobile Subscription Status */}
-        {user.role !== 'admin' && (
-          <SubscriptionStatus
-            userPlan={userPlan}
-            dailyRemaining={dailyRemaining}
-            monthlyRemaining={monthlyRemaining}
-            isSubscriptionActive={isSubscriptionActive}
-            daysRemaining={daysRemaining}
-            userPlanId={user.planId}
-            compact={true}
-          />
-        )}
-      </Header>
+    <ServerHealthGate>
+      <div className="min-h-screen bg-mesh-animated text-slate-100 font-sans pb-10 md:pb-20 animate-in fade-in duration-700">
+        {/* Header */}
+        <Header
+          user={user}
+          onLogout={handleLogout}
+          onToggleAdmin={user.role === 'admin' ? () => { setShowAdminPanel(!showAdminPanel); setCurrentProject(null); } : undefined}
+          showAdmin={showAdminPanel}
+          onOpenSubscription={user.role !== 'admin' ? () => setShowSubscriptionModal(true) : undefined}
+        >
+          {/* Subscription Status */}
+          {user.role !== 'admin' && (
+            <SubscriptionStatus
+              userPlan={userPlan}
+              dailyRemaining={dailyRemaining}
+              monthlyRemaining={monthlyRemaining}
+              isSubscriptionActive={isSubscriptionActive}
+              daysRemaining={daysRemaining}
+              userPlanId={user.planId}
+              compact={false}
+            />
+          )}
+          {/* Mobile Subscription Status */}
+          {user.role !== 'admin' && (
+            <SubscriptionStatus
+              userPlan={userPlan}
+              dailyRemaining={dailyRemaining}
+              monthlyRemaining={monthlyRemaining}
+              isSubscriptionActive={isSubscriptionActive}
+              daysRemaining={daysRemaining}
+              userPlanId={user.planId}
+              compact={true}
+            />
+          )}
+        </Header>
 
-      <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 xl:max-w-7xl">
-        {renderContent()}
-      </main>
+        <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 xl:max-w-7xl">
+          {renderContent()}
+        </main>
 
-      {/* Subscription Modal */}
-      <SubscriptionModal
-        isOpen={showSubscriptionModal}
-        onClose={() => setShowSubscriptionModal(false)}
-        currentPlanId={user.planId}
-        telegramLink={telegramLink}
-      />
-    </div>
+        {/* Subscription Modal */}
+        <SubscriptionModal
+          isOpen={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
+          currentPlanId={user.planId}
+          telegramLink={telegramLink}
+        />
+      </div>
+    </ServerHealthGate>
   );
 }
