@@ -4,42 +4,6 @@ import App from './App';
 import './index.css';
 import { ToastProvider } from './components/Toast';
 
-// ==================== SERVER HEALTH CHECK ====================
-// CRITICAL: Check server availability before rendering React app
-
-async function checkServerHealth(): Promise<boolean> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
-    const response = await fetch('/health?t=' + Date.now() + '&r=' + Math.random(), {
-      method: 'GET',
-      signal: controller.signal,
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache'
-      }
-    });
-    
-    clearTimeout(timeoutId);
-    return response.ok;
-  } catch (e) {
-    console.error('Server health check failed:', e);
-    return false;
-  }
-}
-
-function showOfflineScreen() {
-  const loadingScreen = document.getElementById('loading-screen');
-  const offlineScreen = document.getElementById('server-offline');
-  const root = document.getElementById('root');
-  
-  if (loadingScreen) loadingScreen.style.display = 'none';
-  if (offlineScreen) offlineScreen.style.display = 'flex';
-  if (root) root.style.display = 'none';
-}
-
 // ==================== FIX FOR RUSSIAN CHARACTERS IN BTOA ====================
 // btoa() doesn't support UTF-8 (Cyrillic) characters natively
 // This polyfill catches the error and encodes via UTF-8
@@ -48,10 +12,8 @@ const originalBtoa = window.btoa.bind(window);
 
 window.btoa = (str: string): string => {
   try {
-    // Try standard method first
     return originalBtoa(str);
   } catch (err) {
-    // If it fails (due to Cyrillic characters), use UTF-8 encoding
     console.warn('[btoa polyfill] Handling non-Latin characters...');
     return originalBtoa(
       encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_match, p1) =>
@@ -61,34 +23,22 @@ window.btoa = (str: string): string => {
   }
 };
 
-// ==================== GLOBAL ERROR HANDLER (TEMPORARY DEBUG) ====================
+// ==================== GLOBAL ERROR HANDLER ====================
 
-// Safe helper to create error overlay without innerHTML (XSS safe)
 function createErrorOverlay(id: string, title: string, details: { label: string; value: string; color: string }[], stack?: string) {
   const errorDiv = document.createElement('div');
   errorDiv.id = id;
   errorDiv.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #1a1a2e;
-    color: #ff6b6b;
-    z-index: 99999;
-    padding: 20px;
-    overflow: auto;
-    font-family: monospace;
-    font-size: 12px;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #1a1a2e; color: #ff6b6b; z-index: 99999;
+    padding: 20px; overflow: auto; font-family: monospace; font-size: 12px;
   `;
 
-  // Title
   const h1 = document.createElement('h1');
   h1.style.cssText = 'color: #ff6b6b; margin-bottom: 10px;';
   h1.textContent = title;
   errorDiv.appendChild(h1);
 
-  // Details
   details.forEach(({ label, value, color }) => {
     const p = document.createElement('p');
     p.style.cssText = `color: ${color}; margin-bottom: 5px;`;
@@ -99,7 +49,6 @@ function createErrorOverlay(id: string, title: string, details: { label: string;
     errorDiv.appendChild(p);
   });
 
-  // Stack trace
   if (stack) {
     const pre = document.createElement('pre');
     pre.style.cssText = 'background: #0f0f23; padding: 10px; border-radius: 5px; overflow: auto; color: #ff9f9f; margin-top: 15px;';
@@ -107,7 +56,6 @@ function createErrorOverlay(id: string, title: string, details: { label: string;
     errorDiv.appendChild(pre);
   }
 
-  // Reload button
   const button = document.createElement('button');
   button.style.cssText = 'margin-top: 20px; padding: 10px 20px; background: #ff6b6b; color: white; border: none; border-radius: 5px; cursor: pointer;';
   button.textContent = 'RELOAD PAGE';
@@ -117,35 +65,21 @@ function createErrorOverlay(id: string, title: string, details: { label: string;
   document.body.appendChild(errorDiv);
 }
 
-// Catch unhandled errors outside React
 window.onerror = function(message, source, lineno, colno, error) {
   console.error('GLOBAL ERROR:', message, source, lineno);
-
-  createErrorOverlay(
-    'global-error-overlay',
-    'GLOBAL ERROR',
-    [
-      { label: 'Message', value: String(message), color: '#ffd93d' },
-      { label: 'Source', value: String(source), color: '#6bcb77' },
-      { label: 'Line', value: `${lineno}:${colno}`, color: '#4d96ff' }
-    ],
-    error?.stack
-  );
-  return true; // Prevent default error handling
+  createErrorOverlay('global-error-overlay', 'GLOBAL ERROR', [
+    { label: 'Message', value: String(message), color: '#ffd93d' },
+    { label: 'Source', value: String(source), color: '#6bcb77' },
+    { label: 'Line', value: `${lineno}:${colno}`, color: '#4d96ff' }
+  ], error?.stack);
+  return true;
 };
 
-// Catch unhandled promise rejections
 window.onunhandledrejection = function(event) {
   console.error('UNHANDLED PROMISE REJECTION:', event.reason);
-
-  createErrorOverlay(
-    'promise-error-overlay',
-    'PROMISE REJECTION',
-    [
-      { label: 'Error', value: event.reason?.message || String(event.reason) || 'Unknown error', color: '#ffd93d' }
-    ],
-    event.reason?.stack
-  );
+  createErrorOverlay('promise-error-overlay', 'PROMISE REJECTION', [
+    { label: 'Error', value: event.reason?.message || String(event.reason) || 'Unknown error', color: '#ffd93d' }
+  ], event.reason?.stack);
 };
 
 // ==================== REACT ERROR BOUNDARY ====================
@@ -174,59 +108,24 @@ class GlobalErrorBoundary extends React.Component<{ children: React.ReactNode },
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{
-          padding: 20,
-          background: '#1a1a2e',
-          color: '#ff6b6b',
-          minHeight: '100vh',
-          overflow: 'auto',
-          fontFamily: 'monospace',
-          fontSize: 12
-        }}>
+        <div style={{ padding: 20, background: '#1a1a2e', color: '#ff6b6b', minHeight: '100vh', overflow: 'auto', fontFamily: 'monospace', fontSize: 12 }}>
           <h1 style={{ color: '#ff6b6b', marginBottom: 10 }}>💥 APP CRASHED</h1>
-          
           <div style={{ background: '#0f0f23', padding: 15, borderRadius: 8, marginBottom: 15 }}>
             <h3 style={{ color: '#ffd93d', marginBottom: 10 }}>Error:</h3>
             <p style={{ color: '#ff9f9f' }}>{this.state.error?.toString()}</p>
           </div>
-
           {this.state.error?.stack && (
             <div style={{ background: '#0f0f23', padding: 15, borderRadius: 8, marginBottom: 15 }}>
               <h3 style={{ color: '#6bcb77', marginBottom: 10 }}>Stack Trace:</h3>
-              <pre style={{ color: '#ff9f9f', overflow: 'auto', fontSize: 10 }}>
-                {this.state.error.stack}
-              </pre>
+              <pre style={{ color: '#ff9f9f', overflow: 'auto', fontSize: 10 }}>{this.state.error.stack}</pre>
             </div>
           )}
-
-          {this.state.errorInfo?.componentStack && (
-            <div style={{ background: '#0f0f23', padding: 15, borderRadius: 8, marginBottom: 15 }}>
-              <h3 style={{ color: '#4d96ff', marginBottom: 10 }}>Component Stack:</h3>
-              <pre style={{ color: '#9f9fff', overflow: 'auto', fontSize: 10 }}>
-                {this.state.errorInfo.componentStack}
-              </pre>
-            </div>
-          )}
-
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              padding: '12px 24px',
-              background: '#ff6b6b',
-              color: 'white',
-              border: 'none',
-              borderRadius: 8,
-              cursor: 'pointer',
-              fontSize: 14,
-              fontWeight: 'bold'
-            }}
-          >
+          <button onClick={() => window.location.reload()} style={{ padding: '12px 24px', background: '#ff6b6b', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14, fontWeight: 'bold' }}>
             🔄 RELOAD PAGE
           </button>
         </div>
       );
     }
-
     return this.props.children;
   }
 }
@@ -244,50 +143,26 @@ if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
   }
 }
 
-// ==================== RENDER WITH SERVER CHECK ====================
+// ==================== RENDER ====================
 
-async function initApp() {
-  // First check if server is online
-  const serverOnline = await checkServerHealth();
-  
-  if (!serverOnline) {
-    console.error('❌ Server is offline - blocking React app');
-    showOfflineScreen();
-    return; // Don't render React
-  }
-  
-  console.log('✅ Server is online - proceeding with React app');
-
-  const rootElement = document.getElementById('root');
-  if (!rootElement) {
-    const errorDiv = document.createElement('div');
-    errorDiv.style.cssText = 'padding:20px;color:red;font-family:monospace;';
-    errorDiv.textContent = 'ERROR: Could not find root element';
-    document.body.appendChild(errorDiv);
-    throw new Error("Could not find root element to mount to");
-  }
-
-  // Hide loading screen, show app
-  const loadingScreen = document.getElementById('loading-screen');
-  if (loadingScreen) loadingScreen.style.display = 'none';
-  rootElement.style.display = 'block';
-
-  console.log('🚀 Starting React render...');
-
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(
-    <GlobalErrorBoundary>
-      <ToastProvider>
-        <App />
-      </ToastProvider>
-    </GlobalErrorBoundary>
-  );
-
-  console.log('✅ React render initiated');
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  const errorDiv = document.createElement('div');
+  errorDiv.style.cssText = 'padding:20px;color:red;font-family:monospace;';
+  errorDiv.textContent = 'ERROR: Could not find root element';
+  document.body.appendChild(errorDiv);
+  throw new Error("Could not find root element to mount to");
 }
 
-// Start the app
-initApp().catch(err => {
-  console.error('Failed to initialize app:', err);
-  showOfflineScreen();
-});
+console.log('🚀 Starting React render...');
+
+const root = ReactDOM.createRoot(rootElement);
+root.render(
+  <GlobalErrorBoundary>
+    <ToastProvider>
+      <App />
+    </ToastProvider>
+  </GlobalErrorBoundary>
+);
+
+console.log('✅ React render initiated');
