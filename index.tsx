@@ -171,35 +171,56 @@ function showServerOfflineScreen() {
   const title = document.getElementById('offline-title');
   const text = document.getElementById('offline-text');
 
-  btn?.addEventListener('click', async () => {
-    btn.setAttribute('disabled', 'true');
+  btn?.addEventListener('click', () => {
+    retryServerCheck();
+  });
+}
+
+async function retryServerCheck() {
+  const btn = document.getElementById('offline-btn');
+  const icon = document.getElementById('offline-icon');
+  const title = document.getElementById('offline-title');
+  const text = document.getElementById('offline-text');
+
+  if (!btn) return;
+
+  btn.setAttribute('disabled', 'true');
+  btn.innerHTML = `
+    <svg class="spin" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+    </svg>
+    Проверка...
+  `;
+  icon?.classList.add('checking');
+  if (title) title.textContent = 'Проверка...';
+  if (text) text.textContent = 'Подключение к серверу...';
+
+  const isOnline = await checkServerHealth();
+
+  if (isOnline) {
+    // Server is back online - restore the page and load app
+    // First restore the original body content
+    document.body.innerHTML = '<div id="root"></div>';
+
+    // Re-apply body styles
+    document.body.style.cssText = 'background: #0B0F19; margin: 0; padding: 0;';
+
+    // Now initialize the app
+    initTelegramWebApp();
+    renderApp();
+  } else {
+    // Still offline - reset UI
+    btn.removeAttribute('disabled');
     btn.innerHTML = `
-      <svg class="spin" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
       </svg>
-      Проверка...
+      Повторить попытку
     `;
-    icon?.classList.add('checking');
-    if (title) title.textContent = 'Проверка...';
-    if (text) text.textContent = 'Подключение к серверу...';
-
-    const isOnline = await checkServerHealth();
-
-    if (isOnline) {
-      window.location.reload();
-    } else {
-      btn.removeAttribute('disabled');
-      btn.innerHTML = `
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>
-        Повторить попытку
-      `;
-      icon?.classList.remove('checking');
-      if (title) title.textContent = 'Сервер недоступен';
-      if (text) text.innerHTML = 'Не удалось подключиться к серверу.<br>Возможно, ведутся технические работы.';
-    }
-  });
+    icon?.classList.remove('checking');
+    if (title) title.textContent = 'Сервер недоступен';
+    if (text) text.innerHTML = 'Не удалось подключиться к серверу.<br>Возможно, ведутся технические работы.';
+  }
 }
 
 // ==================== FIX FOR RUSSIAN CHARACTERS IN BTOA ====================
