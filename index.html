@@ -7,6 +7,209 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
+  <style>
+    /* Critical styles for server check screen - must be inline */
+    .server-check-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0B0F19 0%, #1a1f2e 50%, #0B0F19 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999999;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .server-check-card {
+      background: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(71, 85, 105, 0.5);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .server-check-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .server-check-icon svg {
+      width: 40px;
+      height: 40px;
+      color: #f87171;
+    }
+    .server-check-icon.loading {
+      background: rgba(0, 220, 130, 0.1);
+      border-color: rgba(0, 220, 130, 0.2);
+    }
+    .server-check-icon.loading svg {
+      color: #00DC82;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .server-check-title {
+      color: #fff;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .server-check-text {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .server-check-btn {
+      width: 100%;
+      padding: 12px 24px;
+      background: #00DC82;
+      color: #000;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .server-check-btn:hover {
+      background: #00c974;
+    }
+    .server-check-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .server-check-footer {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(71, 85, 105, 0.5);
+      color: #64748b;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+  </style>
+  <script>
+    // ============================================================
+    // CRITICAL: Server health check BEFORE any app code loads
+    // This blocks the entire application if server is unavailable
+    // Protects against cached app running without backend
+    // ============================================================
+    (function() {
+      var MAX_RETRIES = 3;
+      var TIMEOUT_MS = 5000;
+      var retryCount = 0;
+
+      function showBlockingScreen(isLoading, message, subMessage) {
+        var existing = document.getElementById('server-block-screen');
+        if (existing) existing.remove();
+
+        var screen = document.createElement('div');
+        screen.id = 'server-block-screen';
+        screen.className = 'server-check-screen';
+
+        var iconSvg = isLoading
+          ? '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>'
+          : '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2"/></svg>';
+
+        screen.innerHTML =
+          '<div class="server-check-card">' +
+            '<div class="server-check-icon ' + (isLoading ? 'loading' : '') + '">' + iconSvg + '</div>' +
+            '<h1 class="server-check-title">' + message + '</h1>' +
+            '<p class="server-check-text">' + subMessage + '</p>' +
+            (isLoading ? '' : '<button class="server-check-btn" onclick="window.__retryServerCheck()"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>Повторить попытку</button>') +
+            '<div class="server-check-footer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m-3.536-3.536a4 4 0 010-5.656m-7.072 7.072a9 9 0 010-12.728m3.536 3.536a4 4 0 010 5.656"/><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/></svg>' + (isLoading ? 'Подключение к серверу...' : 'Нет соединения с сервером') + '</div>' +
+          '</div>';
+
+        document.body.appendChild(screen);
+      }
+
+      function hideBlockingScreen() {
+        var screen = document.getElementById('server-block-screen');
+        if (screen) screen.remove();
+      }
+
+      function checkServer() {
+        showBlockingScreen(true, 'Проверка сервера...', 'Пожалуйста, подождите');
+
+        var xhr = new XMLHttpRequest();
+        xhr.timeout = TIMEOUT_MS;
+
+        xhr.onreadystatechange = function() {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+              // Server is online - hide screen and allow app to load
+              hideBlockingScreen();
+              window.__serverCheckPassed = true;
+            } else {
+              handleServerOffline();
+            }
+          }
+        };
+
+        xhr.ontimeout = function() {
+          handleServerOffline();
+        };
+
+        xhr.onerror = function() {
+          handleServerOffline();
+        };
+
+        // Add cache-busting parameter
+        xhr.open('GET', '/health?_=' + Date.now(), true);
+        xhr.setRequestHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        xhr.setRequestHeader('Pragma', 'no-cache');
+        xhr.send();
+      }
+
+      function handleServerOffline() {
+        retryCount++;
+        if (retryCount < MAX_RETRIES) {
+          // Auto-retry
+          setTimeout(checkServer, 1000);
+        } else {
+          // Show offline screen with manual retry button
+          showBlockingScreen(
+            false,
+            'Сервер недоступен',
+            'Не удалось подключиться к серверу.<br>Возможно, ведутся технические работы.'
+          );
+        }
+      }
+
+      // Global retry function for button
+      window.__retryServerCheck = function() {
+        retryCount = 0;
+        checkServer();
+      };
+
+      // Start check immediately when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', checkServer);
+      } else {
+        checkServer();
+      }
+    })();
+  </script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -76,6 +279,23 @@
 </head>
 <body style="background: #0B0F19; margin: 0; padding: 0;">
   <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
+  <!-- CRITICAL: App script loads ONLY after server check passes -->
+  <script>
+    (function waitForServerCheck() {
+      // Poll until server check passes, then load the app
+      function tryLoadApp() {
+        if (window.__serverCheckPassed) {
+          var script = document.createElement('script');
+          script.type = 'module';
+          script.src = '/index.tsx';
+          document.body.appendChild(script);
+        } else {
+          // Keep checking every 100ms
+          setTimeout(tryLoadApp, 100);
+        }
+      }
+      tryLoadApp();
+    })();
+  </script>
 </body>
 </html>
