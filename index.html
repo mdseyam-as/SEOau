@@ -8,8 +8,41 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
+  <!-- These must be in head - can't be loaded dynamically -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { green: '#00DC82', dark: '#0B0F19', gray: '#F3F4F6', purple: '#7928CA', accent: '#FF0080' },
+            glass: { 100: 'rgba(255,255,255,0.1)', 200: 'rgba(255,255,255,0.2)', 300: 'rgba(255,255,255,0.3)', dark: 'rgba(15,23,42,0.6)' }
+          },
+          boxShadow: { 'glow': '0 0 20px rgba(0,220,130,0.5)', 'glow-sm': '0 0 10px rgba(0,220,130,0.3)', 'glass': '0 8px 32px 0 rgba(31,38,135,0.37)' },
+          animation: { 'float': 'float 6s ease-in-out infinite', 'pulse-slow': 'pulse 4s cubic-bezier(0.4,0,0.6,1) infinite', 'gradient-x': 'gradient-x 15s ease infinite' },
+          keyframes: { float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-20px)' } }, 'gradient-x': { '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' }, '50%': { 'background-size': '200% 200%', 'background-position': 'right center' } } }
+        }
+      }
+    }
+  </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "xlsx": "https://aistudiocdn.com/xlsx@^0.18.5",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
+    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
+    "mammoth": "https://esm.sh/mammoth@1.8.0"
+  }
+}
+</script>
+  <link rel="stylesheet" href="/index.css">
+
   <style>
-    /* Offline screen styles - inline to work without server */
     body { background: #0B0F19; margin: 0; padding: 0; }
     #offline-screen {
       position: fixed;
@@ -80,12 +113,10 @@
       justify-content: center;
       gap: 8px;
     }
-    /* Hide app content by default - only show after server check passes */
-    #app-content { display: none; }
   </style>
 </head>
 <body>
-  <!-- Offline screen shown by default -->
+  <!-- Offline screen shown first -->
   <div id="offline-screen">
     <div class="offline-card">
       <div class="offline-icon loading" id="offline-icon">
@@ -102,7 +133,7 @@
         Повторить попытку
       </button>
       <div class="offline-footer" id="offline-footer">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg class="spin" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
         </svg>
         Подключение...
@@ -110,16 +141,13 @@
     </div>
   </div>
 
-  <!-- App content - hidden until server check passes -->
-  <div id="app-content">
-    <div id="root"></div>
-  </div>
+  <!-- App root - hidden until server check passes -->
+  <div id="root"></div>
 
-  <!-- Server check script - runs FIRST before anything else -->
+  <!-- Server check script -->
   <script>
     (function() {
       var offlineScreen = document.getElementById('offline-screen');
-      var appContent = document.getElementById('app-content');
       var icon = document.getElementById('offline-icon');
       var title = document.getElementById('offline-title');
       var text = document.getElementById('offline-text');
@@ -147,8 +175,11 @@
 
       function showApp() {
         offlineScreen.style.display = 'none';
-        appContent.style.display = 'block';
-        loadAppScripts();
+        // Load main app script
+        var appScript = document.createElement('script');
+        appScript.type = 'module';
+        appScript.src = '/index.tsx?t=' + Date.now();
+        document.body.appendChild(appScript);
       }
 
       function checkServer() {
@@ -185,71 +216,12 @@
         }
       }
 
-      function loadAppScripts() {
-        // Load Telegram WebApp SDK
-        var tgScript = document.createElement('script');
-        tgScript.src = 'https://telegram.org/js/telegram-web-app.js';
-        tgScript.onload = function() {
-          // Load Tailwind
-          var twScript = document.createElement('script');
-          twScript.src = 'https://cdn.tailwindcss.com';
-          twScript.onload = function() {
-            // Configure Tailwind
-            window.tailwind.config = {
-              theme: {
-                extend: {
-                  colors: {
-                    brand: { green: '#00DC82', dark: '#0B0F19', gray: '#F3F4F6', purple: '#7928CA', accent: '#FF0080' },
-                    glass: { 100: 'rgba(255,255,255,0.1)', 200: 'rgba(255,255,255,0.2)', 300: 'rgba(255,255,255,0.3)', dark: 'rgba(15,23,42,0.6)' }
-                  },
-                  boxShadow: { 'glow': '0 0 20px rgba(0,220,130,0.5)', 'glow-sm': '0 0 10px rgba(0,220,130,0.3)', 'glass': '0 8px 32px 0 rgba(31,38,135,0.37)' },
-                  animation: { 'float': 'float 6s ease-in-out infinite', 'pulse-slow': 'pulse 4s cubic-bezier(0.4,0,0.6,1) infinite', 'gradient-x': 'gradient-x 15s ease infinite' },
-                  keyframes: { float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-20px)' } }, 'gradient-x': { '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' }, '50%': { 'background-size': '200% 200%', 'background-position': 'right center' } } }
-                }
-              }
-            };
-
-            // Add importmap
-            var importMap = document.createElement('script');
-            importMap.type = 'importmap';
-            importMap.textContent = JSON.stringify({
-              imports: {
-                "react/": "https://aistudiocdn.com/react@^19.2.0/",
-                "react": "https://aistudiocdn.com/react@^19.2.0",
-                "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-                "xlsx": "https://aistudiocdn.com/xlsx@^0.18.5",
-                "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-                "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
-                "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
-                "mammoth": "https://esm.sh/mammoth@1.8.0"
-              }
-            });
-            document.head.appendChild(importMap);
-
-            // Load CSS
-            var cssLink = document.createElement('link');
-            cssLink.rel = 'stylesheet';
-            cssLink.href = '/index.css';
-            document.head.appendChild(cssLink);
-
-            // Load main app
-            var appScript = document.createElement('script');
-            appScript.type = 'module';
-            appScript.src = '/index.tsx';
-            document.body.appendChild(appScript);
-          };
-          document.head.appendChild(twScript);
-        };
-        document.head.appendChild(tgScript);
-      }
-
-      // Retry button handler
       btn.onclick = function() {
         btn.disabled = true;
         checkServer();
       };
 
-      // Start server check immediately
+      // Start check
       checkServer();
     })();
   </script>
