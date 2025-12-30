@@ -7,8 +7,6 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-
-  <!-- These must be in head - can't be loaded dynamically -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -16,12 +14,46 @@
       theme: {
         extend: {
           colors: {
-            brand: { green: '#00DC82', dark: '#0B0F19', gray: '#F3F4F6', purple: '#7928CA', accent: '#FF0080' },
-            glass: { 100: 'rgba(255,255,255,0.1)', 200: 'rgba(255,255,255,0.2)', 300: 'rgba(255,255,255,0.3)', dark: 'rgba(15,23,42,0.6)' }
+            brand: {
+              green: '#00DC82',
+              dark: '#0B0F19',
+              gray: '#F3F4F6',
+              purple: '#7928CA',
+              accent: '#FF0080',
+            },
+            glass: {
+              100: 'rgba(255, 255, 255, 0.1)',
+              200: 'rgba(255, 255, 255, 0.2)',
+              300: 'rgba(255, 255, 255, 0.3)',
+              dark: 'rgba(15, 23, 42, 0.6)',
+            }
           },
-          boxShadow: { 'glow': '0 0 20px rgba(0,220,130,0.5)', 'glow-sm': '0 0 10px rgba(0,220,130,0.3)', 'glass': '0 8px 32px 0 rgba(31,38,135,0.37)' },
-          animation: { 'float': 'float 6s ease-in-out infinite', 'pulse-slow': 'pulse 4s cubic-bezier(0.4,0,0.6,1) infinite', 'gradient-x': 'gradient-x 15s ease infinite' },
-          keyframes: { float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-20px)' } }, 'gradient-x': { '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' }, '50%': { 'background-size': '200% 200%', 'background-position': 'right center' } } }
+          boxShadow: {
+            'glow': '0 0 20px rgba(0, 220, 130, 0.5)',
+            'glow-sm': '0 0 10px rgba(0, 220, 130, 0.3)',
+            'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+          },
+          animation: {
+            'float': 'float 6s ease-in-out infinite',
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'gradient-x': 'gradient-x 15s ease infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-20px)' },
+            },
+            'gradient-x': {
+              '0%, 100%': {
+                'background-size': '200% 200%',
+                'background-position': 'left center'
+              },
+              '50%': {
+                'background-size': '200% 200%',
+                'background-position': 'right center'
+              },
+            },
+          }
         }
       }
     }
@@ -41,189 +73,9 @@
 }
 </script>
   <link rel="stylesheet" href="/index.css">
-
-  <style>
-    body { background: #0B0F19; margin: 0; padding: 0; }
-    #offline-screen {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: linear-gradient(135deg, #0B0F19 0%, #1a1f2e 50%, #0B0F19 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      z-index: 999999;
-    }
-    .offline-card {
-      background: rgba(30, 41, 59, 0.9);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(71, 85, 105, 0.5);
-      border-radius: 16px;
-      padding: 32px;
-      max-width: 380px;
-      width: 90%;
-      text-align: center;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    }
-    .offline-icon {
-      width: 80px; height: 80px;
-      margin: 0 auto 24px;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .offline-icon.loading {
-      background: rgba(0, 220, 130, 0.1);
-      border-color: rgba(0, 220, 130, 0.3);
-    }
-    .offline-icon svg { width: 40px; height: 40px; }
-    .offline-icon svg path, .offline-icon svg line { stroke: #f87171; }
-    .offline-icon.loading svg path { stroke: #00DC82; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spin { animation: spin 1s linear infinite; }
-    .offline-title { color: #fff; font-size: 24px; font-weight: 700; margin: 0 0 8px 0; }
-    .offline-text { color: #94a3b8; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0; }
-    .offline-btn {
-      width: 100%;
-      padding: 14px 24px;
-      background: #00DC82;
-      color: #000;
-      font-weight: 600;
-      font-size: 15px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .offline-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .offline-footer {
-      margin-top: 24px;
-      padding-top: 24px;
-      border-top: 1px solid rgba(71, 85, 105, 0.4);
-      color: #64748b;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-  </style>
 </head>
-<body>
-  <!-- Offline screen shown first -->
-  <div id="offline-screen">
-    <div class="offline-card">
-      <div class="offline-icon loading" id="offline-icon">
-        <svg class="spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>
-      </div>
-      <h1 class="offline-title" id="offline-title">Проверка сервера...</h1>
-      <p class="offline-text" id="offline-text">Подключение к серверу...</p>
-      <button class="offline-btn" id="offline-btn" style="display: none;">
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>
-        Повторить попытку
-      </button>
-      <div class="offline-footer" id="offline-footer">
-        <svg class="spin" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>
-        Подключение...
-      </div>
-    </div>
-  </div>
-
-  <!-- App root - hidden until server check passes -->
+<body style="background: #0B0F19; margin: 0; padding: 0;">
   <div id="root"></div>
-
-  <!-- Server check script -->
-  <script>
-    (function() {
-      var offlineScreen = document.getElementById('offline-screen');
-      var icon = document.getElementById('offline-icon');
-      var title = document.getElementById('offline-title');
-      var text = document.getElementById('offline-text');
-      var btn = document.getElementById('offline-btn');
-      var footer = document.getElementById('offline-footer');
-
-      function showOffline() {
-        icon.className = 'offline-icon';
-        icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/><line x1="4" y1="4" x2="20" y2="20" stroke-linecap="round"/></svg>';
-        title.textContent = 'Сервер недоступен';
-        text.innerHTML = 'Не удалось подключиться к серверу.<br>Возможно, ведутся технические работы.';
-        btn.style.display = 'flex';
-        footer.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728m-3.536-3.536a4 4 0 010-5.656m-7.072 7.072a9 9 0 010-12.728m3.536 3.536a4 4 0 010 5.656"/><line x1="2" y1="2" x2="22" y2="22" stroke-linecap="round"/></svg>Нет соединения с сервером';
-      }
-
-      function showLoading() {
-        icon.className = 'offline-icon loading';
-        icon.innerHTML = '<svg class="spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>';
-        title.textContent = 'Проверка сервера...';
-        text.textContent = 'Подключение к серверу...';
-        btn.style.display = 'none';
-        btn.disabled = false;
-        footer.innerHTML = '<svg class="spin" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>Подключение...';
-      }
-
-      function showApp() {
-        offlineScreen.style.display = 'none';
-        // Load main app script
-        var appScript = document.createElement('script');
-        appScript.type = 'module';
-        appScript.src = '/index.tsx?t=' + Date.now();
-        document.body.appendChild(appScript);
-      }
-
-      function checkServer() {
-        showLoading();
-
-        var xhr = new XMLHttpRequest();
-        xhr.timeout = 8000;
-
-        xhr.onreadystatechange = function() {
-          if (xhr.readyState === 4) {
-            if (xhr.status === 200) {
-              try {
-                var data = JSON.parse(xhr.responseText);
-                if (data && data.status === 'ok') {
-                  showApp();
-                  return;
-                }
-              } catch(e) {}
-            }
-            showOffline();
-          }
-        };
-
-        xhr.ontimeout = function() { showOffline(); };
-        xhr.onerror = function() { showOffline(); };
-
-        try {
-          xhr.open('GET', '/health?t=' + Date.now() + '&r=' + Math.random(), true);
-          xhr.setRequestHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-          xhr.setRequestHeader('Pragma', 'no-cache');
-          xhr.send();
-        } catch(e) {
-          showOffline();
-        }
-      }
-
-      btn.onclick = function() {
-        btn.disabled = true;
-        checkServer();
-      };
-
-      // Start check
-      checkServer();
-    })();
-  </script>
+  <script type="module" src="/index.tsx"></script>
 </body>
 </html>
