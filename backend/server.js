@@ -260,7 +260,8 @@ if (process.env.BOT_TOKEN) {
 }
 
 // Health check - with no-cache headers to prevent Telegram caching
-app.get('/health', async (req, res) => {
+// Supports both GET and POST to bypass aggressive caching
+const healthCheckHandler = async (req, res) => {
     // Set headers to prevent caching
     res.set({
         'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
@@ -268,7 +269,7 @@ app.get('/health', async (req, res) => {
         'Expires': '0',
         'Surrogate-Control': 'no-store'
     });
-    
+
     let dbStatus = 'disconnected';
     try {
         await prisma.$queryRaw`SELECT 1`;
@@ -280,9 +281,13 @@ app.get('/health', async (req, res) => {
     res.json({
         status: 'ok',
         timestamp: new Date().toISOString(),
-        database: dbStatus
+        database: dbStatus,
+        random: Math.random() // Extra randomness to prevent any caching
     });
-});
+};
+
+app.get('/health', healthCheckHandler);
+app.post('/health', healthCheckHandler);
 
 // Public routes (no auth required)
 app.use('/api/plans', planRoutes); // Plans are public for viewing

@@ -7,24 +7,47 @@ import { ToastProvider } from './components/Toast';
 // ==================== CRITICAL: SERVER CHECK BEFORE APP LOADS ====================
 
 async function checkServerHealth(): Promise<boolean> {
+  console.log('🔍 checkServerHealth() called at', new Date().toISOString());
+
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => {
+      console.log('⏰ Health check timeout - aborting');
+      controller.abort();
+    }, 5000);
 
-    const response = await fetch('/health?_=' + Date.now(), {
-      method: 'GET',
+    console.log('📡 Fetching /health...');
+
+    // Use POST to avoid any caching, with random body
+    const response = await fetch('/health', {
+      method: 'POST',
       signal: controller.signal,
       cache: 'no-store',
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache'
-      }
+        'Pragma': 'no-cache',
+        'X-Health-Check': Date.now().toString(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ timestamp: Date.now(), random: Math.random() })
     });
 
     clearTimeout(timeoutId);
-    return response.ok;
+
+    console.log('📥 Response status:', response.status);
+
+    // Must be 200 OK and actually return valid response
+    if (!response.ok) {
+      console.error('❌ Server health check: bad status', response.status);
+      return false;
+    }
+
+    // Try to read body to ensure real connection
+    const body = await response.text();
+    console.log('✅ Server health check passed, body:', body.substring(0, 100));
+    return true;
   } catch (e) {
-    console.error('Server health check failed:', e);
+    console.error('❌ Server health check failed:', e);
     return false;
   }
 }
