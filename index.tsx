@@ -16,33 +16,29 @@ async function checkServerHealth(): Promise<boolean> {
       controller.abort();
     }, 5000);
 
-    console.log('📡 Fetching /health...');
+    // Unique URL each time to bypass any caching
+    const url = `/health?t=${Date.now()}&r=${Math.random()}`;
+    console.log('📡 Fetching', url);
 
-    // Use POST to avoid any caching, with random body
-    const response = await fetch('/health', {
-      method: 'POST',
+    const response = await fetch(url, {
+      method: 'GET',
       signal: controller.signal,
       cache: 'no-store',
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'X-Health-Check': Date.now().toString(),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ timestamp: Date.now(), random: Math.random() })
+        'Pragma': 'no-cache'
+      }
     });
 
     clearTimeout(timeoutId);
 
     console.log('📥 Response status:', response.status);
 
-    // Must be 200 OK and actually return valid response
     if (!response.ok) {
       console.error('❌ Server health check: bad status', response.status);
       return false;
     }
 
-    // Try to read body to ensure real connection
     const body = await response.text();
     console.log('✅ Server health check passed, body:', body.substring(0, 100));
     return true;
