@@ -11,4 +11,41 @@ if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
 }
 
+// Connection retry logic
+let isConnected = false;
+let connectionAttempts = 0;
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 5000; // 5 seconds
+
+export async function connectWithRetry() {
+  while (connectionAttempts < MAX_RETRIES) {
+    try {
+      await prisma.$connect();
+      isConnected = true;
+      console.log('✅ Connected to PostgreSQL (Supabase)');
+      return true;
+    } catch (error) {
+      connectionAttempts++;
+      console.error(`❌ Database connection attempt ${connectionAttempts}/${MAX_RETRIES} failed:`, error.message);
+      
+      if (connectionAttempts < MAX_RETRIES) {
+        console.log(`⏳ Retrying in ${RETRY_DELAY / 1000} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      }
+    }
+  }
+  
+  console.error('❌ Failed to connect to database after', MAX_RETRIES, 'attempts');
+  return false;
+}
+
+export function isDatabaseConnected() {
+  return isConnected;
+}
+
+// Handle disconnection
+prisma.$on('beforeExit', async () => {
+  isConnected = false;
+});
+
 export default prisma;

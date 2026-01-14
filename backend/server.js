@@ -230,7 +230,9 @@ app.use((req, res, next) => {
     next();
 });
 
-// Database connection check
+// Database connection check with retry
+import { connectWithRetry, isDatabaseConnected } from './lib/prisma.js';
+
 async function checkDatabase() {
     try {
         await prisma.$queryRaw`SELECT 1`;
@@ -242,11 +244,11 @@ async function checkDatabase() {
     }
 }
 
-// Initialize database connection (non-fatal - will retry on requests)
-checkDatabase().then(connected => {
+// Initialize database connection with retry logic
+connectWithRetry().then(connected => {
     if (!connected) {
-        console.warn('⚠️ Database not available at startup - will retry on requests');
-        // Don't exit - let the server start and handle DB errors per-request
+        console.warn('⚠️ Database not available - some features may not work');
+        console.warn('⚠️ Check if Supabase project is paused (free tier pauses after 7 days of inactivity)');
     }
 });
 

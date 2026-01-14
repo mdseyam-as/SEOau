@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma.js';
+import { isDatabaseConnected } from '../lib/prisma.js';
 
 class TaskQueueService {
   constructor() {
@@ -17,6 +18,11 @@ class TaskQueueService {
 
     this.intervalId = setInterval(async () => {
       if (this.processing) return;
+      
+      // Skip if database is not connected
+      if (!isDatabaseConnected()) {
+        return;
+      }
 
       // Загружаем pending задачи из БД
       try {
@@ -36,7 +42,10 @@ class TaskQueueService {
           this.processing = false;
         }
       } catch (error) {
-        console.error('[TaskQueue] Error loading tasks:', error);
+        // Don't spam logs with connection errors
+        if (!error.message?.includes("Can't reach database")) {
+          console.error('[TaskQueue] Error loading tasks:', error.message);
+        }
         this.processing = false;
       }
     }, 10000); // Проверка каждые 10 секунд
