@@ -11,7 +11,7 @@ if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
 }
 
-// Connection retry logic
+// Connection state tracking
 let isConnected = false;
 let connectionAttempts = 0;
 const MAX_RETRIES = 5;
@@ -43,9 +43,8 @@ export function isDatabaseConnected() {
   return isConnected;
 }
 
-// Handle disconnection
-prisma.$on('beforeExit', async () => {
-  isConnected = false;
-});
+export function setDatabaseConnected(value) {
+  isConnected = value;
+}
 
 export default prisma;
