@@ -15,10 +15,11 @@ interface SettingsFormProps {
   disabled: boolean;
   isLocked?: boolean;
   onSubmit: () => void;
+  onClear?: () => void;
   userPlan?: SubscriptionPlan | null;
 }
 
-export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, disabled, isLocked = false, onSubmit, userPlan }) => {
+export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, disabled, isLocked = false, onSubmit, onClear, userPlan }) => {
   const toast = useToast();
   const [docxFileName, setDocxFileName] = useState<string | null>(null);
   const [isDocxLoading, setIsDocxLoading] = useState(false);
@@ -652,9 +653,25 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
           <InternalLinksManager />
         </div>
 
-        {/* Generate Button */}
+        {/* Generate + Clear Buttons */}
         <div className="pt-2 pointer-events-auto relative z-20">
           {renderGenerateButton()}
+          {onClear && (
+            <button
+              type="button"
+              onClick={onClear}
+              disabled={isDisabled}
+              className={`
+                w-full mt-2 py-3 rounded-xl font-bold text-sm md:text-base flex items-center justify-center gap-2 transition-all
+                ${isDisabled
+                  ? 'bg-slate-800/60 text-slate-500 cursor-not-allowed'
+                  : 'bg-slate-900/60 text-slate-200 border border-white/10 hover:border-red-400 hover:text-red-300'}
+              `}
+            >
+              <Trash2 className="w-4 h-4" />
+              Очистить настройки
+            </button>
+          )}
           {isOverLimit && (
             <p className="text-red-500 text-xs text-center mt-2 font-medium animate-in fade-in">
               не может быть выбрано количество символов свыше лимита

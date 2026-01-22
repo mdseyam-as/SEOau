@@ -70,6 +70,7 @@ export default function App() {
   const [result, setResult] = useState<SeoResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [settingsResetCounter, setSettingsResetCounter] = useState(0);
 
   // Spam Fix State
   const [isFixingSpam, setIsFixingSpam] = useState(false);
@@ -403,6 +404,20 @@ export default function App() {
     }
   };
 
+  const handleClearProjectSettings = () => {
+    if (!currentProject) return;
+    const confirmed = confirm('Очистить все настройки проекта? Это сбросит параметры генерации, ключевые слова и результат.');
+    if (!confirmed) return;
+
+    projectConfigService.deleteConfig(currentProject.id);
+    setConfig(DEFAULT_CONFIG);
+    setKeywords([]);
+    setResult(null);
+    setError(null);
+    setSettingsResetCounter(prev => prev + 1);
+    toast.success('Настройки очищены', 'Параметры проекта сброшены до значений по умолчанию.');
+  };
+
   const handleLogout = () => {
     hapticNotification('warning');
     setUser(null);
@@ -592,12 +607,13 @@ export default function App() {
               </div>
 
               <SettingsForm
-                key={currentProject ? currentProject.id : 'global'}
+                key={`${currentProject ? currentProject.id : 'global'}:${settingsResetCounter}`}
                 config={config}
                 onChange={setConfig}
                 disabled={isGenerating}
                 isLocked={isLocked}
                 onSubmit={handleGenerate}
+                onClear={handleClearProjectSettings}
                 userPlan={userPlan}
               />
             </div>
