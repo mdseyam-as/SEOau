@@ -46,6 +46,7 @@ import { generationWorker } from './workers/generationWorker.js';
 import { initializeBot } from './utils/subscriptionManager.js';
 import { setupWebAppCommands } from './utils/botCommands.js';
 import { initRedis } from './utils/cache.js';
+import { processLock } from './utils/processLock.js';
 
 // Load environment variables
 dotenv.config();
@@ -244,22 +245,41 @@ async function checkDatabase() {
     }
 }
 
-// Initialize database connection with retry logic
+const BOT_LOCK_NAME = 'telegram-bot';
+
+async function initTelegramBotWithLock() {
+    if (!process.env.BOT_TOKEN) {
+        console.warn('⚠️  BOT_TOKEN not set - Telegram notifications disabled');
+        return;
+    }
+
+    try {
+        const isLeader = await processLock.acquireLock(BOT_LOCK_NAME);
+        if (!isLeader) {
+            console.log('⚠️ Telegram Bot already initialized by another instance - skipping');
+            return;
+        }
+
+        const bot = initializeBot(process.env.BOT_TOKEN);
+        setupWebAppCommands(bot);
+        console.log('✅ Telegram Bot initialized (leader)');
+    } catch (error) {
+        console.error('❌ Telegram Bot initialization failed:', error.message);
+    }
+}
+
+// Initialize database connection with retry logic (non-blocking)
 connectWithRetry().then(connected => {
     if (!connected) {
         console.warn('⚠️ Database not available - some features may not work');
         console.warn('⚠️ Check if Supabase project is paused (free tier pauses after 7 days of inactivity)');
     }
-});
 
-// Initialize Telegram Bot
-if (process.env.BOT_TOKEN) {
-    const bot = initializeBot(process.env.BOT_TOKEN);
-    setupWebAppCommands(bot);
-    console.log('✅ Telegram Bot initialized');
-} else {
-    console.warn('⚠️  BOT_TOKEN not set - Telegram notifications disabled');
-}
+    // Initialize Telegram Bot after DB init (lock stored in DB)
+    initTelegramBotWithLock();
+}).catch(err => {
+    console.error('❌ Database connection error:', err.message);
+});
 
 // Health check - with no-cache headers to prevent Telegram caching
 // Supports both GET and POST to bypass aggressive caching

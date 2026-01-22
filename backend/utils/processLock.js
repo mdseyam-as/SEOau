@@ -14,6 +14,7 @@ class ProcessLock {
   constructor() {
     this.locks = new Map(); // lockName -> intervalId
     this.isLeader = new Map(); // lockName -> boolean
+    this.lockTableReady = null; // null = unknown, true = ready, false = disabled
   }
 
   /**
@@ -21,7 +22,11 @@ class ProcessLock {
    * @param {string} lockName - Name of the lock (e.g., 'task-queue', 'telegram-bot')
    * @returns {Promise<boolean>} - true if lock acquired
    */
-  async acquireLock(lockName) {
+  async acquireLock(lockName, hasRetried = false) {
+    if (this.lockTableReady === false) {
+      this.isLeader.set(lockName, true);
+      return true;
+    }
     try {
       const now = new Date();
       const expiresAt = new Date(now.getTime() + LOCK_EXPIRY);
@@ -54,8 +59,18 @@ class ProcessLock {
 
       return hasLock;
     } catch (error) {
+      if (this.isMissingTableError(error)) {
+        const created = await this.ensureProcessLockTable();
+        this.lockTableReady = created ? true : false;
+
+        if (created && !hasRetried) {
+          return this.acquireLock(lockName, true);
+        }
+      }
+
       // Table might not exist yet - that's ok, we're the only instance
       if (error.code === 'P2010' || error.message?.includes('does not exist')) {
+        this.lockTableReady = false;
         console.log(`⚠️ ProcessLock table not found - assuming single instance mode`);
         this.isLeader.set(lockName, true);
         return true;
@@ -66,9 +81,51 @@ class ProcessLock {
   }
 
   /**
+   * Detect missing ProcessLock table errors
+   */
+  isMissingTableError(error) {
+    const message = error?.message || '';
+    return (
+      error?.code === 'P2010' ||
+      error?.code === '42P01' ||
+      message.includes('does not exist') ||
+      message.includes('relation "ProcessLock"')
+    );
+  }
+
+  /**
+   * Create ProcessLock table on the fly (safe for prod)
+   */
+  async ensureProcessLockTable() {
+    try {
+      await prisma.$executeRaw`
+        CREATE TABLE IF NOT EXISTS "ProcessLock" (
+          "name" TEXT PRIMARY KEY,
+          "instanceId" TEXT NOT NULL,
+          "acquiredAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+          "expiresAt" TIMESTAMPTZ NOT NULL
+        )
+      `;
+      await prisma.$executeRaw`
+        CREATE INDEX IF NOT EXISTS "ProcessLock_expiresAt_idx"
+        ON "ProcessLock" ("expiresAt")
+      `;
+      console.log('✅ ProcessLock table ensured');
+      return true;
+    } catch (error) {
+      console.error('Failed to create ProcessLock table:', error.message);
+      return false;
+    }
+  }
+
+  /**
    * Start refreshing the lock periodically
    */
   startRefresh(lockName) {
+    if (this.lockTableReady === false) {
+      return;
+    }
+
     // Clear existing refresh if any
     if (this.locks.has(lockName)) {
       clearInterval(this.locks.get(lockName));
@@ -98,6 +155,11 @@ class ProcessLock {
    */
   async releaseLock(lockName) {
     try {
+      if (this.lockTableReady === false) {
+        this.isLeader.set(lockName, false);
+        return;
+      }
+
       if (this.locks.has(lockName)) {
         clearInterval(this.locks.get(lockName));
         this.locks.delete(lockName);
