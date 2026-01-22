@@ -46,7 +46,6 @@ import { generationWorker } from './workers/generationWorker.js';
 import { initializeBot } from './utils/subscriptionManager.js';
 import { setupWebAppCommands } from './utils/botCommands.js';
 import { initRedis } from './utils/cache.js';
-import { processLock } from './utils/processLock.js';
 
 // Load environment variables
 dotenv.config();
@@ -245,24 +244,16 @@ async function checkDatabase() {
     }
 }
 
-const BOT_LOCK_NAME = 'telegram-bot';
-
-async function initTelegramBotWithLock() {
+async function initTelegramBot() {
     if (!process.env.BOT_TOKEN) {
         console.warn('⚠️  BOT_TOKEN not set - Telegram notifications disabled');
         return;
     }
 
     try {
-        const isLeader = await processLock.acquireLock(BOT_LOCK_NAME);
-        if (!isLeader) {
-            console.log('⚠️ Telegram Bot already initialized by another instance - skipping');
-            return;
-        }
-
         const bot = initializeBot(process.env.BOT_TOKEN);
         setupWebAppCommands(bot);
-        console.log('✅ Telegram Bot initialized (leader)');
+        console.log('✅ Telegram Bot initialized (webhook ready)');
     } catch (error) {
         console.error('❌ Telegram Bot initialization failed:', error.message);
     }
@@ -275,8 +266,8 @@ connectWithRetry().then(connected => {
         console.warn('⚠️ Check if Supabase project is paused (free tier pauses after 7 days of inactivity)');
     }
 
-    // Initialize Telegram Bot after DB init (lock stored in DB)
-    initTelegramBotWithLock();
+    // Initialize Telegram Bot after DB init
+    initTelegramBot();
 }).catch(err => {
     console.error('❌ Database connection error:', err.message);
 });

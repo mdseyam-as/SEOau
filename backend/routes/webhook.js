@@ -12,8 +12,11 @@ const router = express.Router();
 router.post('/telegram', (req, res) => {
     try {
         // Process the update through the bot
-        processUpdate(req.body);
-        res.status(200).json({ ok: true });
+        const handled = processUpdate(req.body);
+        if (!handled) {
+            console.warn('Telegram webhook received before bot initialization');
+        }
+        res.status(200).json({ ok: true, handled });
     } catch (error) {
         console.error('Telegram webhook error:', error);
         res.status(500).json({ error: 'Failed to process update' });

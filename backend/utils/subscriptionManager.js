@@ -55,9 +55,12 @@ export function initializeBot(token) {
  * Process incoming webhook update from Telegram
  */
 export function processUpdate(update) {
-    if (bot) {
-        bot.processUpdate(update);
+    if (!bot) {
+        return false;
     }
+
+    bot.processUpdate(update);
+    return true;
 }
 
 /**
