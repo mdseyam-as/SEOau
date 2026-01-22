@@ -234,3 +234,15 @@ model BackgroundTask {
   @@index([status])
   @@index([userId, createdAt(sort: Desc)])
 }
+
+// ==================== БЛОКИРОВКИ ПРОЦЕССОВ ====================
+// Для предотвращения дублирования фоновых процессов при горизонтальном масштабировании
+
+model ProcessLock {
+  name        String   @id // "task-queue", "telegram-bot", "history-cleanup"
+  instanceId  String   // UUID инстанса который держит блокировку
+  acquiredAt  DateTime @default(now())
+  expiresAt   DateTime // Блокировка истекает если не обновляется
+
+  @@index([expiresAt])
+}

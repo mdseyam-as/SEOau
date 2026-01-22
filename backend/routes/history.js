@@ -2,11 +2,13 @@ import express from 'express';
 import { prisma } from '../lib/prisma.js';
 import { validateParams, validateQuery } from '../middleware/validate.js';
 import { z } from 'zod';
+import { processLock } from '../utils/processLock.js';
 
 const router = express.Router();
 
 // History retention period in days
 const HISTORY_RETENTION_DAYS = 7;
+const CLEANUP_LOCK_NAME = 'history-cleanup';
 
 // Schema for projectId param (UUID)
 const projectIdParamSchema = z.object({
@@ -37,8 +39,14 @@ async function getUserId(telegramId) {
 
 /**
  * Helper: Clean up old history entries (older than HISTORY_RETENTION_DAYS)
+ * Only runs on leader instance to prevent duplicate cleanup
  */
 async function cleanupOldHistory() {
+    // Only run if this instance is the leader
+    if (!processLock.isProcessLeader(CLEANUP_LOCK_NAME)) {
+        return;
+    }
+    
     try {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - HISTORY_RETENTION_DAYS);
@@ -55,13 +63,25 @@ async function cleanupOldHistory() {
             console.log(`[History Cleanup] Deleted ${result.count} old history entries`);
         }
     } catch (error) {
-        console.error('[History Cleanup] Error:', error);
+        if (!error.message?.includes("Can't reach database")) {
+            console.error('[History Cleanup] Error:', error.message);
+        }
     }
 }
 
-// Run cleanup on startup and every 6 hours
-cleanupOldHistory();
-setInterval(cleanupOldHistory, 6 * 60 * 60 * 1000);
+// Try to acquire lock and run cleanup
+async function initCleanup() {
+    const isLeader = await processLock.acquireLock(CLEANUP_LOCK_NAME);
+    if (isLeader) {
+        cleanupOldHistory();
+        setInterval(cleanupOldHistory, 6 * 60 * 60 * 1000);
+    } else {
+        console.log('[History Cleanup] Another instance is handling cleanup');
+    }
+}
+
+// Initialize cleanup with delay to allow DB connection
+setTimeout(initCleanup, 5000);
 
 /**
  * GET /api/history/:projectId
