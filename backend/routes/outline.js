@@ -1,13 +1,15 @@
 import express from 'express';
 import { prisma } from '../lib/prisma.js';
 import { sanitizePromptInput } from '../utils/promptSanitizer.js';
+import { decrypt } from '../utils/encryption.js';
 
 const router = express.Router();
 
 // Получение API ключа
 async function getApiKey() {
   const settings = await prisma.systemSetting.findFirst({ where: { id: 'global' } });
-  return settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
+  const encryptedKey = settings?.openRouterApiKey;
+  return encryptedKey ? decrypt(encryptedKey) : process.env.OPENROUTER_API_KEY;
 }
 
 // Headers для OpenRouter

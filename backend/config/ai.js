@@ -38,11 +38,15 @@ export const RAG_CONFIG = {
  * Приоритет: SystemSetting > Environment Variable
  */
 export async function getApiKey() {
-  const { prisma } = await import('../lib/prisma.js');
+  const [{ prisma }, { decrypt }] = await Promise.all([
+    import('../lib/prisma.js'),
+    import('../utils/encryption.js')
+  ]);
   
   try {
     const settings = await prisma.systemSetting.findFirst({ where: { id: 'global' } });
-    const apiKey = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
+    const encryptedKey = settings?.openRouterApiKey;
+    const apiKey = encryptedKey ? decrypt(encryptedKey) : process.env.OPENROUTER_API_KEY;
     
     if (!apiKey) {
       throw new Error('API ключ не настроен. Установите OPENROUTER_API_KEY или настройте через админ-панель.');

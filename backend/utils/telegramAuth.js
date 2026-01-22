@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 
-// Maximum age for initData in seconds (default: 1 hour)
-const MAX_AUTH_AGE_SECONDS = parseInt(process.env.TELEGRAM_AUTH_MAX_AGE || '3600', 10);
+// Maximum age for initData in seconds (default: 3 hours)
+const MAX_AUTH_AGE_SECONDS = parseInt(process.env.TELEGRAM_AUTH_MAX_AGE || '10800', 10);
 
 /**
  * Validates Telegram WebApp initData

@@ -1,26 +1,48 @@
 import { prisma } from '../lib/prisma.js';
 import { isDatabaseConnected } from '../lib/prisma.js';
+import { processLock } from '../utils/processLock.js';
+import { decrypt } from '../utils/encryption.js';
+
+const LOCK_NAME = 'task-queue';
 
 class TaskQueueService {
   constructor() {
     this.processing = false;
     this.queue = [];
     this.intervalId = null;
+    this.isLeader = false;
   }
 
   /**
    * Запуск обработчика очереди
    */
-  start() {
+  async start() {
     if (this.intervalId) return;
 
-    console.log('[TaskQueue] Starting background task processor...');
+    // Try to acquire lock - only leader processes tasks
+    this.isLeader = await processLock.acquireLock(LOCK_NAME);
+    
+    if (!this.isLeader) {
+      console.log('[TaskQueue] Another instance is the leader - this instance will be standby');
+      // Still start interval to check if we can become leader
+      this.intervalId = setInterval(async () => {
+        if (!this.isLeader) {
+          this.isLeader = await processLock.acquireLock(LOCK_NAME);
+          if (this.isLeader) {
+            console.log('[TaskQueue] This instance is now the leader');
+          }
+        }
+      }, 30000); // Check every 30 seconds
+      return;
+    }
+
+    console.log('[TaskQueue] Starting background task processor (leader)...');
 
     this.intervalId = setInterval(async () => {
       if (this.processing) return;
       
-      // Skip if database is not connected
-      if (!isDatabaseConnected()) {
+      // Skip if not leader or database is not connected
+      if (!processLock.isProcessLeader(LOCK_NAME) || !isDatabaseConnected()) {
         return;
       }
 
@@ -54,10 +76,11 @@ class TaskQueueService {
   /**
    * Остановка обработчика
    */
-  stop() {
+  async stop() {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
+      await processLock.releaseLock(LOCK_NAME);
       console.log('[TaskQueue] Stopped background task processor');
     }
   }
@@ -175,7 +198,8 @@ class TaskQueueService {
   async processGenerateTask(config) {
     // Получаем API ключ
     const settings = await prisma.systemSetting.findFirst({ where: { id: 'global' } });
-    const apiKey = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
+    const encryptedKey = settings?.openRouterApiKey;
+    const apiKey = encryptedKey ? decrypt(encryptedKey) : process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
       throw new Error('API key not configured');
@@ -225,7 +249,8 @@ class TaskQueueService {
    */
   async processRewriteTask(config) {
     const settings = await prisma.systemSetting.findFirst({ where: { id: 'global' } });
-    const apiKey = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
+    const encryptedKey = settings?.openRouterApiKey;
+    const apiKey = encryptedKey ? decrypt(encryptedKey) : process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
       throw new Error('API key not configured');
@@ -273,7 +298,8 @@ class TaskQueueService {
    */
   async processHumanizeTask(config) {
     const settings = await prisma.systemSetting.findFirst({ where: { id: 'global' } });
-    const apiKey = settings?.openRouterApiKey || process.env.OPENROUTER_API_KEY;
+    const encryptedKey = settings?.openRouterApiKey;
+    const apiKey = encryptedKey ? decrypt(encryptedKey) : process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
       throw new Error('API key not configured');
