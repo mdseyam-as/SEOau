@@ -5,6 +5,29 @@ import { User, SubscriptionPlan, Project, HistoryItem, GenerationConfig, SeoResu
 const env = (typeof import.meta !== 'undefined' ? (import.meta as any).env : {}) || {};
 const API_URL: string = env.VITE_API_URL || '/api';
 
+const toFiniteNumber = (value: unknown, fallback: number): number => {
+    if (value === null || value === undefined || value === '') return fallback;
+
+    const parsed = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const normalizeKeywords = (keywords: { keyword: string; frequency: number }[]) =>
+    keywords
+        .map((keyword) => ({
+            keyword: String(keyword?.keyword ?? '').trim(),
+            frequency: toFiniteNumber(keyword?.frequency, 1)
+        }))
+        .filter((keyword) => keyword.keyword.length > 0);
+
+const normalizeGenerationConfig = (config: GenerationConfig): GenerationConfig => ({
+    ...config,
+    minChars: toFiniteNumber(config.minChars, 2500),
+    maxChars: toFiniteNumber(config.maxChars, 5000),
+    minParas: toFiniteNumber(config.minParas, 3),
+    maxParas: toFiniteNumber(config.maxParas, 12)
+});
+
 class ApiService {
     private initData: string = '';
     // Dev-only Telegram ID used when running outside Telegram WebApp
@@ -40,7 +63,10 @@ class ApiService {
 
         if (!response.ok) {
             const error = await response.json().catch(() => ({ error: 'Request failed' }));
-            throw new Error(error.error || `HTTP ${response.status}`);
+            const details = Array.isArray(error.details) && error.details.length > 0
+                ? `: ${error.details.map((item: any) => `${item.field} - ${item.message}`).join('; ')}`
+                : '';
+            throw new Error(`${error.error || `HTTP ${response.status}`}${details}`);
         }
 
         return response.json();
@@ -170,9 +196,12 @@ class ApiService {
 
     // Generation
     async generate(config: GenerationConfig, keywords: { keyword: string; frequency: number }[]): Promise<{ result: SeoResult; user: User }> {
+        const normalizedConfig = normalizeGenerationConfig(config);
+        const normalizedKeywords = normalizeKeywords(keywords);
+
         return this.request('/generate', {
             method: 'POST',
-            body: JSON.stringify({ config, keywords })
+            body: JSON.stringify({ config: normalizedConfig, keywords: normalizedKeywords })
         });
     }
 

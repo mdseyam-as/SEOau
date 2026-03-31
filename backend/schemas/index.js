@@ -1,5 +1,15 @@
 import { z } from 'zod';
 
+const coerceFiniteNumber = (fallback, schema) =>
+    z.preprocess((value) => {
+        if (value === null || value === undefined || value === '') {
+            return fallback;
+        }
+
+        const parsed = typeof value === 'number' ? value : Number(value);
+        return Number.isFinite(parsed) ? parsed : fallback;
+    }, schema);
+
 // ==================== Common Schemas ====================
 
 export const paginationSchema = z.object({
@@ -58,7 +68,7 @@ export const updateProjectSchema = z.object({
 const keywordSchema = z.object({
     keyword: z.string().min(1).max(500),
     // TF-IDF frequencies can be large numbers (document frequency counts)
-    frequency: z.number().min(0).default(1)
+    frequency: coerceFiniteNumber(1, z.number().min(0))
 });
 
 export const competitorFileSchema = z.object({
@@ -79,10 +89,10 @@ export const generateSchema = z.object({
         // Accept any string for tone/style - frontend uses localized display values
         tone: z.string().max(100).optional().default('Professional & Trustworthy'),
         style: z.string().max(100).optional().default('Informative & Educational'),
-        minChars: z.number().int().min(100).max(100000).optional().default(2500),
-        maxChars: z.number().int().min(100).max(100000).optional().default(5000),
-        minParas: z.number().int().min(1).max(100).optional().default(3),
-        maxParas: z.number().int().min(1).max(100).optional().default(12),
+        minChars: coerceFiniteNumber(2500, z.number().int().min(100).max(100000)),
+        maxChars: coerceFiniteNumber(5000, z.number().int().min(100).max(100000)),
+        minParas: coerceFiniteNumber(3, z.number().int().min(1).max(100)),
+        maxParas: coerceFiniteNumber(12, z.number().int().min(1).max(100)),
         model: z.string().min(1).max(100).optional().default('google/gemini-3-flash-preview'),
         writerModel: z.string().min(1).max(100).optional(),
         visualizerModel: z.string().min(1).max(100).optional(),

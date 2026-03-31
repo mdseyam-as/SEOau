@@ -75,6 +75,11 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
     onChange({ ...config, [field]: value });
   };
 
+  const parseNumericInput = (value: string, fallback: number) => {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+
   const handleDocxUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -603,7 +608,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                 <input
                   type="number"
                   value={config.minChars}
-                  onChange={(e) => handleChange('minChars', parseInt(e.target.value))}
+                  onChange={(e) => handleChange('minChars', parseNumericInput(e.target.value, config.minChars))}
                   className="w-full p-2.5 bg-white/5 border border-white/10 rounded-xl text-white shadow-sm focus:ring-1 focus:ring-brand-green text-sm outline-none"
                   placeholder="Мин"
                   disabled={isDisabled}
@@ -612,7 +617,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                 <input
                   type="number"
                   value={config.maxChars}
-                  onChange={(e) => handleChange('maxChars', parseInt(e.target.value))}
+                  onChange={(e) => handleChange('maxChars', parseNumericInput(e.target.value, config.maxChars))}
                   className={`w-full p-2.5 bg-white/5 border rounded-xl text-white shadow-sm focus:ring-1 text-sm outline-none ${isOverLimit ? 'border-red-500 focus:ring-red-500' : 'border-white/10 focus:ring-brand-green'}`}
                   placeholder="Макс"
                   disabled={isDisabled}
@@ -628,7 +633,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                 <input
                   type="number"
                   value={config.minParas}
-                  onChange={(e) => handleChange('minParas', parseInt(e.target.value))}
+                  onChange={(e) => handleChange('minParas', parseNumericInput(e.target.value, config.minParas))}
                   className="w-full p-2.5 bg-white/5 border border-white/10 rounded-xl text-white shadow-sm focus:ring-1 focus:ring-brand-green text-sm outline-none"
                   placeholder="Мин"
                   disabled={isDisabled}
@@ -637,7 +642,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                 <input
                   type="number"
                   value={config.maxParas}
-                  onChange={(e) => handleChange('maxParas', parseInt(e.target.value))}
+                  onChange={(e) => handleChange('maxParas', parseNumericInput(e.target.value, config.maxParas))}
                   className="w-full p-2.5 bg-white/5 border border-white/10 rounded-xl text-white shadow-sm focus:ring-1 focus:ring-brand-green text-sm outline-none"
                   placeholder="Макс"
                   disabled={isDisabled}

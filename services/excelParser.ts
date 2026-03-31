@@ -2,6 +2,15 @@
 import * as XLSX from 'xlsx';
 import { KeywordRow } from '../types';
 
+const parseFrequency = (value: unknown): number => {
+  if (value === null || value === undefined || value === '') return 1;
+
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(parsed)) return 1;
+
+  return Math.max(0, parsed);
+};
+
 export const parseExcelFile = async (file: File): Promise<KeywordRow[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -31,7 +40,7 @@ export const parseExcelFile = async (file: File): Promise<KeywordRow[]> => {
           const row = jsonData[i];
           if (row && row.length >= 2) {
             const keyword = String(row[0] || '').trim();
-            const frequency = Number(row[1] || 0);
+            const frequency = parseFrequency(row[1]);
 
             if (keyword) {
               rows.push({ keyword, frequency });

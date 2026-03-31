@@ -188,15 +188,23 @@ export default function App() {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   }, [user]);
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (
+    override?: {
+      config?: GenerationConfig;
+      keywords?: KeywordRow[];
+    }
+  ) => {
     if (!user) return;
 
-    if (!keywords.length && !config.topic) {
+    const generationConfig = override?.config ?? config;
+    const generationKeywords = override?.keywords ?? keywords;
+
+    if (!generationKeywords.length && !generationConfig.topic) {
       setError("Пожалуйста, загрузите ключевые слова или укажите тему.");
       return;
     }
 
-    if (!config.websiteName) {
+    if (!generationConfig.websiteName) {
       setError("Пожалуйста, укажите название сайта/бренда.");
       return;
     }
@@ -207,7 +215,7 @@ export default function App() {
 
     try {
       // Use backend API for generation (API key stays on server)
-      const { result: data, user: updatedUser } = await apiService.generate(config, keywords);
+      const { result: data, user: updatedUser } = await apiService.generate(generationConfig, generationKeywords);
 
       setResult(data);
       setUser(updatedUser);
@@ -217,7 +225,7 @@ export default function App() {
 
       // Save to History if in a project
       if (currentProject) {
-        await projectService.addToHistory(currentProject.id, config, data);
+        await projectService.addToHistory(currentProject.id, generationConfig, data);
         const history = await projectService.getHistory(currentProject.id);
         setProjectHistory(history);
       }
@@ -542,7 +550,7 @@ export default function App() {
           />
         ) : projectTab === 'outline' ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <OutlineEditor
+              <OutlineEditor
               config={config}
               keywords={keywords}
               onGenerateContent={(outline) => {
@@ -550,10 +558,11 @@ export default function App() {
                 const outlineText = `H1: ${outline.h1}\n\n${outline.sections.map(s => 
                   `## ${s.h2}\n${s.h3s.map(h3 => `### ${h3}`).join('\n')}`
                 ).join('\n\n')}`;
-                setConfig(prev => ({ ...prev, topic: outline.h1, exampleContent: outlineText }));
+                const nextConfig = { ...config, topic: outline.h1, exampleContent: outlineText };
+                setConfig(nextConfig);
                 setProjectTab('generator');
                 // Auto-trigger generation
-                handleGenerate();
+                handleGenerate({ config: nextConfig, keywords });
               }}
               isGenerating={isGenerating}
             />
