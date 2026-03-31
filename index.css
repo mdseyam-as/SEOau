@@ -729,6 +729,26 @@ html {
   box-shadow: 0 0 0 2px rgb(var(--color-brand-dark)), 0 0 0 4px rgb(var(--color-brand));
 }
 
+/* Responsive subscription button */
+.subscription-buy-button {
+  white-space: nowrap;
+}
+
+@media (max-width: 1120px) {
+  .subscription-buy-button {
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0 !important;
+    justify-content: center;
+    gap: 0 !important;
+    overflow: hidden;
+  }
+
+  .subscription-buy-label {
+    display: none !important;
+  }
+}
+
 /* ============================================
    Enhanced Animations & Interactivity
    ============================================ */
