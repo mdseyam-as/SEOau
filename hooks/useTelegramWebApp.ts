@@ -43,15 +43,15 @@ export const useTelegramWebApp = (): TelegramWebAppHookReturn => {
   // Apply Telegram theme to CSS variables
   const applyTheme = useCallback(() => {
     const webApp = (window as any).Telegram?.WebApp;
-    if (!webApp?.themeParams) return;
+    if (!webApp) return;
 
-    const params = webApp.themeParams;
+    const params = webApp.themeParams || {};
     const root = document.documentElement;
+    const appBg = params.bg_color || '#0B0F19';
+    const appSecondaryBg = params.secondary_bg_color || '#151925';
 
     // Apply theme params to CSS variables
-    if (params.bg_color) {
-      root.style.setProperty('--tg-theme-bg-color', params.bg_color);
-    }
+    root.style.setProperty('--tg-theme-bg-color', appBg);
     if (params.text_color) {
       root.style.setProperty('--tg-theme-text-color', params.text_color);
     }
@@ -67,9 +67,14 @@ export const useTelegramWebApp = (): TelegramWebAppHookReturn => {
     if (params.button_text_color) {
       root.style.setProperty('--tg-theme-button-text-color', params.button_text_color);
     }
-    if (params.secondary_bg_color) {
-      root.style.setProperty('--tg-theme-secondary-bg-color', params.secondary_bg_color);
-    }
+    root.style.setProperty('--tg-theme-secondary-bg-color', appSecondaryBg);
+
+    // Match Telegram shell colors to the app palette
+    webApp.setBackgroundColor?.(appBg);
+    webApp.setHeaderColor?.(appSecondaryBg);
+
+    // Keep browser fallback consistent too
+    document.body.style.background = appBg;
   }, []);
 
   // Initialize on mount
