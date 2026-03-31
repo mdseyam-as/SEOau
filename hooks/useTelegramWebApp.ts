@@ -81,15 +81,6 @@ export const useTelegramWebApp = (): TelegramWebAppHookReturn => {
     document.body.style.background = appBg;
     document.body.style.colorScheme = 'dark';
     document.body.style.backgroundColor = appBg;
-
-    // Request fullscreen on supported clients to remove the white Telegram chrome
-    if (webApp.isVersionAtLeast?.('8.0') && webApp.requestFullscreen && !webApp.isFullscreen) {
-      try {
-        webApp.requestFullscreen();
-      } catch (e) {
-        console.warn('Fullscreen request failed:', e);
-      }
-    }
   }, []);
 
   // Initialize on mount
