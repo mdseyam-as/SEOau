@@ -47,8 +47,9 @@ export const useTelegramWebApp = (): TelegramWebAppHookReturn => {
 
     const params = webApp.themeParams || {};
     const root = document.documentElement;
-    const appBg = params.bg_color || '#0B0F19';
-    const appSecondaryBg = params.secondary_bg_color || '#151925';
+    const appBg = '#0B0F19';
+    const appSecondaryBg = '#151925';
+    const appTertiaryBg = '#1A1F2E';
 
     // Apply theme params to CSS variables
     root.style.setProperty('--tg-theme-bg-color', appBg);
@@ -68,13 +69,27 @@ export const useTelegramWebApp = (): TelegramWebAppHookReturn => {
       root.style.setProperty('--tg-theme-button-text-color', params.button_text_color);
     }
     root.style.setProperty('--tg-theme-secondary-bg-color', appSecondaryBg);
+    root.style.background = appBg;
+    root.style.colorScheme = 'dark';
 
     // Match Telegram shell colors to the app palette
     webApp.setBackgroundColor?.(appBg);
-    webApp.setHeaderColor?.(appSecondaryBg);
+    webApp.setHeaderColor?.(appBg);
+    webApp.setBottomBarColor?.(appSecondaryBg || appTertiaryBg);
 
     // Keep browser fallback consistent too
     document.body.style.background = appBg;
+    document.body.style.colorScheme = 'dark';
+    document.body.style.backgroundColor = appBg;
+
+    // Request fullscreen on supported clients to remove the white Telegram chrome
+    if (webApp.isVersionAtLeast?.('8.0') && webApp.requestFullscreen && !webApp.isFullscreen) {
+      try {
+        webApp.requestFullscreen();
+      } catch (e) {
+        console.warn('Fullscreen request failed:', e);
+      }
+    }
   }, []);
 
   // Initialize on mount
