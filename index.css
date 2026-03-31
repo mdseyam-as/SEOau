@@ -734,7 +734,7 @@ html {
   white-space: nowrap;
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 960px) {
   .subscription-buy-button {
     width: 2.5rem;
     height: 2.5rem;
