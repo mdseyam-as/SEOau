@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, LogOut, ShieldCheck, Crown } from 'lucide-react';
+import { LayoutDashboard, LogOut, ShieldCheck, TicketPlus } from 'lucide-react';
 import { User } from '../services/authService';
 
 interface HeaderProps {
@@ -60,11 +60,11 @@ export const Header: React.FC<HeaderProps> = ({
           {user.role !== 'admin' && onOpenSubscription && (
             <button
               onClick={onOpenSubscription}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-full font-medium flex items-center gap-2 transition-all duration-300 whitespace-nowrap bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-white hover:from-purple-500/30 hover:to-pink-500/30 border border-purple-500/30 focus-ring-brand"
-              aria-label="Открыть тарифы подписки"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-full font-medium flex items-center gap-2 transition-all duration-300 whitespace-nowrap bg-brand-green/10 text-brand-green hover:bg-brand-green/15 border border-brand-green/30 shadow-glow-sm focus-ring-brand"
+              aria-label="Купить подписку"
             >
-              <Crown className="w-3 h-3 sm:w-4 sm:h-4 text-amber-400" />
-              <span className="hidden sm:inline">Тарифы</span>
+              <TicketPlus className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+              <span className="hidden sm:inline">Купить подписку</span>
             </button>
           )}
 
