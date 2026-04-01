@@ -60,11 +60,12 @@ export const Header: React.FC<HeaderProps> = ({
           {user.role !== 'admin' && onOpenSubscription && (
             <button
               onClick={onOpenSubscription}
-              className="subscription-buy-button px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs md:text-sm rounded-full font-medium flex items-center gap-1.5 sm:gap-2 transition-all duration-300 whitespace-nowrap bg-brand-green/10 text-brand-green hover:bg-brand-green/15 border border-brand-green/30 shadow-glow-sm focus-ring-brand"
+              className="subscription-buy-button px-2.5 md:px-3 py-1.5 md:py-2 text-[11px] md:text-xs lg:text-sm rounded-full font-medium flex items-center gap-1.5 md:gap-2 transition-all duration-300 whitespace-nowrap bg-brand-green/10 text-brand-green hover:bg-brand-green/15 border border-brand-green/30 shadow-glow-sm focus-ring-brand"
               aria-label="Купить подписку"
             >
-              <TicketPlus className="w-3 h-3 shrink-0" />
-              <span className="subscription-buy-label hidden sm:inline">Купить подписку</span>
+              <TicketPlus className="w-3 h-3 md:w-[14px] md:h-[14px] shrink-0" />
+              <span className="subscription-buy-label-mobile inline md:hidden">Подписка</span>
+              <span className="subscription-buy-label-desktop hidden md:inline">Купить подписку</span>
             </button>
           )}
 

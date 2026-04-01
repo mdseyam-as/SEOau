@@ -732,19 +732,33 @@ html {
 /* Responsive subscription button */
 .subscription-buy-button {
   white-space: nowrap;
+  max-width: 100%;
+  min-width: 0;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 767px) {
   .subscription-buy-button {
-    width: 2.5rem;
-    height: 2.5rem;
-    padding: 0 !important;
-    justify-content: center;
-    gap: 0 !important;
-    overflow: hidden;
+    padding-inline: 0.75rem;
+    padding-block: 0.5rem;
+    gap: 0.4rem;
+    font-size: 0.75rem;
   }
 
-  .subscription-buy-label {
+  .subscription-buy-label-mobile {
+    display: inline !important;
+  }
+
+  .subscription-buy-label-desktop {
+    display: none !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .subscription-buy-button {
+    padding-inline: 0.6rem;
+  }
+
+  .subscription-buy-label-mobile {
     display: none !important;
   }
 }
