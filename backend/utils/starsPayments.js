@@ -43,6 +43,11 @@ export function getPlanStarsPrice(plan) {
         return null;
     }
 
+    const directPrice = normalizePositiveInteger(plan.priceStars);
+    if (directPrice) {
+        return directPrice;
+    }
+
     const prices = getTelegramStarsPrices();
     return prices[plan.slug] ?? prices[plan.id] ?? null;
 }

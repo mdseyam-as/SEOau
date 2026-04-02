@@ -127,6 +127,7 @@ router.post('/', validateTelegramAuth, checkAdminRole, validate(createPlanSchema
             canRewrite,
             canHumanize,
             priceRub,
+            priceStars,
             durationDays,
             isDefault,
             isActive
@@ -150,6 +151,7 @@ router.post('/', validateTelegramAuth, checkAdminRole, validate(createPlanSchema
                 canRewrite: canRewrite || false,
                 canHumanize: canHumanize || false,
                 priceRub: priceRub || 0,
+                priceStars: priceStars || 0,
                 durationDays: durationDays || 30,
                 isDefault: isDefault || false,
                 isActive: isActive !== false
@@ -196,6 +198,7 @@ router.put('/:id', validateTelegramAuth, checkAdminRole, validate(updatePlanSche
             canRewrite,
             canHumanize,
             priceRub,
+            priceStars,
             durationDays,
             isDefault,
             isActive
@@ -218,6 +221,7 @@ router.put('/:id', validateTelegramAuth, checkAdminRole, validate(updatePlanSche
         if (canRewrite !== undefined) updateData.canRewrite = canRewrite;
         if (canHumanize !== undefined) updateData.canHumanize = canHumanize;
         if (priceRub !== undefined) updateData.priceRub = priceRub;
+        if (priceStars !== undefined) updateData.priceStars = priceStars;
         if (durationDays !== undefined) updateData.durationDays = durationDays;
         if (isDefault !== undefined) updateData.isDefault = isDefault;
         if (isActive !== undefined) updateData.isActive = isActive;

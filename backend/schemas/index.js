@@ -184,6 +184,7 @@ export const createPlanSchema = z.object({
     canRewrite: z.boolean().optional().default(false),
     canHumanize: z.boolean().optional().default(false),
     priceRub: z.number().int().min(0).optional().default(0),
+    priceStars: z.number().int().min(0).optional().default(0),
     isDefault: z.boolean().optional().default(false),
     isActive: z.boolean().optional().default(true),
     // Legacy fields - ignored but allowed for backward compatibility

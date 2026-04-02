@@ -201,7 +201,10 @@ export const AdminPanel: React.FC = () => {
       canUseSocialPack: false,
       canAudit: false,
       canRewrite: false,
-      canHumanize: false
+      canHumanize: false,
+      priceRub: 0,
+      priceStars: 0,
+      durationDays: 30
     };
     setEditingPlan(newPlan);
   };
@@ -1033,6 +1036,19 @@ export const AdminPanel: React.FC = () => {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none text-black placeholder-gray-400"
                   />
                   <p className="text-xs text-gray-600 mt-1">0 = Бесплатный тариф</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
+                    <Zap className="w-3 h-3" /> Цена (Telegram Stars)
+                  </label>
+                  <input
+                    type="number"
+                    value={editingPlan.priceStars || ''}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, priceStars: parseInt(e.target.value) || 0 })}
+                    placeholder="0 = Stars отключены"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green outline-none text-black placeholder-gray-400"
+                  />
+                  <p className="text-xs text-gray-600 mt-1">Используется для оплаты внутри Telegram Mini App</p>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">

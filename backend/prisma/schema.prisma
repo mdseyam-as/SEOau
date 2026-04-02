@@ -73,6 +73,7 @@ model Plan {
   
   // Ценообразование
   priceRub               Int      @default(0)
+  priceStars             Int      @default(0)
   durationDays           Int      @default(30)
   
   // Флаги
