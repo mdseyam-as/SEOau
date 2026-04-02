@@ -164,7 +164,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     const canPurchaseViaTelegram = !!selectedPlanData && selectedPlan !== currentPlanId;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
             {/* Backdrop */}
             <div 
                 className="absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -172,32 +172,32 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
             />
 
             {/* Modal */}
-            <div className="relative bg-slate-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-white/10 animate-in zoom-in-95 fade-in duration-300">
+            <div className="relative flex w-full max-w-5xl max-h-[min(92vh,56rem)] min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl animate-in zoom-in-95 fade-in duration-300">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-6 py-5 border-b border-white/10">
+                <div className="shrink-0 border-b border-white/10 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-4 sm:px-5 sm:py-5 md:px-6">
                     <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                                <Crown className="w-6 h-6 text-amber-400" />
+                        <div className="min-w-0 pr-3">
+                            <h2 className="flex items-center gap-2 text-lg font-bold text-white sm:text-xl">
+                                <Crown className="h-5 w-5 text-amber-400 sm:h-6 sm:w-6" />
                                 Выберите тариф
                             </h2>
-                            <p className="text-slate-400 text-sm mt-1">
+                            <p className="mt-1 text-xs text-slate-400 sm:text-sm">
                                 Разблокируйте все возможности SEO Generator
                             </p>
                         </div>
                         <button
                             onClick={onClose}
-                            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                            className="rounded-lg p-2 transition-colors hover:bg-white/10 shrink-0"
                         >
-                            <X className="w-5 h-5 text-slate-400" />
+                            <X className="h-5 w-5 text-slate-400" />
                         </button>
                     </div>
                 </div>
 
                 {/* Content */}
-                <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+                <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5 md:p-6">
                     {loading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                             {[1, 2, 3].map(i => (
                                 <div key={i} className="bg-white/5 rounded-xl p-6 animate-pulse">
                                     <div className="h-8 bg-white/10 rounded w-24 mb-4" />
@@ -211,7 +211,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                             ))}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                             {plans.map((plan) => {
                                 const isCurrent = plan.id === currentPlanId;
                                 const isSelected = plan.id === selectedPlan;
@@ -338,48 +338,50 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 bg-white/5 border-t border-white/10 flex items-center justify-between gap-4">
-                    <div className="space-y-1">
-                        <p className="text-xs text-slate-400">
+                <div className="shrink-0 border-t border-white/10 bg-white/5 px-4 py-4 sm:px-5 md:px-6">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                        <div className="space-y-1 lg:max-w-xl">
+                            <p className="text-xs text-slate-400 sm:text-sm">
                             Вы можете оплатить подписку через Telegram Stars или открыть личные сообщения в Telegram для ручной оплаты.
-                        </p>
-                        {purchaseError && (
-                            <p className="text-xs text-red-300">
-                                {purchaseError}
                             </p>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-3 flex-wrap justify-end">
-                        <button
-                            onClick={onClose}
-                            className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors"
-                        >
-                            Отмена
-                        </button>
-                        <button
-                            onClick={handleTelegramPurchase}
-                            disabled={!canPurchaseViaTelegram || purchaseLoading}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                                canPurchaseViaTelegram && !purchaseLoading
-                                    ? 'bg-white/5 text-slate-100 hover:bg-white/10 border border-white/10'
-                                    : 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                            }`}
-                        >
-                            <ExternalLink className="w-4 h-4" />
-                            Оплатить в Telegram
-                        </button>
-                        <button
-                            onClick={handlePurchase}
-                            disabled={!canPurchaseWithStars || purchaseLoading}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                                canPurchaseWithStars && !purchaseLoading
-                                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-400 hover:to-pink-400 shadow-lg'
-                                    : 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                            }`}
-                        >
-                            <ExternalLink className="w-4 h-4" />
-                            {purchaseLoading ? 'Открываем счет...' : 'Оплатить в Stars'}
-                        </button>
+                            {purchaseError && (
+                                <p className="text-xs text-red-300">
+                                    {purchaseError}
+                                </p>
+                            )}
+                        </div>
+                        <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end lg:w-auto">
+                            <button
+                                onClick={onClose}
+                                className="w-full rounded-xl px-4 py-2.5 text-sm font-medium text-slate-400 transition-colors hover:text-white sm:w-auto"
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                onClick={handleTelegramPurchase}
+                                disabled={!canPurchaseViaTelegram || purchaseLoading}
+                                className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all sm:w-auto ${
+                                    canPurchaseViaTelegram && !purchaseLoading
+                                        ? 'border border-white/10 bg-white/5 text-slate-100 hover:bg-white/10'
+                                        : 'cursor-not-allowed bg-slate-700 text-slate-400'
+                                }`}
+                            >
+                                <ExternalLink className="h-4 w-4" />
+                                Оплатить в Telegram
+                            </button>
+                            <button
+                                onClick={handlePurchase}
+                                disabled={!canPurchaseWithStars || purchaseLoading}
+                                className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all sm:w-auto ${
+                                    canPurchaseWithStars && !purchaseLoading
+                                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:from-purple-400 hover:to-pink-400'
+                                        : 'cursor-not-allowed bg-slate-700 text-slate-400'
+                                }`}
+                            >
+                                <ExternalLink className="h-4 w-4" />
+                                {purchaseLoading ? 'Открываем счет...' : 'Оплатить в Stars'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
