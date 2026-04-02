@@ -14,6 +14,15 @@ interface SubscriptionModalProps {
     telegramLink?: string;
 }
 
+const normalizeTelegramLink = (value: string) => {
+    const trimmed = (value || '').trim();
+    if (!trimmed) return 'https://t.me/bankkz_admin';
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    if (/^t\.me\//i.test(trimmed)) return `https://${trimmed}`;
+    if (/^@/.test(trimmed)) return `https://t.me/${trimmed.slice(1)}`;
+    return `https://t.me/${trimmed}`;
+};
+
 const FEATURE_ICONS: Record<string, React.ReactNode> = {
     canCheckSpam: <AlertOctagon className="w-4 h-4" />,
     canOptimizeRelevance: <Zap className="w-4 h-4" />,
@@ -67,7 +76,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
 
     const handlePurchase = () => {
         // Open Telegram link for purchase
-        window.open(telegramLink, '_blank');
+        window.open(normalizeTelegramLink(telegramLink), '_blank');
         onClose();
     };
 

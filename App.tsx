@@ -31,6 +31,15 @@ import { EmptyState, GeneratorEmptyState, LockedFeatureEmptyState } from './comp
 import { useTelegramWebApp } from './hooks/useTelegramWebApp';
 import { ServerHealthGate } from './components/ServerHealthGate';
 
+const normalizeTelegramLink = (value: string) => {
+  const trimmed = (value || '').trim();
+  if (!trimmed) return 'https://t.me/bankkz_admin';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^t\.me\//i.test(trimmed)) return `https://${trimmed}`;
+  if (/^@/.test(trimmed)) return `https://t.me/${trimmed.slice(1)}`;
+  return `https://t.me/${trimmed}`;
+};
+
 const DEFAULT_CONFIG: GenerationConfig = {
   websiteName: '',
   targetCountry: 'Казахстан',
@@ -592,7 +601,7 @@ export default function App() {
                     </div>
                     <div className="space-y-3">
                       <a
-                        href={telegramLink}
+                        href={normalizeTelegramLink(telegramLink)}
                         target="_blank"
                         rel="noreferrer"
                         className="block w-full bg-[#0088cc] hover:bg-[#0077b5] text-white text-xs font-bold py-2 px-3 rounded-lg text-center transition-colors flex items-center justify-center gap-2"

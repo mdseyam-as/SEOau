@@ -8,6 +8,18 @@ import { encrypt, decrypt } from '../utils/encryption.js';
 
 const router = express.Router();
 
+function normalizeTelegramLink(value) {
+    if (!value || typeof value !== 'string') return 'https://t.me/bankkz_admin';
+
+    const trimmed = value.trim();
+    if (!trimmed) return 'https://t.me/bankkz_admin';
+
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    if (/^t\.me\//i.test(trimmed)) return `https://${trimmed}`;
+    if (/^@/.test(trimmed)) return `https://t.me/${trimmed.slice(1)}`;
+    return `https://t.me/${trimmed}`;
+}
+
 /**
  * @route   GET /api/settings
  * @desc    Get global settings (public fields only for regular users)
@@ -46,12 +58,17 @@ router.get('/', auth, async (req, res) => {
                 openRouterApiKey: decrypt(dbSettings.openRouterApiKey) || '',
                 seoPrompt: dbSettings.seoPrompt || '',
                 geoPrompt: dbSettings.geoPrompt || '',
-                telegramLink: dbSettings.telegramLink || 'https://t.me/bankkz_admin',
+                telegramLink: normalizeTelegramLink(dbSettings.telegramLink),
                 spamCheckModel: dbSettings.spamCheckModel || 'x-ai/grok-2-1212'
             };
 
             // Cache settings for 5 minutes
             await cacheSet(CACHE_KEYS.SETTINGS, settings);
+        } else {
+            settings = {
+                ...settings,
+                telegramLink: normalizeTelegramLink(settings.telegramLink)
+            };
         }
 
         // Regular users only get public settings (NO API keys!)
@@ -90,7 +107,7 @@ router.put('/', auth, validate(updateSettingsSchema), async (req, res) => {
         if (openRouterApiKey !== undefined) updateData.openRouterApiKey = encrypt(openRouterApiKey);
         if (seoPrompt !== undefined) updateData.seoPrompt = seoPrompt;
         if (geoPrompt !== undefined) updateData.geoPrompt = geoPrompt;
-        if (telegramLink !== undefined) updateData.telegramLink = telegramLink;
+        if (telegramLink !== undefined) updateData.telegramLink = normalizeTelegramLink(telegramLink);
         if (spamCheckModel !== undefined) updateData.spamCheckModel = spamCheckModel;
 
         const settings = await prisma.systemSetting.upsert({
@@ -111,7 +128,7 @@ router.put('/', auth, validate(updateSettingsSchema), async (req, res) => {
                 openRouterApiKey: decrypt(settings.openRouterApiKey) || '',
                 seoPrompt: settings.seoPrompt || '',
                 geoPrompt: settings.geoPrompt || '',
-                telegramLink: settings.telegramLink || '',
+                telegramLink: normalizeTelegramLink(settings.telegramLink),
                 spamCheckModel: settings.spamCheckModel || ''
             }
         });
