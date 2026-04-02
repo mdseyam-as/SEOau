@@ -249,6 +249,7 @@ export interface SubscriptionPlan {
   canRewrite?: boolean;
   canHumanize?: boolean;
   priceRub?: number;
+  priceStars?: number | null;
   durationDays?: number;
 }
 

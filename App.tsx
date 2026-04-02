@@ -10,7 +10,7 @@ import { ProjectList } from './components/ProjectList';
 import { HistoryList } from './components/HistoryList';
 import { calculateSeoMetrics } from './services/geminiService';
 import { GenerationConfig, KeywordRow, SeoResult, AIModel, Project, TextTone, TextStyle, GenerationMode, ContentLanguage, HistoryItem } from './types';
-import { Lock, ExternalLink } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { User, authService, SubscriptionPlan } from './services/authService';
 import { projectService } from './services/projectService';
 import { apiService } from './services/apiService';
@@ -30,15 +30,6 @@ import { ProjectHeader } from './components/ProjectHeader';
 import { EmptyState, GeneratorEmptyState, LockedFeatureEmptyState } from './components/EmptyState';
 import { useTelegramWebApp } from './hooks/useTelegramWebApp';
 import { ServerHealthGate } from './components/ServerHealthGate';
-
-const normalizeTelegramLink = (value: string) => {
-  const trimmed = (value || '').trim();
-  if (!trimmed) return 'https://t.me/bankkz_admin';
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  if (/^t\.me\//i.test(trimmed)) return `https://${trimmed}`;
-  if (/^@/.test(trimmed)) return `https://t.me/${trimmed.slice(1)}`;
-  return `https://t.me/${trimmed}`;
-};
 
 const DEFAULT_CONFIG: GenerationConfig = {
   websiteName: '',
@@ -92,15 +83,8 @@ export default function App() {
 
   // Admin State
   const [showAdminPanel, setShowAdminPanel] = useState(false);
-  const [telegramLink, setTelegramLink] = useState('');
-
   // Subscription Modal State
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-
-  useEffect(() => {
-    const settings = authService.getGlobalSettings();
-    setTelegramLink(settings.telegramLink);
-  }, []);
 
   // Update plan when user changes
   useEffect(() => {
@@ -452,8 +436,6 @@ export default function App() {
     // Load global settings from backend (API key, system prompt, etc.)
     try {
       await authService.loadGlobalSettings();
-      const settings = authService.getGlobalSettings();
-      setTelegramLink(settings.telegramLink);
     } catch (e) {
       console.error('Failed to load global settings:', e);
     }
@@ -461,6 +443,15 @@ export default function App() {
     if (loggedInUser.role === 'admin') {
       // Don't auto-show admin panel, let them choose.
       // But we can default to projects.
+    }
+  };
+
+  const refreshCurrentUser = async () => {
+    try {
+      const { user: freshUser } = await apiService.getMe();
+      setUser(freshUser);
+    } catch (e) {
+      console.error('Failed to refresh user after payment:', e);
     }
   };
 
@@ -600,15 +591,13 @@ export default function App() {
                       </div>
                     </div>
                     <div className="space-y-3">
-                      <a
-                        href={normalizeTelegramLink(telegramLink)}
-                        target="_blank"
-                        rel="noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => setShowSubscriptionModal(true)}
                         className="block w-full bg-[#0088cc] hover:bg-[#0077b5] text-white text-xs font-bold py-2 px-3 rounded-lg text-center transition-colors flex items-center justify-center gap-2"
                       >
-                        <ExternalLink className="w-3 h-3" />
                         Купить подписку
-                      </a>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -749,7 +738,7 @@ export default function App() {
           isOpen={showSubscriptionModal}
           onClose={() => setShowSubscriptionModal(false)}
           currentPlanId={user.planId}
-          telegramLink={telegramLink}
+          onPurchaseComplete={refreshCurrentUser}
         />
       </div>
     </ServerHealthGate>

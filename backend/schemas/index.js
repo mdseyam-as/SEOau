@@ -194,6 +194,10 @@ export const createPlanSchema = z.object({
 
 export const updatePlanSchema = createPlanSchema.partial().omit({ id: true });
 
+export const createStarsInvoiceSchema = z.object({
+    planId: z.string().min(1).max(50)
+});
+
 // ==================== Webhook Schemas ====================
 
 export const webhookSchema = z.object({

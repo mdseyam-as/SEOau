@@ -11,17 +11,8 @@ interface SubscriptionModalProps {
     isOpen: boolean;
     onClose: () => void;
     currentPlanId?: string;
-    telegramLink?: string;
+    onPurchaseComplete?: () => Promise<void> | void;
 }
-
-const normalizeTelegramLink = (value: string) => {
-    const trimmed = (value || '').trim();
-    if (!trimmed) return 'https://t.me/bankkz_admin';
-    if (/^https?:\/\//i.test(trimmed)) return trimmed;
-    if (/^t\.me\//i.test(trimmed)) return `https://${trimmed}`;
-    if (/^@/.test(trimmed)) return `https://t.me/${trimmed.slice(1)}`;
-    return `https://t.me/${trimmed}`;
-};
 
 const FEATURE_ICONS: Record<string, React.ReactNode> = {
     canCheckSpam: <AlertOctagon className="w-4 h-4" />,
@@ -43,11 +34,13 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     isOpen,
     onClose,
     currentPlanId,
-    telegramLink = 'https://t.me/bankkz_admin'
+    onPurchaseComplete
 }) => {
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+    const [purchaseLoading, setPurchaseLoading] = useState(false);
+    const [purchaseError, setPurchaseError] = useState<string | null>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -57,6 +50,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
 
     const loadPlans = async () => {
         setLoading(true);
+        setPurchaseError(null);
         try {
             const { plans: loadedPlans } = await apiService.getPlans();
             // Sort by price
@@ -72,12 +66,38 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     const handleSelectPlan = (planId: string) => {
         if (planId === currentPlanId) return;
         setSelectedPlan(planId);
+        setPurchaseError(null);
     };
 
-    const handlePurchase = () => {
-        // Open Telegram link for purchase
-        window.open(normalizeTelegramLink(telegramLink), '_blank');
-        onClose();
+    const handlePurchase = async () => {
+        if (!selectedPlan || selectedPlan === currentPlanId) {
+            return;
+        }
+
+        setPurchaseLoading(true);
+        setPurchaseError(null);
+
+        try {
+            const { invoiceLink } = await apiService.createStarsInvoice(selectedPlan);
+            const webApp = (window as any).Telegram?.WebApp;
+
+            if (webApp?.openInvoice) {
+                webApp.openInvoice(invoiceLink, async (status: string) => {
+                    if (status === 'paid') {
+                        await onPurchaseComplete?.();
+                        onClose();
+                    }
+                });
+            } else {
+                window.open(invoiceLink, '_blank', 'noopener,noreferrer');
+                onClose();
+            }
+        } catch (error) {
+            console.error('Failed to create Telegram Stars invoice:', error);
+            setPurchaseError(error instanceof Error ? error.message : 'Не удалось открыть оплату в Telegram Stars');
+        } finally {
+            setPurchaseLoading(false);
+        }
     };
 
     if (!isOpen) return null;
@@ -101,6 +121,9 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         if (planId === 'unlimited') return 'border-amber-500/30';
         return 'border-white/10';
     };
+
+    const selectedPlanData = plans.find((plan) => plan.id === selectedPlan);
+    const canPurchaseWithStars = !!selectedPlanData?.priceStars && selectedPlan !== currentPlanId;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -192,9 +215,21 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                                         {/* Price */}
                                         <div className="mb-4">
                                             {(plan.priceRub || 0) > 0 ? (
-                                                <div className="flex items-baseline gap-1">
-                                                    <span className="text-3xl font-bold text-white">{plan.priceRub}</span>
-                                                    <span className="text-slate-400">₽/мес</span>
+                                                <div className="space-y-1.5">
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-3xl font-bold text-white">{plan.priceRub}</span>
+                                                        <span className="text-slate-400">₽/мес</span>
+                                                    </div>
+                                                    {plan.priceStars ? (
+                                                        <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-2.5 py-1 text-xs font-semibold text-amber-200">
+                                                            <Star className="w-3.5 h-3.5" />
+                                                            {plan.priceStars} Stars
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-xs text-slate-500">
+                                                            Stars-цена будет доступна после настройки
+                                                        </div>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <div className="text-3xl font-bold text-white">Бесплатно</div>
@@ -265,10 +300,17 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 bg-white/5 border-t border-white/10 flex items-center justify-between">
-                    <p className="text-xs text-slate-400">
-                        Оплата через Telegram. Активация мгновенная.
-                    </p>
+                <div className="px-6 py-4 bg-white/5 border-t border-white/10 flex items-center justify-between gap-4">
+                    <div className="space-y-1">
+                        <p className="text-xs text-slate-400">
+                            Оплата проходит внутри Telegram Stars. Активация подписки происходит автоматически.
+                        </p>
+                        {purchaseError && (
+                            <p className="text-xs text-red-300">
+                                {purchaseError}
+                            </p>
+                        )}
+                    </div>
                     <div className="flex items-center gap-3">
                         <button
                             onClick={onClose}
@@ -278,15 +320,15 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                         </button>
                         <button
                             onClick={handlePurchase}
-                            disabled={!selectedPlan || selectedPlan === currentPlanId}
+                            disabled={!canPurchaseWithStars || purchaseLoading}
                             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                                selectedPlan && selectedPlan !== currentPlanId
+                                canPurchaseWithStars && !purchaseLoading
                                     ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-400 hover:to-pink-400 shadow-lg'
                                     : 'bg-slate-700 text-slate-400 cursor-not-allowed'
                             }`}
                         >
                             <ExternalLink className="w-4 h-4" />
-                            Купить в Telegram
+                            {purchaseLoading ? 'Открываем счет...' : 'Оплатить в Stars'}
                         </button>
                     </div>
                 </div>

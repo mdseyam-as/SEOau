@@ -182,6 +182,23 @@ class ApiService {
         });
     }
 
+    async createStarsInvoice(planId: string): Promise<{
+        ok: boolean;
+        invoiceLink: string;
+        starsAmount: number;
+        currency: 'XTR';
+        plan: {
+            id: string;
+            name: string;
+            durationDays: number;
+        };
+    }> {
+        return this.request('/payments/stars/create', {
+            method: 'POST',
+            body: JSON.stringify({ planId })
+        });
+    }
+
     // Settings
     async getSettings(): Promise<{ settings: { systemPrompt: string; seoPrompt: string; geoPrompt: string; telegramLink: string; spamCheckModel: string } }> {
         return this.request('/settings');

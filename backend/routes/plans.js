@@ -4,8 +4,15 @@ import { validateTelegramAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { createPlanSchema, updatePlanSchema } from '../schemas/index.js';
 import { cacheGet, cacheSet, cacheDel, CACHE_KEYS } from '../utils/cache.js';
+import { getPlanStarsPrice } from '../utils/starsPayments.js';
 
 const router = express.Router();
+
+const mapPlanForClient = (plan) => ({
+    ...plan,
+    id: plan.slug,
+    priceStars: getPlanStarsPrice(plan)
+});
 
 /**
  * GET /api/plans
@@ -23,10 +30,7 @@ router.get('/', async (req, res) => {
             });
 
             // Transform for backward compatibility (slug -> id)
-            plans = plans.map(p => ({
-                ...p,
-                id: p.slug // backward compatibility
-            }));
+            plans = plans.map(mapPlanForClient);
 
             // Cache for 10 minutes
             await cacheSet(CACHE_KEYS.PLANS_ALL, plans);
@@ -60,10 +64,7 @@ router.get('/:id', async (req, res) => {
             }
 
             // Transform for backward compatibility
-            plan = {
-                ...plan,
-                id: plan.slug
-            };
+            plan = mapPlanForClient(plan);
 
             // Cache for 10 minutes
             await cacheSet(cacheKey, plan);
@@ -160,7 +161,7 @@ router.post('/', validateTelegramAuth, checkAdminRole, validate(createPlanSchema
 
         res.json({
             success: true,
-            plan: { ...plan, id: plan.slug }
+            plan: mapPlanForClient(plan)
         });
     } catch (error) {
         if (error.code === 'P2002') {
@@ -234,7 +235,7 @@ router.put('/:id', validateTelegramAuth, checkAdminRole, validate(updatePlanSche
 
         res.json({
             success: true,
-            plan: { ...plan, id: plan.slug }
+            plan: mapPlanForClient(plan)
         });
     } catch (error) {
         if (error.code === 'P2025') {

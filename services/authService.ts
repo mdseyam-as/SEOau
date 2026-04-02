@@ -20,6 +20,7 @@ export interface SubscriptionPlan {
   canRewrite?: boolean; // Ability to use Rewrite/Paraphrase
   canHumanize?: boolean; // Ability to use AI Humanizer
   priceRub?: number; // Price in rubles
+  priceStars?: number | null; // Price in Telegram Stars
   durationDays?: number; // Subscription duration in days
 }
 

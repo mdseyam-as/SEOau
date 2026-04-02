@@ -1,7 +1,130 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { prisma } from '../lib/prisma.js';
+import { getPlanStarsPrice, parseAndVerifyStarsPayload } from './starsPayments.js';
 
 let bot;
+
+async function handlePreCheckoutQuery(query) {
+    try {
+        const parsed = parseAndVerifyStarsPayload(query.invoice_payload);
+        if (!parsed.ok) {
+            await bot.answerPreCheckoutQuery(query.id, false, {
+                error_message: 'Не удалось проверить счет. Попробуйте открыть его заново.'
+            });
+            return;
+        }
+
+        const { telegramId, planSlug, amount } = parsed.data;
+        if (telegramId !== BigInt(query.from.id)) {
+            await bot.answerPreCheckoutQuery(query.id, false, {
+                error_message: 'Этот счет создан для другого пользователя.'
+            });
+            return;
+        }
+
+        const plan = await prisma.plan.findUnique({
+            where: { slug: planSlug }
+        });
+
+        if (!plan || !plan.isActive) {
+            await bot.answerPreCheckoutQuery(query.id, false, {
+                error_message: 'Тариф больше недоступен.'
+            });
+            return;
+        }
+
+        const currentPrice = getPlanStarsPrice(plan);
+        if (!currentPrice || currentPrice !== amount || query.total_amount !== amount || query.currency !== 'XTR') {
+            await bot.answerPreCheckoutQuery(query.id, false, {
+                error_message: 'Цена тарифа изменилась. Откройте оплату заново.'
+            });
+            return;
+        }
+
+        await bot.answerPreCheckoutQuery(query.id, true);
+    } catch (error) {
+        console.error('Failed to handle pre_checkout_query:', error);
+        try {
+            await bot.answerPreCheckoutQuery(query.id, false, {
+                error_message: 'Не удалось подтвердить оплату. Попробуйте позже.'
+            });
+        } catch (answerError) {
+            console.error('Failed to answer pre_checkout_query:', answerError);
+        }
+    }
+}
+
+async function handleSuccessfulPaymentMessage(msg) {
+    const payment = msg.successful_payment;
+    if (!payment) {
+        return;
+    }
+
+    try {
+        const parsed = parseAndVerifyStarsPayload(payment.invoice_payload);
+        if (!parsed.ok) {
+            console.error('Invalid successful payment payload:', parsed.reason);
+            return;
+        }
+
+        const { telegramId, planSlug, amount } = parsed.data;
+        const chargeId = payment.telegram_payment_charge_id;
+
+        const existingPayment = await prisma.payment.findUnique({
+            where: { yookassaId: chargeId }
+        });
+
+        if (existingPayment) {
+            console.log('Telegram Stars payment already processed:', chargeId);
+            return;
+        }
+
+        const plan = await prisma.plan.findUnique({
+            where: { slug: planSlug }
+        });
+
+        if (!plan || !plan.isActive) {
+            console.error('Plan not found for Telegram Stars payment:', planSlug);
+            return;
+        }
+
+        const expectedAmount = getPlanStarsPrice(plan);
+        if (!expectedAmount || expectedAmount !== amount || payment.total_amount !== amount || payment.currency !== 'XTR') {
+            console.error('Telegram Stars payment amount mismatch:', {
+                planSlug,
+                expectedAmount,
+                payloadAmount: amount,
+                paymentAmount: payment.total_amount,
+                currency: payment.currency
+            });
+            return;
+        }
+
+        await prisma.payment.create({
+            data: {
+                telegramId,
+                // Legacy field reused to keep Telegram charge id unique without schema migration.
+                yookassaId: chargeId,
+                planSlug,
+                amount,
+                currency: payment.currency,
+                status: 'succeeded',
+                paidAt: new Date()
+            }
+        });
+
+        const user = await grantSubscription(telegramId, planSlug, plan.durationDays);
+        if (!user) {
+            console.error('Failed to grant Telegram Stars subscription for user:', telegramId.toString());
+            return;
+        }
+
+        await notifySubscriptionActivated(telegramId, plan.name, plan.durationDays);
+        console.log(`Telegram Stars subscription granted: User ${telegramId.toString()}, Plan ${planSlug}`);
+    } catch (error) {
+        console.error('Failed to process successful Telegram Stars payment:', error);
+    }
+}
 
 export function initializeBot(token) {
     const isProduction = process.env.NODE_ENV === 'production';
@@ -48,6 +171,20 @@ export function initializeBot(token) {
         });
     }
 
+    bot.on('pre_checkout_query', (query) => {
+        handlePreCheckoutQuery(query);
+    });
+
+    bot.on('message', (msg) => {
+        if (msg.successful_payment) {
+            handleSuccessfulPaymentMessage(msg);
+        }
+    });
+
+    return bot;
+}
+
+export function getBot() {
     return bot;
 }
 
@@ -68,12 +205,23 @@ export function processUpdate(update) {
  */
 export async function grantSubscription(telegramId, planId, days) {
     try {
-        const newExpiry = new Date();
+        const tgId = typeof telegramId === 'bigint' ? telegramId : BigInt(telegramId);
+        const existingUser = await prisma.user.findUnique({
+            where: { telegramId: tgId }
+        });
+
+        if (!existingUser) {
+            console.error('User not found:', telegramId.toString());
+            return null;
+        }
+
+        const baseDate = existingUser.subscriptionExpiry && new Date(existingUser.subscriptionExpiry) > new Date()
+            ? new Date(existingUser.subscriptionExpiry)
+            : new Date();
+
+        const newExpiry = new Date(baseDate);
         newExpiry.setDate(newExpiry.getDate() + days);
         newExpiry.setHours(23, 59, 59, 999);
-
-        // Ensure telegramId is BigInt
-        const tgId = typeof telegramId === 'bigint' ? telegramId : BigInt(telegramId);
 
         const user = await prisma.user.update({
             where: { telegramId: tgId },
