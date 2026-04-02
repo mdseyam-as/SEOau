@@ -11,8 +11,34 @@ interface SubscriptionModalProps {
     isOpen: boolean;
     onClose: () => void;
     currentPlanId?: string;
+    telegramLink?: string;
     onPurchaseComplete?: () => Promise<void> | void;
 }
+
+const normalizeTelegramLink = (value: string) => {
+    const trimmed = (value || '').trim();
+    if (!trimmed) return 'https://t.me/bankkz_admin';
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    if (/^t\.me\//i.test(trimmed)) return `https://${trimmed}`;
+    if (/^@/.test(trimmed)) return `https://t.me/${trimmed.slice(1)}`;
+    return `https://t.me/${trimmed}`;
+};
+
+const buildTelegramPurchaseLink = (baseLink: string, plan?: SubscriptionPlan | null) => {
+    const normalized = normalizeTelegramLink(baseLink);
+
+    try {
+        const url = new URL(normalized);
+        const message = plan
+            ? `Здравствуйте! Хочу оплатить тариф "${plan.name}" (${plan.durationDays || 30} дней).`
+            : 'Здравствуйте! Хочу оплатить подписку.';
+
+        url.searchParams.set('text', message);
+        return url.toString();
+    } catch {
+        return normalized;
+    }
+};
 
 const FEATURE_ICONS: Record<string, React.ReactNode> = {
     canCheckSpam: <AlertOctagon className="w-4 h-4" />,
@@ -34,6 +60,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     isOpen,
     onClose,
     currentPlanId,
+    telegramLink = 'https://t.me/bankkz_admin',
     onPurchaseComplete
 }) => {
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -100,6 +127,16 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         }
     };
 
+    const handleTelegramPurchase = () => {
+        if (!selectedPlanData || selectedPlan === currentPlanId) {
+            return;
+        }
+
+        const purchaseLink = buildTelegramPurchaseLink(telegramLink, selectedPlanData);
+        window.open(purchaseLink, '_blank', 'noopener,noreferrer');
+        onClose();
+    };
+
     if (!isOpen) return null;
 
     const getPlanIcon = (planId: string) => {
@@ -122,8 +159,9 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         return 'border-white/10';
     };
 
-    const selectedPlanData = plans.find((plan) => plan.id === selectedPlan);
+    const selectedPlanData = plans.find((plan) => plan.id === selectedPlan) || null;
     const canPurchaseWithStars = !!selectedPlanData?.priceStars && selectedPlan !== currentPlanId;
+    const canPurchaseViaTelegram = !!selectedPlanData && selectedPlan !== currentPlanId;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -303,7 +341,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                 <div className="px-6 py-4 bg-white/5 border-t border-white/10 flex items-center justify-between gap-4">
                     <div className="space-y-1">
                         <p className="text-xs text-slate-400">
-                            Оплата проходит внутри Telegram Stars. Активация подписки происходит автоматически.
+                            Вы можете оплатить подписку через Telegram Stars или открыть личные сообщения в Telegram для ручной оплаты.
                         </p>
                         {purchaseError && (
                             <p className="text-xs text-red-300">
@@ -311,12 +349,24 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                             </p>
                         )}
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap justify-end">
                         <button
                             onClick={onClose}
                             className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors"
                         >
                             Отмена
+                        </button>
+                        <button
+                            onClick={handleTelegramPurchase}
+                            disabled={!canPurchaseViaTelegram || purchaseLoading}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                                canPurchaseViaTelegram && !purchaseLoading
+                                    ? 'bg-white/5 text-slate-100 hover:bg-white/10 border border-white/10'
+                                    : 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                            }`}
+                        >
+                            <ExternalLink className="w-4 h-4" />
+                            Оплатить в Telegram
                         </button>
                         <button
                             onClick={handlePurchase}

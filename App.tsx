@@ -83,6 +83,7 @@ export default function App() {
 
   // Admin State
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [telegramLink, setTelegramLink] = useState(authService.getGlobalSettings().telegramLink || '');
   // Subscription Modal State
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
@@ -435,7 +436,8 @@ export default function App() {
 
     // Load global settings from backend (API key, system prompt, etc.)
     try {
-      await authService.loadGlobalSettings();
+      const settings = await authService.loadGlobalSettings();
+      setTelegramLink(settings.telegramLink);
     } catch (e) {
       console.error('Failed to load global settings:', e);
     }
@@ -738,6 +740,7 @@ export default function App() {
           isOpen={showSubscriptionModal}
           onClose={() => setShowSubscriptionModal(false)}
           currentPlanId={user.planId}
+          telegramLink={telegramLink}
           onPurchaseComplete={refreshCurrentUser}
         />
       </div>
