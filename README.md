@@ -237,6 +237,3 @@ npm run test
 
 ## Contributing
 Правила вкладов и формат PR: [CONTRIBUTING.md](./CONTRIBUTING.md)
-
-## Лицензия
-Proprietary. Все права защищены.
