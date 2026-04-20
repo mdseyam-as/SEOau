@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:platform": "npm install && npm run build && npm --prefix ./backend install && npx prisma generate --schema=backend/prisma/schema.prisma",
-    "start:platform": "npx prisma db push --schema=backend/prisma/schema.prisma && npm --prefix ./backend start",
+    "build:platform": "npm install && npm run build && npm --prefix ./backend install && npx prisma generate --schema=backend/prisma/schema.prisma && npx prisma db push --schema=backend/prisma/schema.prisma",
+    "start:platform": "npm --prefix ./backend start",
     "preview": "vite preview",
     "test": "vitest",
     "test:watch": "vitest --watch",
