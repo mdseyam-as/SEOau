@@ -554,7 +554,7 @@ export default function App() {
         ) : projectTab === 'monitoring' ? (
           <MonitoringPanel projectId={currentProject.id} />
         ) : projectTab === 'outline' ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="app-shell-card p-4 sm:p-6">
               <OutlineEditor
               config={config}
               keywords={keywords}
@@ -579,11 +579,11 @@ export default function App() {
 
               {/* Subscription Alert */}
               {isLocked && (
-                <div className="relative overflow-hidden bg-white rounded-xl shadow-lg border border-red-100 animate-in slide-in-from-top duration-500 z-10">
+                <div className="app-light-card relative overflow-hidden border-red-100 animate-in slide-in-from-top duration-500 z-10">
                   <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-red-500 to-orange-500"></div>
                   <div className="p-5">
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="p-2 bg-red-50 rounded-full text-red-500 shrink-0">
+                      <div className="p-2 bg-red-50 rounded-2xl text-red-500 shrink-0 border border-red-100">
                         <Lock className="w-5 h-5" />
                       </div>
                       <div>
@@ -608,8 +608,9 @@ export default function App() {
                 </div>
               )}
 
-              <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-sm border border-gray-200">
-                <h2 className="font-bold text-base sm:text-lg mb-3 sm:mb-4 text-slate-900">1. Источник данных</h2>
+              <div className="app-shell-card p-3 sm:p-4 md:p-6">
+                <div className="app-badge mb-3">Step 1</div>
+                <h2 className="font-bold text-base sm:text-lg mb-3 sm:mb-4 text-slate-900">Источник данных</h2>
                 <FileUpload
                   onKeywordsLoaded={setKeywords}
                   disabled={isLocked}
@@ -633,13 +634,13 @@ export default function App() {
             {/* Right Area: Results & Status */}
             <div className="lg:col-span-8 order-2">
               {error && (
-                <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg animate-in fade-in">
+                <div className="bg-red-50 border border-red-100 p-4 mb-6 rounded-[24px] animate-in fade-in shadow-[0_12px_30px_rgba(239,68,68,0.08)]">
                   <p className="text-red-700 font-medium text-sm md:text-base">Ошибка: {error}</p>
                 </div>
               )}
 
               {isGenerating && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="app-shell-card overflow-hidden">
                   <GenerationProgress
                     keywordsCount={keywords.length}
                     isGeoMode={config.generationMode === 'geo'}

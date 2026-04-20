@@ -35,21 +35,22 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
 
   return (
     <div className="space-y-4 sm:space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl">
+      <div className="app-shell-card flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 sm:p-6 lg:p-7">
         <div>
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white flex items-center gap-2 sm:gap-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-            <div className="p-1.5 sm:p-2 bg-brand-green/20 rounded-lg border border-brand-green/30">
-              <Folder className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-brand-green drop-shadow-glow" />
+          <div className="app-badge mb-3">Workspace</div>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 flex items-center gap-3">
+            <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(56,189,248,0.12))] border border-emerald-200/70 shadow-[0_14px_30px_rgba(16,185,129,0.14)]">
+              <Folder className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
             </div>
             Мои проекты
           </h2>
-          <p className="text-slate-400 text-xs sm:text-sm mt-1 sm:mt-2">
-            Управляйте задачами генерации по проектам
+          <p className="text-slate-500 text-sm sm:text-base mt-2 max-w-xl leading-relaxed">
+            Управляйте генерацией, мониторингом и историей по отдельным рабочим пространствам.
           </p>
         </div>
         <button
           onClick={() => setIsCreating(true)}
-          className="w-full sm:w-auto bg-gradient-to-r from-brand-green to-emerald-600 hover:from-emerald-500 hover:to-brand-green text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-glow transform hover:-translate-y-0.5 active:scale-95 text-sm sm:text-base"
+          className="app-btn-primary w-full sm:w-auto text-sm sm:text-base"
         >
           <FolderPlus className="w-4 h-4 sm:w-5 sm:h-5" />
           Новый проект
@@ -58,43 +59,45 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
 
       {isCreating && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
-          <div className="glass-panel-dark border border-white/10 rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-6 lg:p-8 w-full max-w-[calc(100vw-24px)] sm:max-w-md animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto relative">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-green to-brand-purple"></div>
-            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-4 sm:mb-6">Создание проекта</h3>
+          <div className="app-light-card p-5 sm:p-6 lg:p-8 w-full max-w-[calc(100vw-24px)] sm:max-w-md animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto relative">
+            <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#10b981,#38bdf8,#f472b6)]"></div>
+            <div className="app-badge mb-3">Новый проект</div>
+            <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 mb-2">Создание проекта</h3>
+            <p className="text-sm text-slate-500 mb-5">Соберите отдельное пространство под клиента, сайт или кампанию.</p>
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
               <div className="space-y-1.5 sm:space-y-2">
-                <label className="block text-xs sm:text-sm font-bold text-slate-300 ml-1">Название</label>
+                <label className="block text-xs sm:text-sm font-bold text-slate-700 ml-1">Название</label>
                 <input
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="Например: Ипотека 2025"
-                  className="w-full p-2.5 sm:p-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none transition-all text-sm"
+                  className="app-input-light text-sm"
                   autoFocus
                 />
               </div>
               <div className="space-y-1.5 sm:space-y-2">
-                <label className="block text-xs sm:text-sm font-bold text-slate-300 ml-1">Описание (опционально)</label>
+                <label className="block text-xs sm:text-sm font-bold text-slate-700 ml-1">Описание (опционально)</label>
                 <input
                   type="text"
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
                   placeholder="Статьи для раздела ипотеки..."
-                  className="w-full p-2.5 sm:p-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none transition-all text-sm"
+                  className="app-input-light text-sm"
                 />
               </div>
               <div className="flex gap-3 sm:gap-4 pt-3 sm:pt-4">
                 <button
                   type="button"
                   onClick={() => setIsCreating(false)}
-                  className="flex-1 py-2.5 sm:py-3 border border-white/10 rounded-xl text-slate-300 font-bold hover:bg-white/5 transition-colors text-sm sm:text-base"
+                  className="app-btn-secondary flex-1 text-sm sm:text-base"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
                   disabled={!newName.trim()}
-                  className="flex-1 py-2.5 sm:py-3 bg-brand-green text-white rounded-xl font-bold hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-glow transition-all text-sm sm:text-base"
+                  className="app-btn-primary flex-1 text-sm sm:text-base disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Создать
                 </button>
@@ -105,52 +108,52 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
       )}
 
       {projects.length === 0 ? (
-        <div className="text-center py-12 sm:py-16 lg:py-20 bg-white/5 rounded-xl sm:rounded-2xl border border-white/10 backdrop-blur-sm">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 animate-pulse-slow">
-            <Folder className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-slate-500" />
+        <div className="app-light-card text-center py-12 sm:py-16 lg:py-20 px-6">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-[linear-gradient(135deg,rgba(16,185,129,0.14),rgba(56,189,248,0.10))] rounded-[24px] flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-[0_14px_36px_rgba(16,185,129,0.12)]">
+            <Folder className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-emerald-600" />
           </div>
-          <h3 className="text-base sm:text-lg lg:text-xl font-medium text-white">Нет проектов</h3>
-          <p className="text-slate-400 text-xs sm:text-sm mt-1.5 sm:mt-2 px-4">Создайте свой первый проект, чтобы начать генерацию</p>
+          <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-slate-900">Пока нет проектов</h3>
+          <p className="text-slate-500 text-sm sm:text-base mt-2 px-4 max-w-lg mx-auto">Создайте первое рабочее пространство, чтобы вести генерации, аудит и мониторинг в одном месте.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
           {projects.map((project) => (
             <div
               key={project.id}
-              className="glass-card group flex flex-col h-full p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl hover:scale-[1.02] hover:shadow-glow-sm transition-all duration-300 cursor-pointer relative overflow-hidden"
+              className="app-light-card group flex flex-col h-full p-5 sm:p-6 rounded-[24px] hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(15,23,42,0.10)] transition-all duration-300 cursor-pointer relative overflow-hidden"
               onClick={() => onSelectProject(project)}
             >
-              <div className="absolute top-0 right-0 w-20 h-20 sm:w-28 sm:h-28 lg:w-32 lg:h-32 bg-brand-green/10 rounded-full blur-2xl -mr-10 -mt-10 sm:-mr-14 sm:-mt-14 lg:-mr-16 lg:-mt-16 transition-opacity opacity-0 group-hover:opacity-100"></div>
+              <div className="absolute top-0 right-0 w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 bg-emerald-200/40 rounded-full blur-3xl -mr-12 -mt-12 sm:-mr-14 sm:-mt-14 lg:-mr-16 lg:-mt-16 transition-opacity opacity-0 group-hover:opacity-100"></div>
 
               <div className="flex justify-between items-start mb-3 sm:mb-4 relative z-10">
-                <div className="bg-brand-green/10 p-2 sm:p-3 rounded-lg sm:rounded-xl group-hover:bg-brand-green/20 transition-colors">
-                  <Folder className="w-5 h-5 sm:w-6 sm:h-6 text-brand-green drop-shadow-sm" />
+                <div className="bg-[linear-gradient(135deg,rgba(16,185,129,0.14),rgba(56,189,248,0.10))] p-2.5 sm:p-3 rounded-2xl group-hover:scale-105 transition-all border border-emerald-200/60">
+                  <Folder className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 drop-shadow-sm" />
                 </div>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     if (confirm('Удалить проект и всю историю?')) onDeleteProject(project.id);
                   }}
-                  className="text-slate-400 hover:text-red-400 p-1.5 sm:p-2 rounded-lg hover:bg-red-500/10 transition-all sm:opacity-0 sm:group-hover:opacity-100"
+                  className="text-slate-400 hover:text-red-400 p-2 rounded-2xl hover:bg-red-50 transition-all sm:opacity-0 sm:group-hover:opacity-100 border border-transparent hover:border-red-100"
                   title="Удалить проект"
                 >
                   <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
 
-              <h3 className="font-bold text-base sm:text-lg lg:text-xl text-white mb-1.5 sm:mb-2 line-clamp-1 group-hover:text-brand-green transition-colors drop-shadow-sm" title={project.name}>
+              <h3 className="font-bold text-base sm:text-lg lg:text-xl text-slate-900 mb-1.5 sm:mb-2 line-clamp-1 group-hover:text-emerald-600 transition-colors" title={project.name}>
                 {project.name}
               </h3>
-              <p className="text-slate-300 text-xs sm:text-sm mb-4 sm:mb-6 line-clamp-2 h-8 sm:h-10 leading-relaxed">
+              <p className="text-slate-500 text-xs sm:text-sm mb-4 sm:mb-6 line-clamp-2 h-8 sm:h-10 leading-relaxed">
                 {project.description || 'Нет описания'}
               </p>
 
-              <div className="mt-auto flex items-center justify-between pt-3 sm:pt-4 border-t border-white/10 relative z-10">
-                <div className="flex items-center text-[10px] sm:text-xs text-slate-300 gap-1 sm:gap-1.5 font-medium">
+              <div className="mt-auto flex items-center justify-between pt-3 sm:pt-4 border-t border-slate-100 relative z-10">
+                <div className="flex items-center text-[10px] sm:text-xs text-slate-500 gap-1 sm:gap-1.5 font-medium">
                   <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   {formatDate(project.createdAt)}
                 </div>
-                <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-brand-green sm:opacity-0 sm:group-hover:opacity-100 transform sm:translate-x-[-10px] sm:group-hover:translate-x-0 transition-all duration-300">
+                <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-emerald-600 sm:opacity-0 sm:group-hover:opacity-100 transform sm:translate-x-[-10px] sm:group-hover:translate-x-0 transition-all duration-300">
                   Открыть <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
               </div>

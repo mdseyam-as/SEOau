@@ -195,12 +195,12 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
       onClick={onSubmit}
       disabled={isDisabled || !config.topic || !config.websiteName || isOverLimit}
       className={`
-        w-full py-3.5 md:py-4.5 rounded-xl font-bold text-white shadow-lg transition-all mt-4 text-sm md:text-base flex items-center justify-center gap-2
+        w-full py-3.5 md:py-4.5 rounded-2xl font-bold text-white shadow-lg transition-all mt-4 text-sm md:text-base flex items-center justify-center gap-2
         ${isLocked
           ? 'bg-slate-700 cursor-not-allowed opacity-50'
           : (disabled || !config.topic || !config.websiteName || isOverLimit)
             ? 'bg-slate-700 cursor-not-allowed opacity-50'
-            : 'bg-gradient-to-r from-brand-green to-emerald-600 hover:from-emerald-500 hover:to-brand-green hover:shadow-glow transform hover:-translate-y-0.5 active:scale-95'}
+            : 'bg-[linear-gradient(135deg,#10b981_0%,#14b8a6_45%,#38bdf8_100%)] hover:shadow-[0_22px_52px_rgba(16,185,129,0.28)] transform hover:-translate-y-0.5 active:scale-95'}
       `}
     >
       {isLocked ? (
@@ -216,15 +216,18 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
   );
 
   return (
-    <div className={`glass-panel rounded-2xl flex flex-col ${isLocked ? 'opacity-75' : ''}`}>
+    <div className={`app-dark-card flex flex-col ${isLocked ? 'opacity-75' : ''}`}>
       {/* Header */}
-      <div className="flex border-b border-white/10 p-4 sm:p-5 bg-white/5 rounded-t-2xl backdrop-blur-sm">
+      <div className="flex items-center justify-between border-b border-white/10 p-4 sm:p-5 bg-white/[0.04] rounded-t-[24px] backdrop-blur-sm">
         <h3 className="font-bold text-white flex items-center gap-2.5 text-base sm:text-lg">
-          <div className="p-1.5 bg-brand-green/20 rounded-lg">
+          <div className="p-1.5 bg-brand-green/15 rounded-xl border border-brand-green/20">
             <Settings2 className="w-4 h-4 sm:w-5 sm:h-5 text-brand-green" />
           </div>
           Настройки генерации
         </h3>
+        <span className="hidden sm:inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+          Setup
+        </span>
       </div>
 
       <div className="p-2.5 sm:p-4 md:p-5 relative space-y-3 sm:space-y-4 md:space-y-5">
@@ -233,7 +236,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
         )}
 
         {/* Context & Brand Section */}
-        <div className="bg-white/5 p-3 sm:p-4 rounded-xl border border-white/10 space-y-3 sm:space-y-4">
+        <div className="bg-white/[0.04] p-3 sm:p-4 rounded-[22px] border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] space-y-3 sm:space-y-4">
           <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-300 border-b border-white/10 pb-3 mb-2">
             <Globe className="w-3 h-3 sm:w-4 sm:h-4 text-brand-green" />
             Контекст Бренда
@@ -314,7 +317,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
         </div>
 
         {/* Generation Mode Toggle */}
-        <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 p-3 sm:p-4 rounded-xl border border-purple-500/20">
+        <div className="bg-[linear-gradient(135deg,rgba(139,92,246,0.10),rgba(56,189,248,0.08))] p-3 sm:p-4 rounded-[22px] border border-purple-500/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-300 border-b border-white/10 pb-2 sm:pb-3 mb-3">
             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-purple-400" />
             Режим генерации
@@ -426,7 +429,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
         </div>
 
         {/* Competitor Links & Files */}
-        <div className="p-3 sm:p-4 bg-white/5 rounded-xl border border-white/10">
+        <div className="p-3 sm:p-4 bg-white/[0.04] rounded-[22px] border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <label className="block text-xs sm:text-sm font-bold text-slate-200 mb-2 sm:mb-3 flex items-center gap-2">
             <LinkIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-green" /> Ссылки на конкурентов
           </label>
@@ -595,7 +598,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
         </div>
 
         {/* Length Controls */}
-        <div className="p-4 sm:p-5 bg-white/5 rounded-xl border border-white/10">
+        <div className="p-4 sm:p-5 bg-white/[0.04] rounded-[22px] border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
             <div>
               <label className="block text-sm font-bold text-slate-200 mb-2 flex items-center gap-2 justify-between">
@@ -667,10 +670,10 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               onClick={onClear}
               disabled={isDisabled}
               className={`
-                w-full mt-2 py-3 rounded-xl font-bold text-sm md:text-base flex items-center justify-center gap-2 transition-all
+                w-full mt-2 py-3 rounded-2xl font-bold text-sm md:text-base flex items-center justify-center gap-2 transition-all
                 ${isDisabled
                   ? 'bg-slate-800/60 text-slate-500 cursor-not-allowed'
-                  : 'bg-slate-900/60 text-slate-200 border border-white/10 hover:border-red-400 hover:text-red-300'}
+                  : 'bg-slate-900/60 text-slate-200 border border-white/10 hover:border-red-400 hover:text-red-300 hover:bg-red-500/5'}
               `}
             >
               <Trash2 className="w-4 h-4" />

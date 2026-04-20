@@ -16,9 +16,9 @@ const FREQUENCY_OPTIONS: Array<{ value: MonitoringFrequency; label: string }> = 
 ];
 
 const severityStyles: Record<MonitoringSeverity, string> = {
-  critical: 'bg-red-500/15 text-red-300 border border-red-500/30',
-  warning: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
-  info: 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
+  critical: 'border border-red-100 bg-red-50 text-red-600',
+  warning: 'border border-amber-100 bg-amber-50 text-amber-700',
+  info: 'border border-sky-100 bg-sky-50 text-sky-700'
 };
 
 export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) => {
@@ -168,14 +168,15 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
 
   return (
     <div className="space-y-5">
-      <section className="glass-panel rounded-2xl p-4 sm:p-6 border border-white/10">
+      <section className="app-shell-card p-4 sm:p-6">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
-            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <BellRing className="w-5 h-5 text-brand-green" />
+            <div className="app-badge mb-3">Monitoring</div>
+            <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <BellRing className="w-5 h-5 text-emerald-600" />
               SEO Monitoring + Alerts
             </h3>
-            <p className="text-slate-400 text-sm mt-2 max-w-2xl">
+            <p className="text-slate-500 text-sm mt-2 max-w-2xl leading-relaxed">
               Следим за title, H1, meta description, canonical, status code и сразу отправляем сигнал, если страница ломается или резко меняется.
             </p>
           </div>
@@ -194,19 +195,19 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
             value={newUrl}
             onChange={(event) => setNewUrl(event.target.value)}
             placeholder="https://example.com/pricing"
-            className="lg:col-span-5 rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-green/40"
+            className="app-input-light lg:col-span-5"
           />
           <input
             type="text"
             value={newLabel}
             onChange={(event) => setNewLabel(event.target.value)}
             placeholder="Название или комментарий"
-            className="lg:col-span-3 rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-green/40"
+            className="app-input-light lg:col-span-3"
           />
           <select
             value={newFrequency}
             onChange={(event) => setNewFrequency(event.target.value as MonitoringFrequency)}
-            className="lg:col-span-2 rounded-xl bg-slate-900 border border-white/10 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-brand-green/40"
+            className="lg:col-span-2 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] outline-none transition-all focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
           >
             {FREQUENCY_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -217,7 +218,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
           <button
             type="submit"
             disabled={isSubmitting}
-            className="lg:col-span-2 rounded-xl bg-brand-green hover:bg-emerald-500 disabled:opacity-60 text-white font-bold px-4 py-3 flex items-center justify-center gap-2 transition-colors"
+            className="app-btn-primary lg:col-span-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Plus className="w-4 h-4" />
             Добавить
@@ -226,12 +227,14 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
       </section>
 
       {isLoading ? (
-        <div className="glass-panel rounded-2xl p-8 text-center text-slate-400">Загружаю мониторинг…</div>
+        <div className="app-light-card p-8 text-center text-slate-500">Загружаю мониторинг…</div>
       ) : pages.length === 0 ? (
-        <div className="glass-panel rounded-2xl p-10 text-center border border-white/10">
-          <Globe className="w-10 h-10 text-slate-500 mx-auto mb-3" />
-          <h4 className="text-white font-semibold text-lg">Пока нет URL в мониторинге</h4>
-          <p className="text-slate-400 text-sm mt-2">
+        <div className="app-light-card p-10 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[24px] border border-emerald-100 bg-[linear-gradient(135deg,rgba(16,185,129,0.12),rgba(56,189,248,0.10))] shadow-[0_14px_34px_rgba(16,185,129,0.10)]">
+            <Globe className="w-8 h-8 text-emerald-600" />
+          </div>
+          <h4 className="text-slate-900 font-semibold text-lg">Пока нет URL в мониторинге</h4>
+          <p className="text-slate-500 text-sm mt-2">
             Добавьте важные страницы проекта, и система начнет снимать snapshot по расписанию.
           </p>
         </div>
@@ -240,7 +243,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
           {pages.map((page) => {
             const pageEvents = eventCache[page.id] || page.recentEvents || [];
             return (
-              <article key={page.id} className="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+              <article key={page.id} className="app-light-card overflow-hidden">
                 <div className="p-4 sm:p-5">
                   <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
                     <div className="space-y-3 flex-1 min-w-0">
@@ -248,18 +251,18 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
                         <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${severityStyles[(page.lastSeverity || 'info') as MonitoringSeverity]}`}>
                           {page.lastSeverity || 'info'}
                         </span>
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${page.isActive ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : 'bg-slate-500/10 text-slate-300 border-slate-500/20'}`}>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${page.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
                           {page.isActive ? 'Активен' : 'Пауза'}
                         </span>
-                        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-white/5 text-slate-300 border border-white/10">
+                        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 text-slate-600 border border-slate-200">
                           {FREQUENCY_OPTIONS.find((option) => option.value === page.frequency)?.label}
                         </span>
                       </div>
 
                       <div>
-                        <h4 className="text-white font-bold text-lg break-all">{page.label || page.url}</h4>
+                        <h4 className="text-slate-900 font-bold text-lg break-all">{page.label || page.url}</h4>
                         {page.label && (
-                          <a href={page.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-brand-green hover:text-emerald-300 mt-1 break-all">
+                          <a href={page.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-emerald-600 hover:text-emerald-700 mt-1 break-all">
                             {page.url}
                             <ExternalLink className="w-3.5 h-3.5" />
                           </a>
@@ -277,7 +280,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
                       <select
                         value={page.frequency}
                         onChange={(event) => handleChangeFrequency(page.id, event.target.value as MonitoringFrequency)}
-                        className="rounded-xl bg-slate-900 border border-white/10 px-3 py-2 text-sm text-white"
+                        className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
                       >
                         {FREQUENCY_OPTIONS.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -288,7 +291,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
 
                       <button
                         onClick={() => handleRunCheck(page.id)}
-                        className="rounded-xl bg-brand-green/20 hover:bg-brand-green/30 text-brand-green px-3 py-2 text-sm font-semibold flex items-center gap-2 transition-colors"
+                        className="rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 flex items-center gap-2 transition-colors hover:bg-emerald-100"
                       >
                         <RefreshCw className="w-4 h-4" />
                         Проверить
@@ -296,7 +299,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
 
                       <button
                         onClick={() => handleToggleActive(page)}
-                        className="rounded-xl bg-white/5 hover:bg-white/10 text-white px-3 py-2 text-sm font-semibold flex items-center gap-2 transition-colors"
+                        className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 flex items-center gap-2 transition-colors hover:bg-slate-50"
                       >
                         {page.isActive ? <PauseCircle className="w-4 h-4" /> : <PlayCircle className="w-4 h-4" />}
                         {page.isActive ? 'Пауза' : 'Включить'}
@@ -304,7 +307,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
 
                       <button
                         onClick={() => handleDelete(page.id)}
-                        className="rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 px-3 py-2 text-sm font-semibold flex items-center gap-2 transition-colors"
+                        className="rounded-2xl border border-red-100 bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 flex items-center gap-2 transition-colors hover:bg-red-100"
                       >
                         <Trash2 className="w-4 h-4" />
                         Удалить
@@ -313,22 +316,22 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
                   </div>
                 </div>
 
-                <div className="border-t border-white/10 px-4 sm:px-5 py-3 bg-black/10 flex items-center justify-between gap-4">
-                  <div className="text-xs sm:text-sm text-slate-400">
+                <div className="border-t border-slate-100 px-4 sm:px-5 py-3 bg-slate-50/80 flex items-center justify-between gap-4">
+                  <div className="text-xs sm:text-sm text-slate-500">
                     {pageEvents.length > 0 ? `Событий в истории: ${pageEvents.length}${eventCache[page.id] ? '+' : ''}` : 'Изменений пока не зафиксировано'}
                   </div>
                   <button
                     onClick={() => handleExpand(page.id)}
-                    className="text-sm font-semibold text-brand-green hover:text-emerald-300 transition-colors"
+                    className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
                   >
                     {expandedPageId === page.id ? 'Скрыть diff' : 'Открыть diff и историю'}
                   </button>
                 </div>
 
                 {expandedPageId === page.id && (
-                  <div className="border-t border-white/10 p-4 sm:p-5 space-y-4 bg-black/20">
+                  <div className="border-t border-slate-100 p-4 sm:p-5 space-y-4 bg-[linear-gradient(180deg,rgba(248,250,252,0.92),rgba(241,245,249,0.72))]">
                     {pageEvents.length === 0 ? (
-                      <div className="text-sm text-slate-400">Пока нет событий. Базовый snapshot уже снят, система ждёт следующих изменений.</div>
+                      <div className="text-sm text-slate-500">Пока нет событий. Базовый snapshot уже снят, система ждёт следующих изменений.</div>
                     ) : (
                       pageEvents.map((event) => (
                         <MonitoringEventCard key={event.id} event={event} />
@@ -346,19 +349,19 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
 };
 
 const SummaryCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({ label, value, icon }) => (
-  <div className="rounded-2xl bg-white/5 border border-white/10 px-4 py-3">
-    <div className="flex items-center gap-2 text-slate-400 text-xs uppercase tracking-wide">
+  <div className="app-kpi-card">
+    <div className="flex items-center gap-2 text-slate-500 text-xs uppercase tracking-wide">
       {icon}
       {label}
     </div>
-    <div className="text-white text-xl font-bold mt-1">{value}</div>
+    <div className="text-slate-900 text-xl font-bold mt-1">{value}</div>
   </div>
 );
 
 const MetaCell: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3">
+  <div className="app-light-soft px-3 py-3">
     <div className="text-slate-400 text-xs uppercase tracking-wide">{label}</div>
-    <div className="text-white mt-1 break-words whitespace-pre-wrap">{value}</div>
+    <div className="text-slate-900 mt-1 break-words whitespace-pre-wrap">{value}</div>
   </div>
 );
 
@@ -371,18 +374,18 @@ const MonitoringEventCard: React.FC<{ event: MonitoringEvent }> = ({ event }) =>
   };
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
-      <div className="p-4 sm:p-5 border-b border-white/10">
+    <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_16px_36px_rgba(148,163,184,0.10)]">
+      <div className="p-4 sm:p-5 border-b border-slate-100">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
           <div>
             <div className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${severityStyles[event.severity]}`}>
               {event.severity}
             </div>
-            <h5 className="text-white font-bold text-lg mt-3">{event.title}</h5>
-            <p className="text-slate-300 text-sm mt-2">{event.summary}</p>
+            <h5 className="text-slate-900 font-bold text-lg mt-3">{event.title}</h5>
+            <p className="text-slate-500 text-sm mt-2 leading-relaxed">{event.summary}</p>
           </div>
 
-          <div className="text-sm text-slate-400 flex items-center gap-2 whitespace-nowrap">
+          <div className="text-sm text-slate-500 flex items-center gap-2 whitespace-nowrap">
             <Clock3 className="w-4 h-4" />
             {new Date(event.createdAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
           </div>
@@ -397,9 +400,9 @@ const MonitoringEventCard: React.FC<{ event: MonitoringEvent }> = ({ event }) =>
       </div>
 
       {event.diff?.changes?.map((change, index) => (
-        <div key={`${event.id}-${change.type}-${index}`} className="p-4 sm:p-5 border-b border-white/5 last:border-b-0">
+        <div key={`${event.id}-${change.type}-${index}`} className="p-4 sm:p-5 border-b border-slate-100 last:border-b-0">
           <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="text-white font-semibold uppercase text-sm tracking-wide">{change.type}</div>
+            <div className="text-slate-900 font-semibold uppercase text-sm tracking-wide">{change.type}</div>
             <div className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${severityStyles[change.severity]}`}>
               {change.severity}
             </div>
@@ -410,7 +413,7 @@ const MonitoringEventCard: React.FC<{ event: MonitoringEvent }> = ({ event }) =>
             <MetaCell label="After" value={shortValue(change.after)} />
           </div>
 
-          <div className="rounded-xl bg-black/20 border border-white/10 p-4 text-sm text-slate-300">
+          <div className="rounded-[20px] bg-slate-50 border border-slate-200 p-4 text-sm text-slate-600">
             <div><span className="text-slate-400">Changed:</span> {change.changed}</div>
             <div className="mt-2"><span className="text-slate-400">Risk:</span> {change.risk}</div>
             {typeof change.deltaPercent === 'number' && (
@@ -421,7 +424,7 @@ const MonitoringEventCard: React.FC<{ event: MonitoringEvent }> = ({ event }) =>
       ))}
 
       {contentChange && (
-        <div className="p-4 sm:p-5 bg-black/20">
+        <div className="p-4 sm:p-5 bg-slate-50/80">
           <DiffViewer
             title="Content diff"
             original={contentChange.before || ''}

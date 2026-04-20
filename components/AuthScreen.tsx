@@ -102,126 +102,186 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     }
   };
 
+  const serverStatusConfig = {
+    checking: {
+      label: 'Проверяем backend',
+      classes: 'border-amber-200 bg-amber-50 text-amber-700'
+    },
+    online: {
+      label: 'Backend online',
+      classes: 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    },
+    offline: {
+      label: 'Backend offline',
+      classes: 'border-red-200 bg-red-50 text-red-600'
+    }
+  } as const;
+
   return (
-    <div className="min-h-screen bg-mesh-animated flex items-center justify-center p-3 sm:p-4 relative overflow-hidden">
-      {/* Decorative Elements - Responsive */}
-      <div className="absolute top-1/4 left-1/4 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-brand-green/20 rounded-full blur-3xl animate-pulse-slow"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-brand-purple/20 rounded-full blur-3xl animate-pulse-slow delay-1000"></div>
+    <div className="relative min-h-screen overflow-hidden bg-mesh-animated">
+      <div className="absolute left-[8%] top-[14%] h-40 w-40 rounded-full bg-emerald-400/18 blur-3xl animate-pulse-slow sm:h-56 sm:w-56 lg:h-72 lg:w-72" />
+      <div className="absolute bottom-[10%] right-[8%] h-40 w-40 rounded-full bg-sky-400/18 blur-3xl animate-pulse-slow delay-1000 sm:h-56 sm:w-56 lg:h-72 lg:w-72" />
+      <div className="absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.10),transparent_60%)]" />
 
-      <div className="w-full max-w-[calc(100vw-24px)] sm:max-w-md glass-card rounded-xl sm:rounded-2xl shadow-glass overflow-hidden animate-in fade-in zoom-in duration-700 relative z-10">
+      <div className="relative z-10 flex min-h-screen items-center justify-center p-3 sm:p-4 lg:p-6">
+        <div className="app-shell-card w-full max-w-[calc(100vw-24px)] sm:max-w-5xl p-3 sm:p-4 lg:p-5 animate-in fade-in zoom-in duration-700">
+          <div className="grid gap-3 lg:grid-cols-[1.05fr_0.95fr]">
+            <section className="app-dark-card relative overflow-hidden p-6 sm:p-7 lg:p-8">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.18),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.18),transparent_34%)]" />
+              <div className="relative">
+                <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] ${serverStatusConfig[serverStatus].classes}`}>
+                  <span className="h-2 w-2 rounded-full bg-current opacity-80" />
+                  {serverStatusConfig[serverStatus].label}
+                </div>
 
-        {/* Header Area */}
-        <div className="bg-gradient-to-br from-brand-green/90 to-emerald-600/90 p-4 sm:p-6 lg:p-8 text-center relative overflow-hidden backdrop-blur-sm">
-          <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 animate-gradient-x"></div>
-          <div className="relative z-10 flex flex-col items-center">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-glow border border-white/20 animate-float">
-              <LayoutDashboard className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white drop-shadow-md" />
-            </div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight drop-shadow-sm">SEO Generator</h1>
-            <p className="text-green-50 text-[10px] sm:text-xs lg:text-sm mt-1.5 sm:mt-2 font-medium bg-white/10 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-white/10">Telegram Mini App v2.1</p>
-          </div>
-        </div>
+                <div className="mt-6 flex items-start gap-4">
+                  <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-[24px] border border-white/15 bg-[linear-gradient(135deg,rgba(16,185,129,0.22),rgba(56,189,248,0.18))] shadow-[0_18px_40px_rgba(16,185,129,0.18)]">
+                    <div className="absolute inset-0 rounded-[24px] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.24),transparent_58%)]" />
+                    <LayoutDashboard className="relative h-7 w-7 text-white" />
+                  </div>
+                  <div>
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">
+                      <Send className="h-3.5 w-3.5" />
+                      Telegram Mini App
+                    </div>
+                    <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                      SEO Generator
+                    </h1>
+                    <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-300 sm:text-base">
+                      Платформа для генерации, анализа, рерайта и SEO monitoring в одном аккуратном рабочем пространстве.
+                    </p>
+                  </div>
+                </div>
 
-        {/* Content Area */}
-        <div className="p-4 sm:p-6 lg:p-8 bg-white/60 backdrop-blur-md">
-
-          {/* Server Offline State */}
-          {serverStatus === 'offline' && (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-                <ServerCrash className="w-8 h-8 text-red-500" />
+                <div className="mt-8 grid gap-3 sm:grid-cols-3">
+                  {[
+                    { icon: <Send className="h-4 w-4" />, title: 'Telegram-first', text: 'Моментальный вход и запуск внутри Mini App.' },
+                    { icon: <LayoutDashboard className="h-4 w-4" />, title: 'All-in-one', text: 'Генерация, аудит, outline, SERP и monitoring.' },
+                    { icon: <Smartphone className="h-4 w-4" />, title: 'Mobile-ready', text: 'Удобно пользоваться прямо с телефона.' }
+                  ].map((item) => (
+                    <div key={item.title} className="rounded-[22px] border border-white/10 bg-white/5 p-4 shadow-[0_12px_28px_rgba(2,6,23,0.16)] backdrop-blur-sm">
+                      <div className="mb-3 inline-flex rounded-2xl border border-white/10 bg-white/10 p-2 text-emerald-300">
+                        {item.icon}
+                      </div>
+                      <div className="text-sm font-semibold text-white">{item.title}</div>
+                      <p className="mt-1 text-xs leading-relaxed text-slate-400">{item.text}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <h2 className="text-xl font-bold text-slate-800 mb-2">Сервер недоступен</h2>
-              <p className="text-slate-500 text-sm mb-6">
-                Не удалось подключиться к серверу.<br />
-                Пожалуйста, попробуйте позже.
+            </section>
+
+            <section className="app-light-card p-5 sm:p-6 lg:p-8">
+              <div className="app-badge mb-3">Access</div>
+              <h2 className="text-2xl font-bold text-slate-900 sm:text-[2rem]">Вход в приложение</h2>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                Сначала проверяем доступность backend, затем авторизуем пользователя через Telegram или dev-вход.
               </p>
-              <button
-                onClick={checkServerHealth}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Повторить
-              </button>
-            </div>
-          )}
 
-          {/* Server Checking State */}
-          {serverStatus === 'checking' && (
-            <div className="flex flex-col items-center justify-center py-8">
-              <div className="w-10 h-10 border-4 border-brand-green border-t-transparent rounded-full animate-spin mb-4"></div>
-              <p className="text-slate-600 font-medium">Проверка сервера...</p>
-            </div>
-          )}
-
-          {/* Server Online - Show Auth */}
-          {serverStatus === 'online' && (
-            <>
               {error && (
-                <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center animate-in fade-in">
+                <div className="mt-6 rounded-[22px] border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600 shadow-[0_12px_30px_rgba(239,68,68,0.08)] animate-in fade-in">
                   {error}
                 </div>
               )}
 
-              {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-8">
-                  <div className="w-10 h-10 border-4 border-brand-green border-t-transparent rounded-full animate-spin mb-4"></div>
-                  <p className="text-slate-600 font-medium">Авторизация...</p>
-                </div>
-              ) : isTelegramEnv ? (
-                <div className="text-center py-8">
-                  <p className="text-slate-600">Подождите, идет вход через Telegram...</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <h2 className="text-xl font-bold text-slate-800 mb-2">Вход в систему</h2>
-                    <p className="text-slate-500 text-sm">
-                      Приложение не запущено внутри Telegram. <br />
-                      Используйте симуляцию ID для входа.
-                    </p>
+              {serverStatus === 'offline' && (
+                <div className="mt-8 text-center">
+                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-[24px] border border-red-100 bg-red-50 shadow-[0_16px_36px_rgba(239,68,68,0.10)]">
+                    <ServerCrash className="h-8 w-8 text-red-500" />
                   </div>
-
-                  <form onSubmit={handleDevLogin} className="space-y-5">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-bold text-slate-700 ml-1">Telegram ID (Dev Mode)</label>
-                      <div className="relative group">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Smartphone className="h-5 w-5 text-slate-400 group-focus-within:text-brand-green transition-colors" />
-                        </div>
-                        <input
-                          type="number"
-                          value={devId}
-                          onChange={(e) => setDevId(e.target.value)}
-                          className="block w-full pl-10 pr-3 py-3 bg-white/80 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green transition-all shadow-sm group-hover:shadow-md"
-                          placeholder="Например: 123456789"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-gradient-to-r from-brand-green to-emerald-600 hover:from-emerald-500 hover:to-brand-green focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-green disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-glow"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
-                          Вход...
-                        </>
-                      ) : (
-                        'Войти (Dev Mode)'
-                      )}
-                    </button>
-                  </form>
-                  <p className="text-xs text-gray-400">
-                    Для добавления администратора, добавьте ID в массив ADMIN_IDS в коде.
+                  <h3 className="text-xl font-bold text-slate-900">Сервер недоступен</h3>
+                  <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-500">
+                    Не удалось подключиться к API. Проверьте деплой или попробуйте повторить проверку через несколько секунд.
                   </p>
+                  <button onClick={checkServerHealth} className="app-btn-secondary mt-6">
+                    <RefreshCw className="w-4 h-4" />
+                    Повторить проверку
+                  </button>
                 </div>
               )}
-            </>
-          )}
+
+              {serverStatus === 'checking' && (
+                <div className="mt-8 flex flex-col items-center justify-center rounded-[24px] border border-slate-200 bg-slate-50/90 px-6 py-10 text-center">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-emerald-100 bg-white shadow-[0_14px_30px_rgba(16,185,129,0.10)]">
+                    <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
+                  </div>
+                  <p className="font-semibold text-slate-800">Проверяем backend…</p>
+                  <p className="mt-2 text-sm text-slate-500">Это занимает несколько секунд перед авторизацией.</p>
+                </div>
+              )}
+
+              {serverStatus === 'online' && (
+                <>
+                  {isLoading ? (
+                    <div className="mt-8 flex flex-col items-center justify-center rounded-[24px] border border-slate-200 bg-slate-50/90 px-6 py-10 text-center">
+                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-emerald-100 bg-white shadow-[0_14px_30px_rgba(16,185,129,0.10)]">
+                        <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
+                      </div>
+                      <p className="font-semibold text-slate-800">Авторизация…</p>
+                      <p className="mt-2 text-sm text-slate-500">Подтверждаем доступ и загружаем ваш workspace.</p>
+                    </div>
+                  ) : isTelegramEnv ? (
+                    <div className="mt-8 rounded-[24px] border border-emerald-100 bg-[linear-gradient(135deg,rgba(16,185,129,0.08),rgba(56,189,248,0.08))] px-6 py-10 text-center shadow-[0_18px_40px_rgba(16,185,129,0.10)]">
+                      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-emerald-200 bg-white">
+                        <Send className="h-6 w-6 text-emerald-600" />
+                      </div>
+                      <p className="font-semibold text-slate-800">Подключаем Telegram-профиль…</p>
+                      <p className="mt-2 text-sm text-slate-500">Если вход не завершится автоматически, обновите Mini App.</p>
+                    </div>
+                  ) : (
+                    <div className="mt-8 space-y-6">
+                      <div className="rounded-[24px] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,250,252,0.88))] p-5">
+                        <div className="inline-flex rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-sky-700">
+                          Dev access
+                        </div>
+                        <h3 className="mt-3 text-xl font-bold text-slate-900">Вход вне Telegram</h3>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                          Приложение открыто не внутри Telegram. Используйте тестовый Telegram ID для dev-входа.
+                        </p>
+                      </div>
+
+                      <form onSubmit={handleDevLogin} className="space-y-5">
+                        <div className="space-y-2">
+                          <label className="ml-1 block text-sm font-bold text-slate-700">Telegram ID</label>
+                          <div className="relative">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                              <Smartphone className="h-5 w-5 text-slate-400" />
+                            </div>
+                            <input
+                              type="number"
+                              value={devId}
+                              onChange={(e) => setDevId(e.target.value)}
+                              className="app-input-light pl-12"
+                              placeholder="Например: 123456789"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <button type="submit" disabled={isLoading} className="app-btn-primary w-full disabled:cursor-not-allowed disabled:opacity-60">
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                              Вход...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="h-4 w-4" />
+                              Войти в dev-режиме
+                            </>
+                          )}
+                        </button>
+                      </form>
+
+                      <p className="rounded-[20px] border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs leading-relaxed text-slate-500">
+                        Для прав администратора добавьте Telegram ID в массив `ADMIN_IDS` в коде или выдайте роль через backend.
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
+          </div>
         </div>
       </div>
     </div>

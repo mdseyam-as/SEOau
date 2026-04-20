@@ -50,20 +50,20 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <div
-      className={`flex flex-col items-center justify-center h-64 md:h-96 bg-white rounded-xl shadow-sm border border-gray-200 border-dashed animate-fade-in-scale ${className}`}
+      className={`app-light-card flex flex-col items-center justify-center h-64 md:h-96 border-dashed px-6 animate-fade-in-scale ${className}`}
       role="status"
       aria-live="polite"
     >
-      <div className={`p-4 md:p-6 ${styles.iconBg} rounded-full mb-4 float-animation`}>
+      <div className={`p-4 md:p-6 ${styles.iconBg} rounded-[24px] mb-4 shadow-[0_18px_40px_rgba(148,163,184,0.12)]`}>
         <div className={`${styles.iconColor} icon-bounce`}>
           {icon || defaultIcon}
         </div>
       </div>
-      <h3 className="text-base md:text-lg text-slate-900 font-medium mb-2 text-title">
+      <h3 className="text-lg md:text-xl text-slate-900 font-semibold mb-2 text-title text-center">
         {title}
       </h3>
       {description && (
-        <p className="text-xs md:text-sm text-slate-500 text-center px-4 mb-6 max-w-md text-body">
+        <p className="text-sm md:text-base text-slate-500 text-center px-4 mb-6 max-w-md text-body leading-relaxed">
           {description}
         </p>
       )}
@@ -86,7 +86,7 @@ export const GeneratorEmptyState: React.FC<{ onUpload?: () => void }> = ({ onUpl
       onUpload && (
         <button
           onClick={onUpload}
-          className="px-6 py-2.5 bg-brand-green hover:bg-emerald-500 text-white rounded-lg font-bold transition-all duration-200 focus-ring-brand haptic-press"
+          className="app-btn-primary"
         >
           Загрузить Excel
         </button>
@@ -99,20 +99,21 @@ export const LockedFeatureEmptyState: React.FC<{
   featureName: string;
   onUpgrade?: () => void;
 }> = ({ featureName, onUpgrade }) => (
-  <div className="glass-panel p-8 rounded-2xl text-center">
-    <div className="p-4 bg-red-50 rounded-full inline-flex mb-4">
-      <Lock className="w-12 h-12 text-red-400" />
+  <div className="app-shell-card p-8 text-center">
+    <div className="inline-flex rounded-[24px] border border-red-100 bg-red-50 p-4 shadow-[0_16px_36px_rgba(239,68,68,0.10)] mb-4">
+      <Lock className="w-12 h-12 text-red-500" />
     </div>
-    <h3 className="text-lg font-bold text-white mb-2 text-readable">
+    <div className="app-badge mb-3">Upgrade</div>
+    <h3 className="text-lg font-bold text-slate-900 mb-2 text-readable">
       {featureName} недоступен
     </h3>
-    <p className="text-slate-400 text-sm mb-4">
+    <p className="text-slate-500 text-sm mb-5 max-w-md mx-auto leading-relaxed">
       Эта функция недоступна для вашего тарифа. Обновите подписку для доступа к {featureName.toLowerCase()}.
     </p>
     {onUpgrade && (
       <button
         onClick={onUpgrade}
-        className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold transition-all duration-200 focus-ring-brand haptic-press"
+        className="app-btn-primary"
       >
         Обновить тариф
       </button>
@@ -134,7 +135,7 @@ export const PremiumFeatureEmptyState: React.FC<{
       onUpgrade && (
         <button
           onClick={onUpgrade}
-          className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg font-bold transition-all duration-200 focus-ring-brand haptic-press"
+          className="app-btn-primary"
         >
           <Crown className="w-4 h-4 inline mr-2" />
           Получить Premium

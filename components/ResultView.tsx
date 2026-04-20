@@ -334,7 +334,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
 
       {/* Spam Score Card */}
       {result.spamScore !== undefined && (
-        <div className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl relative overflow-hidden">
+        <div className="app-dark-card p-4 sm:p-5 lg:p-6 relative overflow-hidden">
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 lg:gap-6 items-start sm:items-center relative z-10">
             {/* Gauge */}
             <div className="relative flex-shrink-0 mx-auto sm:mx-0">
@@ -416,7 +416,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
       )}
 
       {/* Meta Info Card */}
-      <div className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl">
+      <div className="app-dark-card p-4 sm:p-5 lg:p-6">
         <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-3 sm:mb-4 text-white flex items-center gap-1.5 sm:gap-2">
           <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-brand-green" />
           Мета-данные
@@ -477,7 +477,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
         </ErrorBoundary>
       ) : (
         /* ==================== SEO CONTENT WITH H1-H3 LABELS ==================== */
-        <div className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
+        <div className="app-dark-card overflow-hidden">
           <div className="bg-white/5 px-4 sm:px-6 py-3 sm:py-4 border-b border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 backdrop-blur-sm">
             <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white flex items-center gap-1.5 sm:gap-2">
               <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-brand-green" />
@@ -544,7 +544,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
 
       {/* JSON-LD Schema Block */}
       {jsonLd && (
-        <div className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
+        <div className="app-dark-card overflow-hidden">
           <div className="bg-purple-500/10 px-4 sm:px-6 py-3 sm:py-4 border-b border-purple-500/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 backdrop-blur-sm">
             <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white flex items-center gap-1.5 sm:gap-2">
               <Code className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
@@ -588,7 +588,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
 
       {/* AI Humanizer */}
       {onHumanize && result.content && (
-        <div className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl">
+        <div className="app-dark-card p-4 sm:p-5 lg:p-6">
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 lg:gap-6 items-start sm:items-center">
             {/* Icon */}
             <div className="relative flex-shrink-0 mx-auto sm:mx-0">
@@ -664,7 +664,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
       )}
 
       {/* Export & Copy Actions */}
-      <div className="glass-panel p-4 rounded-xl flex flex-wrap items-center justify-between gap-3">
+      <div className="app-dark-card p-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Download className="w-5 h-5 text-brand-green" />
           <span className="text-sm font-bold text-white">Экспорт:</span>
