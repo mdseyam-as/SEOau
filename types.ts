@@ -205,6 +205,79 @@ export interface Project {
   createdAt: string;
 }
 
+export type MonitoringFrequency = '15m' | '1h' | '1d';
+export type MonitoringSeverity = 'critical' | 'warning' | 'info';
+
+export interface MonitoringSnapshot {
+  id: string;
+  monitoredPageId: string;
+  url: string;
+  finalUrl?: string | null;
+  statusCode: number;
+  title?: string | null;
+  h1?: string | null;
+  metaDescription?: string | null;
+  canonical?: string | null;
+  robotsMeta?: string | null;
+  wordCount: number;
+  hasFaq: boolean;
+  hasSchema: boolean;
+  fetchError?: string | null;
+  createdAt: string;
+}
+
+export interface MonitoringChange {
+  type: string;
+  severity: MonitoringSeverity;
+  before?: string | null;
+  after?: string | null;
+  changed: string;
+  risk: string;
+  deltaPercent?: number;
+}
+
+export interface MonitoringEvent {
+  id: string;
+  monitoredPageId: string;
+  severity: MonitoringSeverity;
+  changeTypes: string[];
+  title: string;
+  summary: string;
+  diff: {
+    summary: string;
+    changes: MonitoringChange[];
+    metrics?: {
+      previousWordCount?: number;
+      currentWordCount?: number;
+      deltaPercent?: number;
+    };
+  };
+  notifiedAt?: string | null;
+  createdAt: string;
+}
+
+export interface MonitoredPage {
+  id: string;
+  projectId: string;
+  url: string;
+  normalizedUrl: string;
+  label?: string | null;
+  frequency: MonitoringFrequency;
+  frequencyMinutes: number;
+  isActive: boolean;
+  lastCheckedAt?: string | null;
+  nextCheckAt: string;
+  lastStatusCode?: number | null;
+  lastFinalUrl?: string | null;
+  lastTitle?: string | null;
+  lastSeverity?: MonitoringSeverity | null;
+  lastEventAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  latestSnapshot?: MonitoringSnapshot | null;
+  recentEvents: MonitoringEvent[];
+}
+
 export interface HistoryItem {
   id: string;
   projectId: string;

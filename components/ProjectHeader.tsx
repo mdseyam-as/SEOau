@@ -1,8 +1,8 @@
 import React from 'react';
-import { Home, ChevronRight, Sparkles, Search, RefreshCw, BarChart3, History, ListTree } from 'lucide-react';
+import { Home, ChevronRight, Sparkles, Search, RefreshCw, BarChart3, History, ListTree, BellRing } from 'lucide-react';
 import { Project } from '../types';
 
-type ProjectTab = 'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp';
+type ProjectTab = 'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp' | 'monitoring';
 
 interface ProjectHeaderProps {
   project: Project;
@@ -55,6 +55,13 @@ const tabs: TabConfig[] = [
     icon: <BarChart3 className="w-4 h-4" />,
     colorClass: 'text-indigo-600',
     bgClass: 'bg-white text-indigo-600 shadow-sm',
+  },
+  {
+    id: 'monitoring',
+    label: 'Monitoring',
+    icon: <BellRing className="w-4 h-4" />,
+    colorClass: 'text-rose-600',
+    bgClass: 'bg-white text-rose-600 shadow-sm',
   },
   {
     id: 'history',

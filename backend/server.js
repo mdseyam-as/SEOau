@@ -33,9 +33,11 @@ import tasksRoutes from './routes/tasks.js';
 import exportRoutes from './routes/export.js';
 import streamingRoutes from './routes/streaming.js';
 import queueRoutes from './routes/queue.js';
+import monitoringRoutes from './routes/monitoring.js';
 
 // Import services
 import { taskQueue } from './services/taskQueueService.js';
+import { monitoringScheduler } from './services/monitoringSchedulerService.js';
 
 // Import Swagger
 import { setupSwagger } from './swagger.js';
@@ -322,6 +324,7 @@ app.use('/api/tasks', validateTelegramAuth, tasksRoutes);
 app.use('/api/export', validateTelegramAuth, exportRoutes);
 app.use('/api/streaming', generateRateLimiter, validateTelegramAuth, streamingRoutes);
 app.use('/api/queue', validateTelegramAuth, queueRoutes);
+app.use('/api/monitoring', validateTelegramAuth, monitoringRoutes);
 
 // Serve Vite-built frontend
 import path from 'path';
@@ -389,19 +392,22 @@ app.listen(PORT, '0.0.0.0', () => {
 
     // Start background task queue processor
     taskQueue.start();
+    monitoringScheduler.start();
 });
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
     console.log('\n🛑 Shutting down gracefully...');
-    taskQueue.stop();
+    await taskQueue.stop();
+    await monitoringScheduler.stop();
     await prisma.$disconnect();
     process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
     console.log('\n🛑 Received SIGTERM, shutting down...');
-    taskQueue.stop();
+    await taskQueue.stop();
+    await monitoringScheduler.stop();
     await prisma.$disconnect();
     process.exit(0);
 });

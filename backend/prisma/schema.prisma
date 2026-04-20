@@ -100,9 +100,97 @@ model Project {
   
   // Relations
   history     History[]
+  monitoredPages MonitoredPage[]
   
   @@index([userId])
   @@index([userId, createdAt(sort: Desc)])
+}
+
+// ==================== SEO MONITORING ====================
+
+model MonitoredPage {
+  id               String              @id @default(uuid())
+  projectId        String
+  project          Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  url              String
+  normalizedUrl    String
+  label            String?
+  frequency        String              @default("1h") // "15m" | "1h" | "1d"
+  frequencyMinutes Int                 @default(60)
+  isActive         Boolean             @default(true)
+
+  lastCheckedAt    DateTime?
+  nextCheckAt      DateTime            @default(now())
+  lastStatusCode   Int?
+  lastFinalUrl     String?
+  lastTitle        String?
+  lastSeverity     String?
+  lastEventAt      DateTime?
+
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  snapshots        MonitoringSnapshot[]
+  events           MonitoringEvent[]
+
+  @@unique([projectId, normalizedUrl])
+  @@index([projectId])
+  @@index([projectId, createdAt(sort: Desc)])
+  @@index([isActive, nextCheckAt])
+}
+
+model MonitoringSnapshot {
+  id               String            @id @default(uuid())
+  monitoredPageId  String
+  monitoredPage    MonitoredPage     @relation(fields: [monitoredPageId], references: [id], onDelete: Cascade)
+
+  url              String
+  finalUrl         String?
+  statusCode       Int
+  title            String?
+  h1               String?
+  metaDescription  String?
+  canonical        String?
+  robotsMeta       String?
+  wordCount        Int               @default(0)
+  contentText      String?           @db.Text
+  contentHash      String?
+  hasFaq           Boolean           @default(false)
+  hasSchema        Boolean           @default(false)
+  fetchError       String?
+
+  createdAt        DateTime          @default(now())
+
+  events           MonitoringEvent[] @relation("MonitoringSnapshotCurrent")
+  previousFor      MonitoringEvent[] @relation("MonitoringSnapshotPrevious")
+
+  @@index([monitoredPageId])
+  @@index([monitoredPageId, createdAt(sort: Desc)])
+}
+
+model MonitoringEvent {
+  id                 String             @id @default(uuid())
+  monitoredPageId    String
+  monitoredPage      MonitoredPage      @relation(fields: [monitoredPageId], references: [id], onDelete: Cascade)
+
+  snapshotId         String?
+  snapshot           MonitoringSnapshot? @relation("MonitoringSnapshotCurrent", fields: [snapshotId], references: [id], onDelete: SetNull)
+  previousSnapshotId String?
+  previousSnapshot   MonitoringSnapshot? @relation("MonitoringSnapshotPrevious", fields: [previousSnapshotId], references: [id], onDelete: SetNull)
+
+  severity           String
+  changeTypes        String[]           @default([])
+  title              String
+  summary            String             @db.Text
+  diff               Json
+  notifiedAt         DateTime?
+
+  createdAt          DateTime           @default(now())
+
+  @@index([monitoredPageId])
+  @@index([monitoredPageId, createdAt(sort: Desc)])
+  @@index([severity])
 }
 
 // ==================== ИСТОРИЯ ГЕНЕРАЦИЙ ====================

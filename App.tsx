@@ -30,6 +30,7 @@ import { ProjectHeader } from './components/ProjectHeader';
 import { EmptyState, GeneratorEmptyState, LockedFeatureEmptyState } from './components/EmptyState';
 import { useTelegramWebApp } from './hooks/useTelegramWebApp';
 import { ServerHealthGate } from './components/ServerHealthGate';
+import { MonitoringPanel } from './components/MonitoringPanel';
 
 const DEFAULT_CONFIG: GenerationConfig = {
   websiteName: '',
@@ -61,7 +62,7 @@ export default function App() {
   // Project State
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
-  const [projectTab, setProjectTab] = useState<'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp'>('generator');
+  const [projectTab, setProjectTab] = useState<'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp' | 'monitoring'>('generator');
   const [projectHistory, setProjectHistory] = useState<any[]>([]);
 
   // Generator State
@@ -550,6 +551,8 @@ export default function App() {
               setProjectTab('generator');
             }}
           />
+        ) : projectTab === 'monitoring' ? (
+          <MonitoringPanel projectId={currentProject.id} />
         ) : projectTab === 'outline' ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
               <OutlineEditor

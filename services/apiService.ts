@@ -1,4 +1,4 @@
-import { User, SubscriptionPlan, Project, HistoryItem, GenerationConfig, SeoResult, SerpAnalysisResult } from '../types';
+import { User, SubscriptionPlan, Project, HistoryItem, GenerationConfig, SeoResult, SerpAnalysisResult, MonitoredPage, MonitoringEvent, MonitoringFrequency } from '../types';
 
 // Безопасно читаем переменные окружения Vite через any-каст,
 // чтобы не ломать типы в TypeScript и не требовать глобальных переменных.
@@ -132,6 +132,41 @@ class ApiService {
         return this.request(`/projects/${projectId}`, {
             method: 'DELETE'
         });
+    }
+
+    // SEO Monitoring
+    async getMonitoringPages(projectId: string): Promise<{ pages: MonitoredPage[] }> {
+        return this.request(`/monitoring/projects/${projectId}/pages`);
+    }
+
+    async createMonitoringPage(projectId: string, data: { url: string; label?: string; frequency: MonitoringFrequency }): Promise<{ page: MonitoredPage }> {
+        return this.request(`/monitoring/projects/${projectId}/pages`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async updateMonitoringPage(pageId: string, data: { label?: string; frequency?: MonitoringFrequency; isActive?: boolean }): Promise<{ page: MonitoredPage }> {
+        return this.request(`/monitoring/pages/${pageId}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async deleteMonitoringPage(pageId: string): Promise<{ success: boolean }> {
+        return this.request(`/monitoring/pages/${pageId}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async runMonitoringCheck(pageId: string): Promise<{ page: MonitoredPage; event?: MonitoringEvent | null }> {
+        return this.request(`/monitoring/pages/${pageId}/check`, {
+            method: 'POST'
+        });
+    }
+
+    async getMonitoringEvents(pageId: string, limit: number = 20): Promise<{ events: MonitoringEvent[] }> {
+        return this.request(`/monitoring/pages/${pageId}/events?limit=${limit}`);
     }
 
     // History

@@ -63,6 +63,24 @@ export const updateProjectSchema = z.object({
     description: z.string().max(1000).optional()
 });
 
+// ==================== SEO Monitoring Schemas ====================
+
+export const monitoringFrequencySchema = z.enum(['15m', '1h', '1d']);
+
+export const createMonitoredPageSchema = z.object({
+    url: z.string().url('Invalid URL').max(2000),
+    label: z.string().max(120).optional().default(''),
+    frequency: monitoringFrequencySchema.optional().default('1h')
+});
+
+export const updateMonitoredPageSchema = z.object({
+    label: z.string().max(120).optional(),
+    frequency: monitoringFrequencySchema.optional(),
+    isActive: z.boolean().optional()
+}).refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided'
+});
+
 // ==================== Generation Schemas ====================
 
 const keywordSchema = z.object({
