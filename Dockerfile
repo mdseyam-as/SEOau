@@ -44,5 +44,5 @@ RUN npx prisma generate --schema=../prisma/schema.prisma
 # Открываем порт
 EXPOSE 3000
 
-# Запускаем сервер
-CMD ["node", "server.js"]
+# Применяем актуальную Prisma-схему перед стартом сервера
+CMD ["sh", "-c", "npx prisma db push --schema=../prisma/schema.prisma && node server.js"]
