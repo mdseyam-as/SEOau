@@ -195,12 +195,12 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
       onClick={onSubmit}
       disabled={isDisabled || !config.topic || !config.websiteName || isOverLimit}
       className={`
-        w-full py-3.5 md:py-4.5 rounded-2xl font-bold text-white shadow-lg transition-all mt-4 text-sm md:text-base flex items-center justify-center gap-2
+        w-full py-3.5 md:py-4.5 rounded-2xl font-bold shadow-lg transition-all mt-4 text-sm md:text-base flex items-center justify-center gap-2
         ${isLocked
-          ? 'bg-slate-700 cursor-not-allowed opacity-50'
+          ? 'border border-white/10 bg-slate-700/95 text-slate-100 cursor-not-allowed'
           : (disabled || !config.topic || !config.websiteName || isOverLimit)
-            ? 'bg-slate-700 cursor-not-allowed opacity-50'
-            : 'bg-[linear-gradient(135deg,#10b981_0%,#14b8a6_45%,#38bdf8_100%)] hover:shadow-[0_22px_52px_rgba(16,185,129,0.28)] transform hover:-translate-y-0.5 active:scale-95'}
+            ? 'border border-white/10 bg-slate-700/95 text-slate-200 cursor-not-allowed'
+            : 'bg-[linear-gradient(135deg,#10b981_0%,#14b8a6_45%,#38bdf8_100%)] text-white hover:shadow-[0_22px_52px_rgba(16,185,129,0.28)] transform hover:-translate-y-0.5 active:scale-95'}
       `}
     >
       {isLocked ? (
@@ -216,7 +216,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
   );
 
   return (
-    <div className={`app-dark-card flex flex-col ${isLocked ? 'opacity-75' : ''}`}>
+    <div className={`app-dark-card flex flex-col ${isLocked ? 'opacity-85' : ''}`}>
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/10 p-4 sm:p-5 bg-white/[0.04] rounded-t-[24px] backdrop-blur-sm">
         <h3 className="font-bold text-white flex items-center gap-2.5 text-base sm:text-lg">

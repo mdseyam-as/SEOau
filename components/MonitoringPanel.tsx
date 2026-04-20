@@ -172,11 +172,11 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
             <div className="app-badge mb-3">Monitoring</div>
-            <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <h3 className="text-xl font-bold text-slate-950 flex items-center gap-2 tracking-tight">
               <BellRing className="w-5 h-5 text-emerald-600" />
               SEO Monitoring + Alerts
             </h3>
-            <p className="text-slate-500 text-sm mt-2 max-w-2xl leading-relaxed">
+            <p className="text-slate-600 text-sm mt-2 max-w-2xl leading-relaxed">
               Следим за title, H1, meta description, canonical, status code и сразу отправляем сигнал, если страница ломается или резко меняется.
             </p>
           </div>
@@ -227,14 +227,14 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
       </section>
 
       {isLoading ? (
-        <div className="app-light-card p-8 text-center text-slate-500">Загружаю мониторинг…</div>
+        <div className="app-light-card p-8 text-center text-slate-600">Загружаю мониторинг…</div>
       ) : pages.length === 0 ? (
         <div className="app-light-card p-10 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[24px] border border-emerald-100 bg-[linear-gradient(135deg,rgba(16,185,129,0.12),rgba(56,189,248,0.10))] shadow-[0_14px_34px_rgba(16,185,129,0.10)]">
             <Globe className="w-8 h-8 text-emerald-600" />
           </div>
-          <h4 className="text-slate-900 font-semibold text-lg">Пока нет URL в мониторинге</h4>
-          <p className="text-slate-500 text-sm mt-2">
+          <h4 className="text-slate-950 font-semibold text-lg">Пока нет URL в мониторинге</h4>
+          <p className="text-slate-600 text-sm mt-2 leading-relaxed">
             Добавьте важные страницы проекта, и система начнет снимать snapshot по расписанию.
           </p>
         </div>
@@ -260,7 +260,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
                       </div>
 
                       <div>
-                        <h4 className="text-slate-900 font-bold text-lg break-all">{page.label || page.url}</h4>
+                        <h4 className="text-slate-950 font-bold text-lg break-all">{page.label || page.url}</h4>
                         {page.label && (
                           <a href={page.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-emerald-600 hover:text-emerald-700 mt-1 break-all">
                             {page.url}
@@ -317,7 +317,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
                 </div>
 
                 <div className="border-t border-slate-100 px-4 sm:px-5 py-3 bg-slate-50/80 flex items-center justify-between gap-4">
-                  <div className="text-xs sm:text-sm text-slate-500">
+                  <div className="text-xs sm:text-sm text-slate-600">
                     {pageEvents.length > 0 ? `Событий в истории: ${pageEvents.length}${eventCache[page.id] ? '+' : ''}` : 'Изменений пока не зафиксировано'}
                   </div>
                   <button
@@ -331,7 +331,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
                 {expandedPageId === page.id && (
                   <div className="border-t border-slate-100 p-4 sm:p-5 space-y-4 bg-[linear-gradient(180deg,rgba(248,250,252,0.92),rgba(241,245,249,0.72))]">
                     {pageEvents.length === 0 ? (
-                      <div className="text-sm text-slate-500">Пока нет событий. Базовый snapshot уже снят, система ждёт следующих изменений.</div>
+                      <div className="text-sm text-slate-600">Пока нет событий. Базовый snapshot уже снят, система ждёт следующих изменений.</div>
                     ) : (
                       pageEvents.map((event) => (
                         <MonitoringEventCard key={event.id} event={event} />
@@ -350,18 +350,18 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
 
 const SummaryCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({ label, value, icon }) => (
   <div className="app-kpi-card">
-    <div className="flex items-center gap-2 text-slate-500 text-xs uppercase tracking-wide">
+    <div className="flex items-center gap-2 text-slate-600 text-xs uppercase tracking-wide">
       {icon}
       {label}
     </div>
-    <div className="text-slate-900 text-xl font-bold mt-1">{value}</div>
+    <div className="text-slate-950 text-xl font-bold mt-1">{value}</div>
   </div>
 );
 
 const MetaCell: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="app-light-soft px-3 py-3">
-    <div className="text-slate-400 text-xs uppercase tracking-wide">{label}</div>
-    <div className="text-slate-900 mt-1 break-words whitespace-pre-wrap">{value}</div>
+    <div className="text-slate-500 text-xs uppercase tracking-wide">{label}</div>
+    <div className="text-slate-950 mt-1 break-words whitespace-pre-wrap">{value}</div>
   </div>
 );
 
@@ -381,11 +381,11 @@ const MonitoringEventCard: React.FC<{ event: MonitoringEvent }> = ({ event }) =>
             <div className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${severityStyles[event.severity]}`}>
               {event.severity}
             </div>
-            <h5 className="text-slate-900 font-bold text-lg mt-3">{event.title}</h5>
-            <p className="text-slate-500 text-sm mt-2 leading-relaxed">{event.summary}</p>
+            <h5 className="text-slate-950 font-bold text-lg mt-3">{event.title}</h5>
+            <p className="text-slate-600 text-sm mt-2 leading-relaxed">{event.summary}</p>
           </div>
 
-          <div className="text-sm text-slate-500 flex items-center gap-2 whitespace-nowrap">
+          <div className="text-sm text-slate-600 flex items-center gap-2 whitespace-nowrap">
             <Clock3 className="w-4 h-4" />
             {new Date(event.createdAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
           </div>
@@ -402,7 +402,7 @@ const MonitoringEventCard: React.FC<{ event: MonitoringEvent }> = ({ event }) =>
       {event.diff?.changes?.map((change, index) => (
         <div key={`${event.id}-${change.type}-${index}`} className="p-4 sm:p-5 border-b border-slate-100 last:border-b-0">
           <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="text-slate-900 font-semibold uppercase text-sm tracking-wide">{change.type}</div>
+            <div className="text-slate-950 font-semibold uppercase text-sm tracking-wide">{change.type}</div>
             <div className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${severityStyles[change.severity]}`}>
               {change.severity}
             </div>
@@ -413,11 +413,11 @@ const MonitoringEventCard: React.FC<{ event: MonitoringEvent }> = ({ event }) =>
             <MetaCell label="After" value={shortValue(change.after)} />
           </div>
 
-          <div className="rounded-[20px] bg-slate-50 border border-slate-200 p-4 text-sm text-slate-600">
-            <div><span className="text-slate-400">Changed:</span> {change.changed}</div>
-            <div className="mt-2"><span className="text-slate-400">Risk:</span> {change.risk}</div>
+          <div className="rounded-[20px] bg-slate-50 border border-slate-200 p-4 text-sm text-slate-700">
+            <div><span className="text-slate-500">Changed:</span> {change.changed}</div>
+            <div className="mt-2"><span className="text-slate-500">Risk:</span> {change.risk}</div>
             {typeof change.deltaPercent === 'number' && (
-              <div className="mt-2"><span className="text-slate-400">Diff:</span> {change.deltaPercent > 0 ? '+' : ''}{change.deltaPercent}% текста</div>
+              <div className="mt-2"><span className="text-slate-500">Diff:</span> {change.deltaPercent > 0 ? '+' : ''}{change.deltaPercent}% текста</div>
             )}
           </div>
         </div>

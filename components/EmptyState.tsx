@@ -50,7 +50,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <div
-      className={`app-light-card flex flex-col items-center justify-center h-64 md:h-96 border-dashed px-6 animate-fade-in-scale ${className}`}
+      className={`app-light-card flex flex-col items-center justify-center h-64 md:h-96 border border-slate-200 px-6 animate-fade-in-scale ${className}`}
       role="status"
       aria-live="polite"
     >
@@ -59,11 +59,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           {icon || defaultIcon}
         </div>
       </div>
-      <h3 className="text-lg md:text-xl text-slate-900 font-semibold mb-2 text-title text-center">
+      <h3 className="text-lg md:text-xl text-slate-950 font-semibold mb-2 text-title text-center tracking-tight">
         {title}
       </h3>
       {description && (
-        <p className="text-sm md:text-base text-slate-500 text-center px-4 mb-6 max-w-md text-body leading-relaxed">
+        <p className="text-sm md:text-base text-slate-600 text-center px-4 mb-6 max-w-md text-body leading-relaxed">
           {description}
         </p>
       )}

@@ -36,15 +36,15 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
   return (
     <div className="space-y-4 sm:space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="app-shell-card flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 sm:p-6 lg:p-7">
-        <div>
+        <div className="relative z-10">
           <div className="app-badge mb-3">Workspace</div>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 flex items-center gap-3">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-950 flex items-center gap-3 tracking-tight">
             <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(56,189,248,0.12))] border border-emerald-200/70 shadow-[0_14px_30px_rgba(16,185,129,0.14)]">
               <Folder className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
             </div>
             Мои проекты
           </h2>
-          <p className="text-slate-500 text-sm sm:text-base mt-2 max-w-xl leading-relaxed">
+          <p className="text-slate-600 text-sm sm:text-base mt-2 max-w-xl leading-relaxed">
             Управляйте генерацией, мониторингом и историей по отдельным рабочим пространствам.
           </p>
         </div>
@@ -62,11 +62,11 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
           <div className="app-light-card p-5 sm:p-6 lg:p-8 w-full max-w-[calc(100vw-24px)] sm:max-w-md animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto relative">
             <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#10b981,#38bdf8,#f472b6)]"></div>
             <div className="app-badge mb-3">Новый проект</div>
-            <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 mb-2">Создание проекта</h3>
-            <p className="text-sm text-slate-500 mb-5">Соберите отдельное пространство под клиента, сайт или кампанию.</p>
+            <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-950 mb-2 tracking-tight">Создание проекта</h3>
+            <p className="text-sm text-slate-600 mb-5 leading-relaxed">Соберите отдельное пространство под клиента, сайт или кампанию.</p>
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
               <div className="space-y-1.5 sm:space-y-2">
-                <label className="block text-xs sm:text-sm font-bold text-slate-700 ml-1">Название</label>
+                <label className="block text-xs sm:text-sm font-bold text-slate-800 ml-1">Название</label>
                 <input
                   type="text"
                   value={newName}
@@ -77,7 +77,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                 />
               </div>
               <div className="space-y-1.5 sm:space-y-2">
-                <label className="block text-xs sm:text-sm font-bold text-slate-700 ml-1">Описание (опционально)</label>
+                <label className="block text-xs sm:text-sm font-bold text-slate-800 ml-1">Описание (опционально)</label>
                 <input
                   type="text"
                   value={newDesc}
@@ -112,8 +112,8 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
           <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-[linear-gradient(135deg,rgba(16,185,129,0.14),rgba(56,189,248,0.10))] rounded-[24px] flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-[0_14px_36px_rgba(16,185,129,0.12)]">
             <Folder className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-emerald-600" />
           </div>
-          <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-slate-900">Пока нет проектов</h3>
-          <p className="text-slate-500 text-sm sm:text-base mt-2 px-4 max-w-lg mx-auto">Создайте первое рабочее пространство, чтобы вести генерации, аудит и мониторинг в одном месте.</p>
+          <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-slate-950">Пока нет проектов</h3>
+          <p className="text-slate-600 text-sm sm:text-base mt-2 px-4 max-w-lg mx-auto leading-relaxed">Создайте первое рабочее пространство, чтобы вести генерации, аудит и мониторинг в одном месте.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
@@ -141,15 +141,15 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                 </button>
               </div>
 
-              <h3 className="font-bold text-base sm:text-lg lg:text-xl text-slate-900 mb-1.5 sm:mb-2 line-clamp-1 group-hover:text-emerald-600 transition-colors" title={project.name}>
+              <h3 className="font-bold text-base sm:text-lg lg:text-xl text-slate-950 mb-1.5 sm:mb-2 line-clamp-1 group-hover:text-emerald-700 transition-colors" title={project.name}>
                 {project.name}
               </h3>
-              <p className="text-slate-500 text-xs sm:text-sm mb-4 sm:mb-6 line-clamp-2 h-8 sm:h-10 leading-relaxed">
+              <p className="text-slate-600 text-xs sm:text-sm mb-4 sm:mb-6 line-clamp-2 h-8 sm:h-10 leading-relaxed">
                 {project.description || 'Нет описания'}
               </p>
 
               <div className="mt-auto flex items-center justify-between pt-3 sm:pt-4 border-t border-slate-100 relative z-10">
-                <div className="flex items-center text-[10px] sm:text-xs text-slate-500 gap-1 sm:gap-1.5 font-medium">
+                <div className="flex items-center text-[10px] sm:text-xs text-slate-600 gap-1 sm:gap-1.5 font-medium">
                   <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   {formatDate(project.createdAt)}
                 </div>
