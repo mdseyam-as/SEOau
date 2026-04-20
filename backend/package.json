@@ -13,8 +13,7 @@
         "test:coverage": "node --test --coverage",
         "db:generate": "prisma generate",
         "db:push": "prisma db push",
-        "db:seed": "node ../prisma/seed.js",
-        "postinstall": "prisma generate || echo 'Prisma generate skipped'"
+        "db:seed": "node ../prisma/seed.js"
     },
     "prisma": {
         "seed": "node ../prisma/seed.js"
