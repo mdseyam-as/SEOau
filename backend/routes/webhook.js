@@ -1,7 +1,7 @@
 import express from 'express';
 import crypto from 'crypto';
 import { prisma } from '../lib/prisma.js';
-import { grantSubscription, notifySubscriptionActivated, processUpdate } from '../utils/subscriptionManager.js';
+import { ensureBotInitialized, grantSubscription, notifySubscriptionActivated, processUpdate } from '../utils/subscriptionManager.js';
 
 const router = express.Router();
 
@@ -9,8 +9,9 @@ const router = express.Router();
  * POST /api/webhook/telegram
  * Handle Telegram Bot webhook updates
  */
-router.post('/telegram', (req, res) => {
+router.post('/telegram', async (req, res) => {
     try {
+        await ensureBotInitialized();
         // Process the update through the bot
         const handled = processUpdate(req.body);
         if (!handled) {

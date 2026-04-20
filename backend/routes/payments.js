@@ -2,7 +2,7 @@ import express from 'express';
 import { prisma } from '../lib/prisma.js';
 import { validate } from '../middleware/validate.js';
 import { createStarsInvoiceSchema } from '../schemas/index.js';
-import { getBot } from '../utils/subscriptionManager.js';
+import { ensureBotInitialized } from '../utils/subscriptionManager.js';
 import {
     createStarsInvoicePayload,
     getPlanStarsPrice,
@@ -20,23 +20,28 @@ const router = express.Router();
  */
 router.post('/stars/create', validate(createStarsInvoiceSchema), async (req, res) => {
     try {
-        const bot = getBot();
+        const bot = await ensureBotInitialized();
         if (!bot) {
-            return res.status(503).json({ error: 'Telegram bot is not initialized yet' });
+            return res.status(503).json({ error: 'Telegram bot is not initialized or BOT_TOKEN is missing' });
         }
 
         const telegramId = BigInt(req.telegramUser.id);
         const { planId } = req.body;
 
-        const plan = await prisma.plan.findUnique({
-            where: { slug: planId }
+        const plan = await prisma.plan.findFirst({
+            where: {
+                OR: [
+                    { slug: planId },
+                    { id: planId }
+                ]
+            }
         });
 
         if (!plan || !plan.isActive) {
             return res.status(404).json({ error: 'Plan not found' });
         }
 
-        if (plan.slug === 'free' || plan.priceRub <= 0) {
+        if (plan.slug === 'free') {
             return res.status(400).json({ error: 'Free plans cannot be purchased via Telegram Stars' });
         }
 
@@ -47,9 +52,10 @@ router.post('/stars/create', validate(createStarsInvoiceSchema), async (req, res
             });
         }
 
+        const normalizedPlanId = plan.slug;
         const payload = createStarsInvoicePayload({
             telegramId: telegramId.toString(),
-            planSlug: plan.slug,
+            planSlug: normalizedPlanId,
             amount: starsAmount
         });
 
@@ -68,14 +74,14 @@ router.post('/stars/create', validate(createStarsInvoiceSchema), async (req, res
             starsAmount,
             currency: getTelegramStarsCurrency(),
             plan: {
-                id: plan.slug,
+                id: normalizedPlanId,
                 name: plan.name,
                 durationDays: plan.durationDays
             }
         });
     } catch (error) {
         console.error('Create Telegram Stars invoice error:', error);
-        res.status(500).json({ error: 'Failed to create Telegram Stars invoice' });
+        res.status(500).json({ error: error?.message || 'Failed to create Telegram Stars invoice' });
     }
 });
 

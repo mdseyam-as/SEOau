@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma.js';
 import { getPlanStarsPrice, parseAndVerifyStarsPayload } from './starsPayments.js';
 
 let bot;
+let botInitPromise = null;
 
 async function handlePreCheckoutQuery(query) {
     try {
@@ -127,6 +128,10 @@ async function handleSuccessfulPaymentMessage(msg) {
 }
 
 export function initializeBot(token) {
+    if (bot) {
+        return bot;
+    }
+
     const isProduction = process.env.NODE_ENV === 'production';
     
     // In production, use webhook instead of polling to avoid 409 conflicts during redeploys
@@ -186,6 +191,34 @@ export function initializeBot(token) {
 
 export function getBot() {
     return bot;
+}
+
+export async function ensureBotInitialized() {
+    if (bot) {
+        return bot;
+    }
+
+    const token = process.env.BOT_TOKEN;
+    if (!token) {
+        return null;
+    }
+
+    if (!botInitPromise) {
+        botInitPromise = Promise.resolve()
+            .then(() => initializeBot(token))
+            .catch((error) => {
+                botInitPromise = null;
+                throw error;
+            });
+    }
+
+    try {
+        return await botInitPromise;
+    } finally {
+        if (bot) {
+            botInitPromise = null;
+        }
+    }
 }
 
 /**
