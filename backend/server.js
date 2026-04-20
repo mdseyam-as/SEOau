@@ -8,6 +8,7 @@ import rateLimit from 'express-rate-limit';
 
 // Import Prisma client
 import { prisma } from './lib/prisma.js';
+import { ensureMonitoringSchemaReady } from './lib/monitoringSchema.js';
 
 // Import middleware
 import { validateTelegramAuth } from './middleware/auth.js';
@@ -267,6 +268,10 @@ connectWithRetry().then(connected => {
     if (!connected) {
         console.warn('⚠️ Database not available - some features may not work');
         console.warn('⚠️ Check if Supabase project is paused (free tier pauses after 7 days of inactivity)');
+    } else {
+        ensureMonitoringSchemaReady().catch((error) => {
+            console.error('⚠️ Monitoring schema bootstrap failed:', error.message);
+        });
     }
 
     // Initialize Telegram Bot after DB init

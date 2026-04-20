@@ -1,5 +1,6 @@
 import express from 'express';
 import { z } from 'zod';
+import { ensureMonitoringSchemaReady } from '../lib/monitoringSchema.js';
 import { prisma } from '../lib/prisma.js';
 import { validate, validateParams, validateQuery } from '../middleware/validate.js';
 import {
@@ -52,6 +53,8 @@ async function assertProjectOwnership(projectId, userId) {
 }
 
 async function assertPageOwnership(pageId, userId) {
+  await ensureMonitoringSchemaReady();
+
   const page = await prisma.monitoredPage.findUnique({
     where: { id: pageId },
     include: {

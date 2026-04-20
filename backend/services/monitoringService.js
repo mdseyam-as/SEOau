@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { ensureMonitoringSchemaReady } from '../lib/monitoringSchema.js';
 import { prisma } from '../lib/prisma.js';
 import { notifyUser } from '../utils/subscriptionManager.js';
 import logger from '../utils/logger.js';
@@ -499,6 +500,8 @@ async function createMonitoringEvent(monitoredPage, previousSnapshot, snapshot) 
 }
 
 export async function runMonitoringCheck(monitoredPageId, options = {}) {
+  await ensureMonitoringSchemaReady();
+
   const page = await prisma.monitoredPage.findUnique({
     where: { id: monitoredPageId },
     include: {
@@ -568,6 +571,8 @@ export async function scheduleInitialCheck(monitoredPageId) {
 }
 
 export async function createMonitoredPage(projectId, data) {
+  await ensureMonitoringSchemaReady();
+
   const normalizedUrl = normalizeUrl(data.url);
   const frequency = data.frequency || '1h';
   const page = await prisma.monitoredPage.create({
@@ -600,6 +605,8 @@ export async function createMonitoredPage(projectId, data) {
 }
 
 export async function updateMonitoredPage(pageId, data) {
+  await ensureMonitoringSchemaReady();
+
   const updateData = {};
 
   if (typeof data.label === 'string') {
@@ -636,6 +643,8 @@ export async function updateMonitoredPage(pageId, data) {
 }
 
 export async function getProjectMonitoringPages(projectId) {
+  await ensureMonitoringSchemaReady();
+
   return prisma.monitoredPage.findMany({
     where: { projectId },
     orderBy: { createdAt: 'desc' },
@@ -653,6 +662,8 @@ export async function getProjectMonitoringPages(projectId) {
 }
 
 export async function getMonitoringPageEvents(pageId, limit = 20) {
+  await ensureMonitoringSchemaReady();
+
   return prisma.monitoringEvent.findMany({
     where: { monitoredPageId: pageId },
     orderBy: { createdAt: 'desc' },
@@ -661,12 +672,16 @@ export async function getMonitoringPageEvents(pageId, limit = 20) {
 }
 
 export async function deleteMonitoringPage(pageId) {
+  await ensureMonitoringSchemaReady();
+
   return prisma.monitoredPage.delete({
     where: { id: pageId }
   });
 }
 
 export async function processDueMonitoringChecks() {
+  await ensureMonitoringSchemaReady();
+
   const duePages = await prisma.monitoredPage.findMany({
     where: {
       isActive: true,
