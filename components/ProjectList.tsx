@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Project } from '../types';
 import { FolderPlus, Folder, Trash2, ChevronRight, Clock } from 'lucide-react';
+import { useToast } from './Toast';
 
 interface ProjectListProps {
   projects: Project[];
@@ -10,6 +11,7 @@ interface ProjectListProps {
 }
 
 export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProject, onSelectProject, onDeleteProject }) => {
+  const toast = useToast();
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
@@ -31,6 +33,19 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleDeleteProjectClick = async (event: React.MouseEvent, projectId: string, projectName: string) => {
+    event.stopPropagation();
+    const confirmed = await toast.confirm(
+      'Удалить проект?',
+      `Проект "${projectName}" и вся его история будут удалены без возможности восстановления.`
+    );
+
+    if (!confirmed) return;
+
+    onDeleteProject(projectId);
+    toast.success('Проект удалён');
   };
 
   return (
@@ -132,10 +147,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                   <Folder className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-300 drop-shadow-sm" />
                 </div>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (confirm('Удалить проект и всю историю?')) onDeleteProject(project.id);
-                  }}
+                  onClick={(event) => handleDeleteProjectClick(event, project.id, project.name)}
                   className="text-slate-400 hover:text-red-300 p-2 rounded-2xl hover:bg-red-500/10 transition-all sm:opacity-0 sm:group-hover:opacity-100 border border-transparent hover:border-red-400/10"
                   title="Удалить проект"
                 >

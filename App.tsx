@@ -407,9 +407,12 @@ export default function App() {
     }
   };
 
-  const handleClearProjectSettings = () => {
+  const handleClearProjectSettings = async () => {
     if (!currentProject) return;
-    const confirmed = confirm('Очистить все настройки проекта? Это сбросит параметры генерации, ключевые слова и результат.');
+    const confirmed = await toast.confirm(
+      'Очистить настройки проекта?',
+      'Это сбросит параметры генерации, ключевые слова и текущий результат.'
+    );
     if (!confirmed) return;
 
     projectConfigService.deleteConfig(currentProject.id);

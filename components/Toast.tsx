@@ -84,29 +84,37 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({ title, message, onConfirm, 
       aria-labelledby="confirm-title"
     >
       <div
-        className="bg-slate-900 border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(17,24,39,0.95))] p-6 shadow-[0_30px_80px_rgba(2,6,23,0.55)] animate-in zoom-in-95 duration-200"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-start gap-4 mb-4">
-          <div className="p-2 bg-yellow-500/20 rounded-xl text-yellow-400">
+        <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#10b981,#38bdf8,#f472b6)]" />
+        <div className="pointer-events-none absolute -right-10 top-6 h-24 w-24 rounded-full bg-emerald-400/15 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-0 left-0 h-24 w-24 rounded-full bg-sky-400/10 blur-3xl" />
+
+        <div className="relative flex items-start gap-4 mb-5">
+          <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3 text-amber-300 shadow-[0_16px_36px_rgba(245,158,11,0.12)]">
             <AlertTriangle className="w-6 h-6" />
           </div>
-          <div>
-            <h3 id="confirm-title" className="text-lg font-bold text-white">{title}</h3>
-            {message && <p className="text-sm text-slate-400 mt-1">{message}</p>}
+          <div className="min-w-0">
+            <div className="mb-2 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+              Подтверждение
+            </div>
+            <h3 id="confirm-title" className="text-xl font-bold tracking-tight text-white">{title}</h3>
+            {message && <p className="mt-2 text-sm leading-relaxed text-slate-300">{message}</p>}
           </div>
         </div>
-        <div className="flex gap-3 justify-end">
+
+        <div className="relative flex gap-3 justify-end">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors"
+            className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-slate-200 transition-all hover:bg-white/10 hover:text-white"
             aria-label="Отменить действие"
           >
             Отмена
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-500 rounded-xl transition-colors"
+            className="inline-flex items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#ef4444_0%,#f97316_100%)] px-5 py-3 text-sm font-bold text-white shadow-[0_18px_40px_rgba(239,68,68,0.24)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_46px_rgba(239,68,68,0.30)]"
             aria-label="Подтвердить действие"
           >
             Подтвердить
