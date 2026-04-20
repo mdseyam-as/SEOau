@@ -76,10 +76,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onKeywordsLoaded, disabl
         onDrop={handleDrop}
         className={`
           relative overflow-hidden border-2 border-dashed rounded-[24px] p-6 md:p-8 text-center transition-all duration-300
-          ${disabled ? 'bg-slate-100 border-slate-300' : 'cursor-pointer'}
-          ${!disabled && isDragging ? 'border-emerald-400 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(56,189,248,0.08))] shadow-[0_18px_40px_rgba(16,185,129,0.15)] scale-[1.01]' : ''}
-          ${!disabled && !isDragging ? 'border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(248,250,252,0.92))] hover:border-emerald-300 hover:shadow-[0_18px_40px_rgba(148,163,184,0.10)]' : ''}
-          ${fileName ? 'bg-[linear-gradient(135deg,rgba(16,185,129,0.12),rgba(255,255,255,0.9))] border-emerald-300 shadow-[0_18px_40px_rgba(16,185,129,0.12)]' : ''}
+          ${disabled ? 'bg-slate-800/80 border-white/10' : 'cursor-pointer'}
+          ${!disabled && isDragging ? 'border-emerald-400 bg-[linear-gradient(135deg,rgba(16,185,129,0.16),rgba(56,189,248,0.10))] shadow-[0_18px_40px_rgba(16,185,129,0.15)] scale-[1.01]' : ''}
+          ${!disabled && !isDragging ? 'border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))] hover:border-emerald-400/30 hover:shadow-[0_18px_40px_rgba(2,6,23,0.18)]' : ''}
+          ${fileName ? 'bg-[linear-gradient(135deg,rgba(16,185,129,0.16),rgba(255,255,255,0.04))] border-emerald-400/30 shadow-[0_18px_40px_rgba(16,185,129,0.12)]' : ''}
         `}
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.10),transparent_28%),radial-gradient(circle_at_left_center,rgba(56,189,248,0.08),transparent_22%)]" />
@@ -99,24 +99,24 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onKeywordsLoaded, disabl
             <>
               <CheckCircle className="w-10 h-10 md:w-12 md:h-12 text-emerald-500" />
               <div>
-                <p className="font-semibold text-slate-800 text-sm md:text-base truncate max-w-[200px] md:max-w-xs">{fileName}</p>
-                <p className="text-xs md:text-sm text-slate-500">Нажмите, чтобы заменить</p>
+                <p className="font-semibold text-white text-sm md:text-base truncate max-w-[200px] md:max-w-xs">{fileName}</p>
+                <p className="text-xs md:text-sm text-slate-300">Нажмите, чтобы заменить</p>
               </div>
             </>
           ) : (
             <>
-              <div className={`p-3 md:p-4 rounded-[20px] border ${disabled ? 'bg-slate-200 border-slate-300' : 'bg-[linear-gradient(135deg,rgba(16,185,129,0.12),rgba(56,189,248,0.10))] border-emerald-200/70 shadow-[0_14px_36px_rgba(16,185,129,0.10)]'}`}>
-                <FileSpreadsheet className={`w-6 h-6 md:w-8 md:h-8 ${disabled ? 'text-gray-400' : 'text-emerald-600'}`} />
+              <div className={`p-3 md:p-4 rounded-[20px] border ${disabled ? 'bg-white/5 border-white/10' : 'bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(56,189,248,0.10))] border-emerald-400/20 shadow-[0_14px_36px_rgba(16,185,129,0.10)]'}`}>
+                <FileSpreadsheet className={`w-6 h-6 md:w-8 md:h-8 ${disabled ? 'text-slate-400' : 'text-emerald-300'}`} />
               </div>
               <div>
-                <p className="font-semibold text-slate-800 text-sm md:text-base">
+                <p className="font-semibold text-white text-sm md:text-base">
                   {disabled ? 'Загрузка недоступна' : 'Нажмите для загрузки Excel'}
                 </p>
-                <p className="text-xs md:text-sm text-slate-500 mt-1">
+                <p className="text-xs md:text-sm text-slate-300 mt-1">
                   {disabled ? 'Требуется активная подписка' : 'или перетащите файл .xlsx сюда'}
                 </p>
               </div>
-              {!disabled && <div className="app-badge mt-2">Ключ | Частота</div>}
+              {!disabled && <div className="mt-2 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Ключ | Частота</div>}
             </>
           )}
         </div>

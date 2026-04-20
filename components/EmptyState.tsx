@@ -18,16 +18,16 @@ export interface EmptyStateProps {
 
 const variantStyles = {
   default: {
-    iconBg: 'bg-gray-50',
-    iconColor: 'text-gray-300',
+    iconBg: 'bg-white/10 border border-white/10',
+    iconColor: 'text-slate-200',
   },
   locked: {
-    iconBg: 'bg-red-50',
-    iconColor: 'text-red-400',
+    iconBg: 'bg-red-500/10 border border-red-400/20',
+    iconColor: 'text-red-300',
   },
   premium: {
-    iconBg: 'bg-gradient-to-br from-purple-50 to-pink-50',
-    iconColor: 'text-purple-400',
+    iconBg: 'bg-gradient-to-br from-purple-500/20 to-pink-500/15 border border-purple-400/20',
+    iconColor: 'text-pink-200',
   },
 };
 
@@ -50,7 +50,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <div
-      className={`app-light-card flex flex-col items-center justify-center h-64 md:h-96 border border-slate-200 px-6 animate-fade-in-scale ${className}`}
+      className={`app-dark-card flex flex-col items-center justify-center h-64 md:h-96 px-6 animate-fade-in-scale ${className}`}
       role="status"
       aria-live="polite"
     >
@@ -59,11 +59,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           {icon || defaultIcon}
         </div>
       </div>
-      <h3 className="text-lg md:text-xl text-slate-950 font-semibold mb-2 text-title text-center tracking-tight">
+      <h3 className="text-lg md:text-xl text-white font-semibold mb-2 text-title text-center tracking-tight">
         {title}
       </h3>
       {description && (
-        <p className="text-sm md:text-base text-slate-600 text-center px-4 mb-6 max-w-md text-body leading-relaxed">
+        <p className="text-sm md:text-base text-slate-300 text-center px-4 mb-6 max-w-md text-body leading-relaxed">
           {description}
         </p>
       )}
@@ -99,15 +99,15 @@ export const LockedFeatureEmptyState: React.FC<{
   featureName: string;
   onUpgrade?: () => void;
 }> = ({ featureName, onUpgrade }) => (
-  <div className="app-shell-card p-8 text-center">
-    <div className="inline-flex rounded-[24px] border border-red-100 bg-red-50 p-4 shadow-[0_16px_36px_rgba(239,68,68,0.10)] mb-4">
-      <Lock className="w-12 h-12 text-red-500" />
+  <div className="app-dark-card p-8 text-center">
+    <div className="inline-flex rounded-[24px] border border-red-400/20 bg-red-500/10 p-4 shadow-[0_16px_36px_rgba(239,68,68,0.10)] mb-4">
+      <Lock className="w-12 h-12 text-red-300" />
     </div>
-    <div className="app-badge mb-3">Upgrade</div>
-    <h3 className="text-lg font-bold text-slate-900 mb-2 text-readable">
+    <div className="mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Upgrade</div>
+    <h3 className="text-lg font-bold text-white mb-2 text-readable">
       {featureName} недоступен
     </h3>
-    <p className="text-slate-500 text-sm mb-5 max-w-md mx-auto leading-relaxed">
+    <p className="text-slate-300 text-sm mb-5 max-w-md mx-auto leading-relaxed">
       Эта функция недоступна для вашего тарифа. Обновите подписку для доступа к {featureName.toLowerCase()}.
     </p>
     {onUpgrade && (

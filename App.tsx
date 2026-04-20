@@ -608,9 +608,9 @@ export default function App() {
                 </div>
               )}
 
-              <div className="app-shell-card p-3 sm:p-4 md:p-6">
-                <div className="app-badge mb-3">Step 1</div>
-                <h2 className="font-bold text-base sm:text-lg mb-3 sm:mb-4 text-slate-900">Источник данных</h2>
+              <div className="app-dark-card p-3 sm:p-4 md:p-6">
+                <div className="mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Step 1</div>
+                <h2 className="font-bold text-base sm:text-lg mb-3 sm:mb-4 text-white">Источник данных</h2>
                 <FileUpload
                   onKeywordsLoaded={setKeywords}
                   disabled={isLocked}
