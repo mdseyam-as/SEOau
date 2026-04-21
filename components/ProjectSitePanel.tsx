@@ -35,6 +35,10 @@ const statusStyles: Record<string, string> = {
   error: 'border border-red-400/20 bg-red-500/10 text-red-300'
 };
 
+const fieldShellClass = 'rounded-[20px] border border-white/12 bg-[linear-gradient(180deg,rgba(2,6,23,0.32),rgba(15,23,42,0.72))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_10px_25px_rgba(2,6,23,0.16)]';
+const fieldInputClass = 'w-full bg-transparent p-0 text-white outline-none placeholder:text-slate-500';
+const fieldSelectClass = 'w-full appearance-none bg-transparent p-0 text-white outline-none [&>option]:text-slate-900';
+
 export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId }) => {
   const toast = useToast();
   const [site, setSite] = useState<ProjectSite | null>(null);
@@ -247,35 +251,41 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
             <form onSubmit={handleCreateSite} className="grid grid-cols-1 lg:grid-cols-12 gap-3">
               <div className="lg:col-span-5">
                 <FieldLabel>Основной домен</FieldLabel>
-                <input
-                  type="url"
-                  value={homepageUrl}
-                  onChange={(event) => setHomepageUrl(event.target.value)}
-                  placeholder="https://your-site.com"
-                  className="app-input-dark"
-                />
+                <div className={fieldShellClass}>
+                  <input
+                    type="url"
+                    value={homepageUrl}
+                    onChange={(event) => setHomepageUrl(event.target.value)}
+                    placeholder="https://your-site.com"
+                    className={fieldInputClass}
+                  />
+                </div>
               </div>
               <div className="lg:col-span-3">
                 <FieldLabel>Название</FieldLabel>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="Название сайта или бренда"
-                  className="app-input-dark"
-                />
+                <div className={fieldShellClass}>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Название сайта или бренда"
+                    className={fieldInputClass}
+                  />
+                </div>
               </div>
               <div className="lg:col-span-2">
                 <FieldLabel>Частота</FieldLabel>
-                <select
-                  value={scanFrequency}
-                  onChange={(event) => setScanFrequency(event.target.value as MonitoringFrequency)}
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition-all focus:border-brand-green/40 focus:ring-4 focus:ring-brand-green/10 [&>option]:text-slate-900"
-                >
-                  {FREQUENCY_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
+                <div className={fieldShellClass}>
+                  <select
+                    value={scanFrequency}
+                    onChange={(event) => setScanFrequency(event.target.value as MonitoringFrequency)}
+                    className={fieldSelectClass}
+                  >
+                    {FREQUENCY_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="lg:col-span-2 lg:self-end">
                 <button
@@ -305,34 +315,40 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                 <div className="lg:col-span-5">
                   <FieldLabel>Основной домен</FieldLabel>
-                  <input
-                    type="url"
-                    value={homepageUrl}
-                    onChange={(event) => setHomepageUrl(event.target.value)}
-                    className="app-input-dark"
-                  />
+                  <div className={fieldShellClass}>
+                    <input
+                      type="url"
+                      value={homepageUrl}
+                      onChange={(event) => setHomepageUrl(event.target.value)}
+                      className={fieldInputClass}
+                    />
+                  </div>
                 </div>
                 <div className="lg:col-span-3">
                   <FieldLabel>Название</FieldLabel>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    placeholder="Название сайта"
-                    className="app-input-dark"
-                  />
+                  <div className={fieldShellClass}>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      placeholder="Название сайта"
+                      className={fieldInputClass}
+                    />
+                  </div>
                 </div>
                 <div className="lg:col-span-2">
                   <FieldLabel>Частота</FieldLabel>
-                  <select
-                    value={scanFrequency}
-                    onChange={(event) => setScanFrequency(event.target.value as MonitoringFrequency)}
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition-all focus:border-brand-green/40 focus:ring-4 focus:ring-brand-green/10 [&>option]:text-slate-900"
-                  >
-                    {FREQUENCY_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
+                  <div className={fieldShellClass}>
+                    <select
+                      value={scanFrequency}
+                      onChange={(event) => setScanFrequency(event.target.value as MonitoringFrequency)}
+                      className={fieldSelectClass}
+                    >
+                      {FREQUENCY_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div className="lg:col-span-2 lg:self-end">
                   <button

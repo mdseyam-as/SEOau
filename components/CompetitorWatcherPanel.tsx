@@ -50,6 +50,10 @@ const severityStyles: Record<MonitoringSeverity, string> = {
   info: 'border border-sky-400/20 bg-sky-500/10 text-sky-300'
 };
 
+const fieldShellClass = 'rounded-[20px] border border-white/12 bg-[linear-gradient(180deg,rgba(2,6,23,0.32),rgba(15,23,42,0.72))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_10px_25px_rgba(2,6,23,0.16)]';
+const fieldInputClass = 'w-full bg-transparent p-0 text-white outline-none placeholder:text-slate-500';
+const fieldSelectClass = 'w-full appearance-none bg-transparent p-0 text-white outline-none [&>option]:text-slate-900';
+
 export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ projectId }) => {
   const toast = useToast();
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
@@ -360,47 +364,55 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
           <form onSubmit={handleCreateCompetitor} className="grid grid-cols-1 lg:grid-cols-12 gap-3">
             <div className="lg:col-span-4">
               <FieldLabel>Сайт конкурента</FieldLabel>
-              <input
-                type="url"
-                value={newUrl}
-                onChange={(event) => setNewUrl(event.target.value)}
-                placeholder="https://competitor.com"
-                className="app-input-dark"
-              />
+              <div className={fieldShellClass}>
+                <input
+                  type="url"
+                  value={newUrl}
+                  onChange={(event) => setNewUrl(event.target.value)}
+                  placeholder="https://competitor.com"
+                  className={fieldInputClass}
+                />
+              </div>
             </div>
             <div className="lg:col-span-2">
               <FieldLabel>Название</FieldLabel>
-              <input
-                type="text"
-                value={newName}
-                onChange={(event) => setNewName(event.target.value)}
-                placeholder="Имя конкурента"
-                className="app-input-dark"
-              />
+              <div className={fieldShellClass}>
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(event) => setNewName(event.target.value)}
+                  placeholder="Имя конкурента"
+                  className={fieldInputClass}
+                />
+              </div>
             </div>
             <div className="lg:col-span-2">
               <FieldLabel>Приоритет</FieldLabel>
-              <select
-                value={newPriority}
-                onChange={(event) => setNewPriority(event.target.value as CompetitorPriority)}
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition-all focus:border-brand-green/40 focus:ring-4 focus:ring-brand-green/10 [&>option]:text-slate-900"
-              >
-                {PRIORITY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
+              <div className={fieldShellClass}>
+                <select
+                  value={newPriority}
+                  onChange={(event) => setNewPriority(event.target.value as CompetitorPriority)}
+                  className={fieldSelectClass}
+                >
+                  {PRIORITY_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="lg:col-span-2">
               <FieldLabel>Частота</FieldLabel>
-              <select
-                value={newFrequency}
-                onChange={(event) => setNewFrequency(event.target.value as MonitoringFrequency)}
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition-all focus:border-brand-green/40 focus:ring-4 focus:ring-brand-green/10 [&>option]:text-slate-900"
-              >
-                {FREQUENCY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
+              <div className={fieldShellClass}>
+                <select
+                  value={newFrequency}
+                  onChange={(event) => setNewFrequency(event.target.value as MonitoringFrequency)}
+                  className={fieldSelectClass}
+                >
+                  {FREQUENCY_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="lg:col-span-2 lg:self-end">
               <button
@@ -414,12 +426,14 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
             </div>
             <div className="lg:col-span-12">
               <FieldLabel>Заметки</FieldLabel>
-              <textarea
-                value={newNotes}
-                onChange={(event) => setNewNotes(event.target.value)}
-                placeholder="Например: важны pricing, integrations и любые comparison pages против нас"
-                className="app-input-dark min-h-[104px]"
-              />
+              <div className={fieldShellClass}>
+                <textarea
+                  value={newNotes}
+                  onChange={(event) => setNewNotes(event.target.value)}
+                  placeholder="Например: важны pricing, integrations и любые comparison pages против нас"
+                  className={`${fieldInputClass} min-h-[92px] resize-none`}
+                />
+              </div>
             </div>
           </form>
         </div>
@@ -525,7 +539,7 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                       <select
                         value={selectedCompetitor.priority}
                         onChange={(event) => handleChangePriority(selectedCompetitor, event.target.value as CompetitorPriority)}
-                        className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white [&>option]:text-slate-900"
+                        className="rounded-2xl border border-white/12 bg-[linear-gradient(180deg,rgba(2,6,23,0.28),rgba(15,23,42,0.72))] px-3 py-2 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] [&>option]:text-slate-900"
                       >
                         {PRIORITY_OPTIONS.map((option) => (
                           <option key={option.value} value={option.value}>{option.label}</option>
@@ -534,7 +548,7 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                       <select
                         value={selectedCompetitor.scanFrequency}
                         onChange={(event) => handleChangeFrequency(selectedCompetitor, event.target.value as MonitoringFrequency)}
-                        className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white [&>option]:text-slate-900"
+                        className="rounded-2xl border border-white/12 bg-[linear-gradient(180deg,rgba(2,6,23,0.28),rgba(15,23,42,0.72))] px-3 py-2 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] [&>option]:text-slate-900"
                       >
                         {FREQUENCY_OPTIONS.map((option) => (
                           <option key={option.value} value={option.value}>{option.label}</option>
