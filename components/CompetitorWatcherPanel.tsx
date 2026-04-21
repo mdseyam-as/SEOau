@@ -109,6 +109,33 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
     setComparisonCache((prev) => ({ ...prev, [competitor.id]: competitor.comparisonItems || [] }));
   };
 
+  const hydrateCompetitorState = (
+    competitorId: string,
+    payload: {
+      competitor?: Competitor;
+      changes?: CompetitorPageChange[];
+      comparisons?: CompetitorComparison[];
+      summary?: CompetitorWeeklySummary;
+    }
+  ) => {
+    if (payload.competitor) {
+      setCompetitors((prev) => prev.map((item) => item.id === competitorId ? payload.competitor! : item));
+      hydrateCompetitorCaches(payload.competitor);
+    }
+
+    if (payload.changes) {
+      setChangeCache((prev) => ({ ...prev, [competitorId]: payload.changes || [] }));
+    }
+
+    if (payload.comparisons) {
+      setComparisonCache((prev) => ({ ...prev, [competitorId]: payload.comparisons || [] }));
+    }
+
+    if (payload.summary) {
+      setSummaryCache((prev) => ({ ...prev, [competitorId]: payload.summary! }));
+    }
+  };
+
   const loadCompetitors = async () => {
     setIsLoading(true);
     try {
@@ -141,20 +168,17 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
 
     const loadDetails = async () => {
       try {
-        if (!changeCache[selectedCompetitor.id]) {
-          const changes = await competitorWatcherService.getChanges(selectedCompetitor.id, 20);
-          setChangeCache((prev) => ({ ...prev, [selectedCompetitor.id]: changes }));
-        }
+        const [changes, comparisons, summary] = await Promise.all([
+          competitorWatcherService.getChanges(selectedCompetitor.id, 20),
+          competitorWatcherService.getComparison(selectedCompetitor.id),
+          competitorWatcherService.getWeeklySummary(selectedCompetitor.id, 7)
+        ]);
 
-        if (!comparisonCache[selectedCompetitor.id]) {
-          const comparisons = await competitorWatcherService.getComparison(selectedCompetitor.id);
-          setComparisonCache((prev) => ({ ...prev, [selectedCompetitor.id]: comparisons }));
-        }
-
-        if (!summaryCache[selectedCompetitor.id]) {
-          const summary = await competitorWatcherService.getWeeklySummary(selectedCompetitor.id, 7);
-          setSummaryCache((prev) => ({ ...prev, [selectedCompetitor.id]: summary }));
-        }
+        hydrateCompetitorState(selectedCompetitor.id, {
+          changes,
+          comparisons,
+          summary
+        });
       } catch (error: any) {
         toast.error('Не удалось загрузить детали', error.message || 'Попробуйте ещё раз');
       }
@@ -233,13 +257,24 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
     setIsRefreshing(true);
     try {
       const result = await competitorWatcherService.scanCompetitor(competitor.id);
-      setCompetitors((prev) => prev.map((item) => item.id === competitor.id ? result.competitor : item));
-      setChangeCache((prev) => ({ ...prev, [competitor.id]: result.changes }));
-      setComparisonCache((prev) => ({ ...prev, [competitor.id]: result.competitor.comparisonItems }));
-      setSummaryCache((prev) => ({ ...prev, [competitor.id]: result.weeklySummary }));
+
+      const [changes, comparisons] = await Promise.all([
+        competitorWatcherService.getChanges(competitor.id, 20),
+        competitorWatcherService.getComparison(competitor.id)
+      ]);
+
+      hydrateCompetitorState(competitor.id, {
+        competitor: result.competitor,
+        changes,
+        comparisons,
+        summary: result.weeklySummary
+      });
+
       toast.success(
         'Scan завершен',
-        result.changes.length > 0 ? result.changes[0].title : 'Сильных изменений не найдено.'
+        result.changes.length > 0
+          ? result.changes[0].title
+          : (changes[0]?.title || 'Новых изменений в этом скане не найдено, история сохранена.')
       );
     } catch (error: any) {
       toast.error('Ошибка scan', error.message || 'Не удалось просканировать конкурента');
