@@ -104,6 +104,23 @@ export const updateCompetitorSchema = z.object({
     message: 'At least one field must be provided'
 });
 
+// ==================== PROJECT SITE SCHEMAS ====================
+
+export const createProjectSiteSchema = z.object({
+    homepageUrl: z.string().url('Invalid site URL').max(2000),
+    name: z.string().max(160).optional().default(''),
+    scanFrequency: monitoringFrequencySchema.optional().default('1d')
+});
+
+export const updateProjectSiteSchema = z.object({
+    homepageUrl: z.string().url('Invalid site URL').max(2000).optional(),
+    name: z.string().max(160).optional(),
+    scanFrequency: monitoringFrequencySchema.optional(),
+    isActive: z.boolean().optional()
+}).refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided'
+});
+
 // ==================== Generation Schemas ====================
 
 const keywordSchema = z.object({

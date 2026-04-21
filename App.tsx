@@ -32,6 +32,7 @@ import { useTelegramWebApp } from './hooks/useTelegramWebApp';
 import { ServerHealthGate } from './components/ServerHealthGate';
 import { MonitoringPanel } from './components/MonitoringPanel';
 import { CompetitorWatcherPanel } from './components/CompetitorWatcherPanel';
+import { ProjectSitePanel } from './components/ProjectSitePanel';
 
 const DEFAULT_CONFIG: GenerationConfig = {
   websiteName: '',
@@ -63,7 +64,7 @@ export default function App() {
   // Project State
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
-  const [projectTab, setProjectTab] = useState<'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp' | 'monitoring' | 'competitors'>('generator');
+  const [projectTab, setProjectTab] = useState<'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp' | 'monitoring' | 'competitors' | 'ours'>('generator');
   const [projectHistory, setProjectHistory] = useState<any[]>([]);
 
   // Generator State
@@ -559,6 +560,8 @@ export default function App() {
           <MonitoringPanel projectId={currentProject.id} />
         ) : projectTab === 'competitors' ? (
           <CompetitorWatcherPanel projectId={currentProject.id} />
+        ) : projectTab === 'ours' ? (
+          <ProjectSitePanel projectId={currentProject.id} />
         ) : projectTab === 'outline' ? (
           <div className="app-shell-card p-4 sm:p-6">
               <OutlineEditor

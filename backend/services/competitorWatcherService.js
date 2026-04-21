@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { ensureCompetitorWatcherSchemaReady } from '../lib/competitorWatcherSchema.js';
+import { ensureProjectSiteSchemaReady } from '../lib/projectSiteSchema.js';
 import { prisma } from '../lib/prisma.js';
 import { notifyUser } from '../utils/subscriptionManager.js';
 import logger from '../utils/logger.js';
@@ -902,6 +903,50 @@ async function syncTopicClusters(competitor, activeSnapshots, options = {}) {
 }
 
 async function buildOurTopicCoverage(projectId) {
+  await ensureProjectSiteSchemaReady();
+
+  const projectSite = await prisma.projectSite.findUnique({
+    where: { projectId },
+    select: { id: true }
+  });
+
+  if (projectSite) {
+    const projectSiteSnapshots = await prisma.projectSitePageSnapshot.findMany({
+      where: { projectSiteId: projectSite.id },
+      orderBy: { scannedAt: 'desc' }
+    });
+
+    const latestByUrl = new Map();
+    for (const snapshot of projectSiteSnapshots) {
+      if (!latestByUrl.has(snapshot.normalizedUrl)) {
+        latestByUrl.set(snapshot.normalizedUrl, snapshot);
+      }
+    }
+
+    const currentPages = [...latestByUrl.values()].filter((snapshot) => !snapshot.isDeletedPage);
+    if (currentPages.length > 0) {
+      const counts = new Map();
+      const increment = (topicKey, label) => {
+        const current = counts.get(topicKey) || { topicKey, label, count: 0 };
+        current.count += 1;
+        counts.set(topicKey, current);
+      };
+
+      for (const page of currentPages) {
+        const topicKey = page.topicKey || deriveTopicKey({
+          url: page.url,
+          title: page.title || '',
+          h1: page.h1 || '',
+          h2List: page.h2List || [],
+          pageType: page.pageType || classifyCompetitorPageType({ url: page.url, title: page.title || '', h1: page.h1 || '' })
+        });
+        increment(topicKey, getTopicLabel(topicKey));
+      }
+
+      return [...counts.values()];
+    }
+  }
+
   const history = await prisma.history.findMany({
     where: { projectId },
     select: {

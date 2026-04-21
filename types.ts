@@ -207,6 +207,68 @@ export interface Project {
 
 export type MonitoringFrequency = '15m' | '1h' | '1d';
 export type MonitoringSeverity = 'critical' | 'warning' | 'info';
+export type ProjectSiteStatus = 'healthy' | 'warning' | 'error';
+
+export interface ProjectSitePage {
+  id: string;
+  projectSiteId: string;
+  url: string;
+  normalizedUrl: string;
+  finalUrl?: string | null;
+  statusCode: number;
+  title?: string | null;
+  h1?: string | null;
+  h2List: string[];
+  h3List: string[];
+  metaDescription?: string | null;
+  canonical?: string | null;
+  faqQuestions: string[];
+  contentText?: string | null;
+  wordCount: number;
+  ctaText?: string | null;
+  internalLinks: string[];
+  pageType?: string | null;
+  topicKey?: string | null;
+  fetchError?: string | null;
+  isDeletedPage: boolean;
+  scannedAt: string;
+}
+
+export interface ProjectSiteTopicCoverage {
+  topicKey: string;
+  label: string;
+  pageType: string;
+  count: number;
+}
+
+export interface ProjectSite {
+  id: string;
+  projectId: string;
+  name?: string | null;
+  domain: string;
+  normalizedDomain: string;
+  homepageUrl: string;
+  scanFrequency: MonitoringFrequency;
+  frequencyMinutes: number;
+  isActive: boolean;
+  lastScannedAt?: string | null;
+  nextScanAt: string;
+  lastStatus?: ProjectSiteStatus | null;
+  lastPageCount: number;
+  lastSummary?: string | null;
+  lastImportedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  currentPages: ProjectSitePage[];
+  topicCoverage: ProjectSiteTopicCoverage[];
+}
+
+export interface ProjectSiteImportResult {
+  imported: number;
+  skipped: number;
+  limitReached: boolean;
+  totalLinks: number;
+}
 
 export interface MonitoringSnapshot {
   id: string;

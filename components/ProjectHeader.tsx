@@ -10,13 +10,14 @@ import {
   ListTree,
   BellRing,
   Radar,
+  ShieldCheck,
   Menu,
   X,
   ArrowUpRight,
 } from 'lucide-react';
 import { Project } from '../types';
 
-type ProjectTab = 'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp' | 'monitoring' | 'competitors';
+type ProjectTab = 'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp' | 'monitoring' | 'competitors' | 'ours';
 
 interface ProjectHeaderProps {
   project: Project;
@@ -104,6 +105,17 @@ const tabs: TabConfig[] = [
     iconSurfaceClass: 'bg-rose-50',
     activeSurfaceClass: 'from-rose-600 via-orange-500 to-amber-400',
     glowClass: 'shadow-[0_22px_50px_rgba(244,63,94,0.22)]',
+  },
+  {
+    id: 'ours',
+    label: 'Мы',
+    description: 'Ваш сайт проекта для comparison, тем и внутренних ссылок',
+    icon: <ShieldCheck className="w-4 h-4" />,
+    colorClass: 'text-emerald-600',
+    bgClass: 'bg-white text-emerald-600 shadow-sm',
+    iconSurfaceClass: 'bg-emerald-50',
+    activeSurfaceClass: 'from-emerald-600 via-teal-500 to-cyan-400',
+    glowClass: 'shadow-[0_22px_50px_rgba(16,185,129,0.22)]',
   },
   {
     id: 'competitors',

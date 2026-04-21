@@ -102,6 +102,7 @@ model Project {
   history     History[]
   monitoredPages MonitoredPage[]
   competitors Competitor[]
+  projectSite ProjectSite?
   
   @@index([userId])
   @@index([userId, createdAt(sort: Desc)])
@@ -343,6 +344,72 @@ model CompetitorComparison {
 
   @@unique([competitorId, topicKey])
   @@index([competitorId])
+}
+
+// ==================== OUR SITE ====================
+
+model ProjectSite {
+  id               String                  @id @default(uuid())
+  projectId        String                  @unique
+  project          Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  name             String?
+  domain           String
+  normalizedDomain String
+  homepageUrl      String
+  scanFrequency    String                  @default("1d")
+  frequencyMinutes Int                     @default(1440)
+  isActive         Boolean                 @default(true)
+
+  lastScannedAt    DateTime?
+  nextScanAt       DateTime                @default(now())
+  lastStatus       String?
+  lastPageCount    Int                     @default(0)
+  lastSummary      String?                 @db.Text
+  lastImportedAt   DateTime?
+
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  pageSnapshots    ProjectSitePageSnapshot[]
+
+  @@index([projectId])
+  @@index([isActive, nextScanAt])
+}
+
+model ProjectSitePageSnapshot {
+  id              String      @id @default(uuid())
+  projectSiteId   String
+  projectSite     ProjectSite @relation(fields: [projectSiteId], references: [id], onDelete: Cascade)
+
+  url             String
+  normalizedUrl   String
+  finalUrl        String?
+  statusCode      Int
+  title           String?
+  h1              String?
+  h2List          String[]    @default([])
+  h3List          String[]    @default([])
+  metaDescription String?
+  canonical       String?
+  faqQuestions    String[]    @default([])
+  contentText     String?     @db.Text
+  wordCount       Int         @default(0)
+  contentHash     String?
+  structureHash   String?
+  ctaText         String?
+  internalLinks   String[]    @default([])
+  pageType        String?
+  topicKey        String?
+  fetchError      String?
+  isDeletedPage   Boolean     @default(false)
+
+  scannedAt       DateTime    @default(now())
+
+  @@index([projectSiteId])
+  @@index([projectSiteId, scannedAt(sort: Desc)])
+  @@index([projectSiteId, normalizedUrl])
+  @@index([projectSiteId, normalizedUrl, scannedAt(sort: Desc)])
 }
 
 // ==================== ИСТОРИЯ ГЕНЕРАЦИЙ ====================

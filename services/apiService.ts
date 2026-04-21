@@ -2,6 +2,8 @@ import {
     User,
     SubscriptionPlan,
     Project,
+    ProjectSite,
+    ProjectSiteImportResult,
     HistoryItem,
     GenerationConfig,
     SeoResult,
@@ -147,6 +149,43 @@ class ApiService {
     async deleteProject(projectId: string): Promise<{ success: boolean }> {
         return this.request(`/projects/${projectId}`, {
             method: 'DELETE'
+        });
+    }
+
+    // Project Site ("Мы")
+    async getProjectSite(projectId: string): Promise<{ site: ProjectSite | null }> {
+        return this.request(`/project-site/projects/${projectId}/site`);
+    }
+
+    async createProjectSite(projectId: string, data: { homepageUrl: string; name?: string; scanFrequency: MonitoringFrequency }): Promise<{ site: ProjectSite }> {
+        return this.request(`/project-site/projects/${projectId}/site`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async updateProjectSite(siteId: string, data: { homepageUrl?: string; name?: string; scanFrequency?: MonitoringFrequency; isActive?: boolean }): Promise<{ site: ProjectSite }> {
+        return this.request(`/project-site/site/${siteId}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async deleteProjectSite(siteId: string): Promise<{ success: boolean }> {
+        return this.request(`/project-site/site/${siteId}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async scanProjectSite(siteId: string): Promise<{ site: ProjectSite }> {
+        return this.request(`/project-site/site/${siteId}/scan`, {
+            method: 'POST'
+        });
+    }
+
+    async importProjectSiteLinks(siteId: string): Promise<{ site: ProjectSite | null; result: ProjectSiteImportResult }> {
+        return this.request(`/project-site/site/${siteId}/import-links`, {
+            method: 'POST'
         });
     }
 
