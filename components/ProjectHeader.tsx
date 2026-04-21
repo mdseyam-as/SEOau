@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Home,
   ChevronRight,
+  ChevronDown,
   Sparkles,
   Search,
   RefreshCw,
@@ -39,7 +40,7 @@ interface TabConfig {
   glowClass: string;
 }
 
-const tabs: TabConfig[] = [
+const primaryTabs: TabConfig[] = [
   {
     id: 'generator',
     label: 'Генератор',
@@ -96,26 +97,41 @@ const tabs: TabConfig[] = [
     glowClass: 'shadow-[0_22px_50px_rgba(79,70,229,0.22)]',
   },
   {
+    id: 'history',
+    label: 'История',
+    description: 'Откройте сохранённые результаты и прошлые генерации',
+    icon: <History className="w-4 h-4" />,
+    colorClass: 'text-brand-green',
+    bgClass: 'bg-white text-brand-green shadow-sm',
+    iconSurfaceClass: 'bg-slate-100',
+    activeSurfaceClass: 'from-slate-900 via-slate-700 to-slate-500',
+    glowClass: 'shadow-[0_22px_50px_rgba(15,23,42,0.22)]',
+  },
+];
+
+const monitoringParentTab: TabConfig = {
+  id: 'monitoring',
+  label: 'Monitoring',
+  description: 'SEO Monitoring, конкуренты и ваш сайт в одном разделе',
+  icon: <BellRing className="w-4 h-4" />,
+  colorClass: 'text-rose-600',
+  bgClass: 'bg-white text-rose-600 shadow-sm',
+  iconSurfaceClass: 'bg-rose-50',
+  activeSurfaceClass: 'from-rose-600 via-orange-500 to-amber-400',
+  glowClass: 'shadow-[0_22px_50px_rgba(244,63,94,0.22)]',
+};
+
+const monitoringTabs: TabConfig[] = [
+  {
     id: 'monitoring',
-    label: 'Monitoring',
-    description: 'Следите за изменениями на важных страницах',
+    label: 'SEO Monitoring',
+    description: 'Следите за изменениями на важных страницах и техническими сигналами',
     icon: <BellRing className="w-4 h-4" />,
     colorClass: 'text-rose-600',
     bgClass: 'bg-white text-rose-600 shadow-sm',
     iconSurfaceClass: 'bg-rose-50',
     activeSurfaceClass: 'from-rose-600 via-orange-500 to-amber-400',
     glowClass: 'shadow-[0_22px_50px_rgba(244,63,94,0.22)]',
-  },
-  {
-    id: 'ours',
-    label: 'Мы',
-    description: 'Ваш сайт проекта для comparison, тем и внутренних ссылок',
-    icon: <ShieldCheck className="w-4 h-4" />,
-    colorClass: 'text-emerald-600',
-    bgClass: 'bg-white text-emerald-600 shadow-sm',
-    iconSurfaceClass: 'bg-emerald-50',
-    activeSurfaceClass: 'from-emerald-600 via-teal-500 to-cyan-400',
-    glowClass: 'shadow-[0_22px_50px_rgba(16,185,129,0.22)]',
   },
   {
     id: 'competitors',
@@ -129,17 +145,20 @@ const tabs: TabConfig[] = [
     glowClass: 'shadow-[0_22px_50px_rgba(6,182,212,0.22)]',
   },
   {
-    id: 'history',
-    label: 'История',
-    description: 'Откройте сохранённые результаты и прошлые генерации',
-    icon: <History className="w-4 h-4" />,
-    colorClass: 'text-brand-green',
-    bgClass: 'bg-white text-brand-green shadow-sm',
-    iconSurfaceClass: 'bg-slate-100',
-    activeSurfaceClass: 'from-slate-900 via-slate-700 to-slate-500',
-    glowClass: 'shadow-[0_22px_50px_rgba(15,23,42,0.22)]',
-  },
+    id: 'ours',
+    label: 'Мы',
+    description: 'Ваш сайт проекта для comparison, тем и внутренних ссылок',
+    icon: <ShieldCheck className="w-4 h-4" />,
+    colorClass: 'text-emerald-600',
+    bgClass: 'bg-white text-emerald-600 shadow-sm',
+    iconSurfaceClass: 'bg-emerald-50',
+    activeSurfaceClass: 'from-emerald-600 via-teal-500 to-cyan-400',
+    glowClass: 'shadow-[0_22px_50px_rgba(16,185,129,0.22)]',
+  }
 ];
+
+const allTabs = [...primaryTabs, ...monitoringTabs];
+const monitoringTabIds: ProjectTab[] = ['monitoring', 'competitors', 'ours'];
 
 export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   project,
@@ -149,7 +168,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   historyCount = 0
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const activeTab = tabs.find(tab => tab.id === currentTab);
+  const [isMonitoringExpanded, setIsMonitoringExpanded] = useState(monitoringTabIds.includes(currentTab));
+  const activeTab = allTabs.find(tab => tab.id === currentTab);
+  const isMonitoringSectionActive = monitoringTabIds.includes(currentTab);
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -168,6 +189,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       window.removeEventListener('keydown', handleEscape);
     };
   }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (isMonitoringSectionActive) {
+      setIsMonitoringExpanded(true);
+    }
+  }, [isMonitoringSectionActive]);
 
   const handleTabChange = (tabId: ProjectTab) => {
     onTabChange(tabId);
@@ -304,13 +331,13 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-white/35">Инструментов</div>
-                    <div className="mt-1 text-lg font-semibold text-white">{tabs.length}</div>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-white/35">История</div>
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-white/35">Инструментов</div>
+                    <div className="mt-1 text-lg font-semibold text-white">{allTabs.length}</div>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-white/35">История</div>
                     <div className="mt-1 text-lg font-semibold text-white">{historyCount}</div>
                   </div>
                 </div>
@@ -324,7 +351,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               </div>
 
               <div className="space-y-3" role="tablist" aria-label="Вкладки проекта">
-                {tabs.map((tab, index) => {
+                {primaryTabs.map((tab, index) => {
                   const isActive = currentTab === tab.id;
 
                   return (
@@ -376,6 +403,103 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                     </button>
                   );
                 })}
+
+                {(() => {
+                  const baseIndex = primaryTabs.length;
+                  return (
+                    <div
+                      className="space-y-3"
+                      style={{
+                        transitionDelay: isMenuOpen ? `${baseIndex * 28}ms` : '0ms',
+                        opacity: isMenuOpen ? 1 : 0,
+                        transform: isMenuOpen ? 'translateX(0) scale(1)' : 'translateX(28px) scale(0.98)',
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsMonitoringExpanded((prev) => !prev);
+                          if (!isMonitoringSectionActive) {
+                            onTabChange('monitoring');
+                          }
+                        }}
+                        className={`group relative flex w-full items-center gap-4 overflow-hidden rounded-[24px] border px-4 py-4 text-left transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                          isMonitoringSectionActive
+                            ? `border-transparent bg-[linear-gradient(135deg,rgba(15,23,42,0.96),rgba(30,41,59,0.92))] text-white ${monitoringParentTab.glowClass}`
+                            : 'border-slate-200/80 bg-white/80 text-slate-700 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-[0_18px_38px_rgba(148,163,184,0.12)]'
+                        }`}
+                        role="tab"
+                        aria-selected={isMonitoringSectionActive}
+                        aria-expanded={isMonitoringExpanded}
+                        aria-controls="panel-monitoring-group"
+                        aria-label={monitoringParentTab.label}
+                      >
+                        <div className={`pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 ${isMonitoringSectionActive ? 'opacity-100' : 'group-hover:opacity-100'}`}>
+                          <div
+                            className={`absolute inset-0 bg-gradient-to-br ${isMonitoringSectionActive ? monitoringParentTab.activeSurfaceClass : 'from-slate-100 via-white to-slate-50'}`}
+                            style={{ opacity: isMonitoringSectionActive ? 1 : 0.4 }}
+                          />
+                        </div>
+
+                        <div className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${isMonitoringSectionActive ? `bg-gradient-to-br ${monitoringParentTab.activeSurfaceClass} text-white shadow-[0_14px_32px_rgba(0,0,0,0.22)]` : `${monitoringParentTab.iconSurfaceClass} ${monitoringParentTab.colorClass}`}`}>
+                          {monitoringParentTab.icon}
+                        </div>
+
+                        <div className="relative min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate text-base font-semibold">{monitoringParentTab.label}</span>
+                            <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${isMonitoringSectionActive ? 'bg-white/12 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                              {monitoringTabs.length}
+                            </span>
+                          </div>
+                          <div className={`mt-1 text-sm ${isMonitoringSectionActive ? 'text-white/72' : 'text-slate-500'}`}>
+                            {monitoringParentTab.description}
+                          </div>
+                        </div>
+
+                        <ChevronDown className={`relative h-5 w-5 shrink-0 transition-transform duration-300 ${isMonitoringExpanded ? 'rotate-180' : ''} ${isMonitoringSectionActive ? 'text-white/75' : 'text-slate-300'}`} />
+                      </button>
+
+                      <div
+                        id="panel-monitoring-group"
+                        className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isMonitoringExpanded ? 'max-h-[540px] opacity-100' : 'max-h-0 opacity-0'}`}
+                      >
+                        <div className="ml-5 space-y-2 border-l border-white/10 pl-4 pt-1">
+                          {monitoringTabs.map((tab, childIndex) => {
+                            const isActive = currentTab === tab.id;
+                            return (
+                              <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => handleTabChange(tab.id)}
+                                className={`group relative flex w-full items-center gap-3 overflow-hidden rounded-[20px] border px-4 py-3 text-left transition-all duration-300 ${
+                                  isActive
+                                    ? 'border-brand-green/30 bg-[linear-gradient(135deg,rgba(15,23,42,0.96),rgba(30,41,59,0.92))] text-white shadow-[0_18px_42px_rgba(15,23,42,0.16)]'
+                                    : 'border-slate-200/70 bg-white/70 text-slate-700 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white'
+                                }`}
+                                style={{
+                                  transitionDelay: isMonitoringExpanded ? `${childIndex * 40}ms` : '0ms',
+                                  transform: isMonitoringExpanded ? 'translateX(0)' : 'translateX(12px)',
+                                }}
+                              >
+                                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${isActive ? `bg-gradient-to-br ${tab.activeSurfaceClass} text-white shadow-[0_12px_28px_rgba(0,0,0,0.18)]` : `${tab.iconSurfaceClass} ${tab.colorClass}`}`}>
+                                  {tab.icon}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="truncate text-sm font-semibold">{tab.label}</div>
+                                  <div className={`mt-0.5 text-xs ${isActive ? 'text-white/70' : 'text-slate-500'}`}>
+                                    {tab.description}
+                                  </div>
+                                </div>
+                                <ArrowUpRight className={`h-4 w-4 shrink-0 ${isActive ? 'text-white/70' : 'text-slate-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5'} transition-transform duration-300`} />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
