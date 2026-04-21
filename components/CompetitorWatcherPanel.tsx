@@ -83,6 +83,10 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
     ? summaryCache[selectedCompetitor.id]
     : undefined;
 
+  const comparisonScale = useMemo(() => (
+    Math.max(1, ...selectedComparisons.map((item) => Math.max(item.ourCoverage, item.theirCoverage)))
+  ), [selectedComparisons]);
+
   const stats = useMemo(() => ({
     competitors: competitors.length,
     trackedPages: competitors.reduce((sum, competitor) => sum + competitor.lastPageCount, 0),
@@ -315,10 +319,13 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
 
   return (
     <div className="space-y-5">
-      <section className="app-dark-card p-4 sm:p-6">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+      <section className="app-dark-card relative overflow-hidden p-4 sm:p-6">
+        <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-emerald-400/12 blur-3xl" />
+        <div className="pointer-events-none absolute left-10 top-14 h-28 w-28 rounded-full bg-sky-400/10 blur-3xl" />
+
+        <div className="relative flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
-            <div className="mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+            <div className="mb-3 inline-flex items-center rounded-full border border-emerald-400/15 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-200">
               Competitor Watcher
             </div>
             <h3 className="text-xl font-bold text-white flex items-center gap-2 tracking-tight">
@@ -339,54 +346,83 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
           </div>
         </div>
 
-        <form onSubmit={handleCreateCompetitor} className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-3">
-          <input
-            type="url"
-            value={newUrl}
-            onChange={(event) => setNewUrl(event.target.value)}
-            placeholder="https://competitor.com"
-            className="app-input-dark lg:col-span-4"
-          />
-          <input
-            type="text"
-            value={newName}
-            onChange={(event) => setNewName(event.target.value)}
-            placeholder="Имя конкурента"
-            className="app-input-dark lg:col-span-2"
-          />
-          <select
-            value={newPriority}
-            onChange={(event) => setNewPriority(event.target.value as CompetitorPriority)}
-            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition-all focus:border-brand-green/40 focus:ring-4 focus:ring-brand-green/10 [&>option]:text-slate-900 lg:col-span-2"
-          >
-            {PRIORITY_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-          <select
-            value={newFrequency}
-            onChange={(event) => setNewFrequency(event.target.value as MonitoringFrequency)}
-            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition-all focus:border-brand-green/40 focus:ring-4 focus:ring-brand-green/10 [&>option]:text-slate-900 lg:col-span-2"
-          >
-            {FREQUENCY_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="app-btn-primary lg:col-span-2 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <Plus className="w-4 h-4" />
-            Добавить
-          </button>
-          <textarea
-            value={newNotes}
-            onChange={(event) => setNewNotes(event.target.value)}
-            placeholder="Заметки: что особенно важно отслеживать у этого конкурента"
-            className="app-input-dark min-h-[96px] lg:col-span-12"
-          />
-        </form>
+        <div className="relative mt-6 rounded-[26px] border border-white/10 bg-black/15 p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold text-white">Добавить конкурента</div>
+              <div className="text-xs text-slate-400">Новый домен, рабочий приоритет и заметки для сигналов.</div>
+            </div>
+            <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+              New watcher
+            </div>
+          </div>
+
+          <form onSubmit={handleCreateCompetitor} className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+            <div className="lg:col-span-4">
+              <FieldLabel>Сайт конкурента</FieldLabel>
+              <input
+                type="url"
+                value={newUrl}
+                onChange={(event) => setNewUrl(event.target.value)}
+                placeholder="https://competitor.com"
+                className="app-input-dark"
+              />
+            </div>
+            <div className="lg:col-span-2">
+              <FieldLabel>Название</FieldLabel>
+              <input
+                type="text"
+                value={newName}
+                onChange={(event) => setNewName(event.target.value)}
+                placeholder="Имя конкурента"
+                className="app-input-dark"
+              />
+            </div>
+            <div className="lg:col-span-2">
+              <FieldLabel>Приоритет</FieldLabel>
+              <select
+                value={newPriority}
+                onChange={(event) => setNewPriority(event.target.value as CompetitorPriority)}
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition-all focus:border-brand-green/40 focus:ring-4 focus:ring-brand-green/10 [&>option]:text-slate-900"
+              >
+                {PRIORITY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="lg:col-span-2">
+              <FieldLabel>Частота</FieldLabel>
+              <select
+                value={newFrequency}
+                onChange={(event) => setNewFrequency(event.target.value as MonitoringFrequency)}
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition-all focus:border-brand-green/40 focus:ring-4 focus:ring-brand-green/10 [&>option]:text-slate-900"
+              >
+                {FREQUENCY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="lg:col-span-2 lg:self-end">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="app-btn-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Plus className="w-4 h-4" />
+                Добавить
+              </button>
+            </div>
+            <div className="lg:col-span-12">
+              <FieldLabel>Заметки</FieldLabel>
+              <textarea
+                value={newNotes}
+                onChange={(event) => setNewNotes(event.target.value)}
+                placeholder="Например: важны pricing, integrations и любые comparison pages против нас"
+                className="app-input-dark min-h-[104px]"
+              />
+            </div>
+          </form>
+        </div>
       </section>
 
       {isLoading ? (
@@ -413,10 +449,10 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                   key={competitor.id}
                   type="button"
                   onClick={() => setSelectedCompetitorId(competitor.id)}
-                  className={`w-full text-left rounded-[24px] border p-4 transition-all ${
+                  className={`group w-full text-left rounded-[26px] border p-4 transition-all duration-300 ${
                     isActive
-                      ? 'border-emerald-400/30 bg-emerald-500/10 shadow-[0_18px_40px_rgba(16,185,129,0.12)]'
-                      : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/[0.07]'
+                      ? 'border-emerald-400/30 bg-[linear-gradient(180deg,rgba(16,185,129,0.16),rgba(15,23,42,0.88))] shadow-[0_18px_40px_rgba(16,185,129,0.12)]'
+                      : 'border-white/10 bg-white/[0.04] hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/[0.07]'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -432,7 +468,7 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                       <div className="mt-3 text-white font-bold text-lg truncate">{competitor.name}</div>
                       <div className="mt-1 text-sm text-emerald-200/90 break-all">{competitor.domain}</div>
                     </div>
-                    <ChevronRight className={`w-5 h-5 shrink-0 ${isActive ? 'text-emerald-300' : 'text-slate-500'}`} />
+                    <ChevronRight className={`w-5 h-5 shrink-0 transition-transform duration-300 ${isActive ? 'text-emerald-300' : 'text-slate-500 group-hover:translate-x-0.5'}`} />
                   </div>
 
                   <div className="grid grid-cols-3 gap-3 mt-4">
@@ -455,7 +491,8 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
           <section className="xl:col-span-8 space-y-4">
             {selectedCompetitor && (
               <>
-                <div className="app-dark-card p-4 sm:p-5">
+                <div className="app-dark-card relative overflow-hidden p-4 sm:p-5">
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.16),transparent_42%)]" />
                   <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -479,7 +516,7 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                         {selectedCompetitor.homepageUrl}
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
-                      <p className="mt-3 text-sm text-slate-300 leading-relaxed">
+                      <p className="mt-3 max-w-3xl text-sm text-slate-300 leading-relaxed">
                         {selectedCompetitor.notes || selectedCompetitor.lastSummary || 'Модуль отслеживает URL-level изменения, контентные сдвиги, кластеры и gaps по темам.'}
                       </p>
                     </div>
@@ -537,7 +574,8 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <section className="app-dark-card p-4 sm:p-5">
+                  <section className="app-dark-card relative overflow-hidden p-4 sm:p-5">
+                    <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-emerald-400/10 blur-3xl" />
                     <div className="flex items-center gap-2 text-white font-semibold text-lg">
                       <BellRing className="w-5 h-5 text-emerald-300" />
                       Weekly Summary
@@ -552,12 +590,24 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                       <CompactMetric label="Topic gaps" value={String(selectedSummary?.metrics.topicGaps || 0)} />
                     </div>
                     <div className="space-y-2 mt-4">
-                      {(selectedSummary?.bullets || []).map((bullet, index) => (
-                        <div key={`${selectedCompetitor.id}-bullet-${index}`} className="rounded-[18px] border border-white/10 bg-white/5 px-3 py-3 text-sm text-slate-200">
-                          {bullet}
+                      {(selectedSummary?.bullets || []).length === 0 ? (
+                        <div className="rounded-[18px] border border-dashed border-white/10 bg-black/10 px-4 py-5 text-sm text-slate-400">
+                          После нескольких сканов здесь появится digest по новым страницам, кластерам и сильным сигналам.
                         </div>
-                      ))}
+                      ) : (
+                        (selectedSummary?.bullets || []).map((bullet, index) => (
+                          <div key={`${selectedCompetitor.id}-bullet-${index}`} className="rounded-[18px] border border-white/10 bg-white/5 px-3 py-3 text-sm text-slate-200">
+                            {bullet}
+                          </div>
+                        ))
+                      )}
                     </div>
+                    {selectedSummary?.recommendation && (
+                      <div className="mt-4 rounded-[20px] border border-cyan-400/15 bg-cyan-500/10 px-4 py-4 text-sm text-cyan-50">
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-cyan-200/80">Recommendation</div>
+                        <div className="mt-2 leading-relaxed">{selectedSummary.recommendation}</div>
+                      </div>
+                    )}
                     {selectedSummary?.llmModel && (
                       <div className="mt-4 text-[11px] uppercase tracking-[0.16em] text-slate-500">
                         LLM: {selectedSummary.llmModel}
@@ -565,21 +615,39 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                     )}
                   </section>
 
-                  <section className="app-dark-card p-4 sm:p-5">
+                  <section className="app-dark-card relative overflow-hidden p-4 sm:p-5">
+                    <div className="pointer-events-none absolute left-0 top-0 h-24 w-24 rounded-full bg-sky-400/10 blur-3xl" />
                     <div className="flex items-center gap-2 text-white font-semibold text-lg">
                       <Layers3 className="w-5 h-5 text-emerald-300" />
                       Topic Clusters
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2">
                       {selectedCompetitor.topClusters.length === 0 ? (
-                        <div className="text-sm text-slate-300">Кластеры появятся после накопления страниц и тем.</div>
+                        <div className="w-full rounded-[20px] border border-dashed border-white/10 bg-black/10 px-4 py-8 text-center text-sm text-slate-400">
+                          Кластеры появятся после накопления страниц и тем.
+                        </div>
                       ) : (
                         selectedCompetitor.topClusters.map((cluster) => (
-                          <div key={cluster.id} className="rounded-[20px] border border-white/10 bg-white/5 px-3 py-3 min-w-[180px]">
-                            <div className="text-white font-semibold">{cluster.name}</div>
-                            <div className="mt-1 text-xs text-slate-400 uppercase tracking-wide">{cluster.pageCount} pages</div>
-                            <div className="mt-2 text-sm text-slate-300">
-                              {cluster.keywords.slice(0, 4).join(', ') || 'Ключи появятся после следующего scan'}
+                          <div key={cluster.id} className="min-w-[200px] flex-1 rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(15,23,42,0.18))] px-4 py-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="text-white font-semibold">{cluster.name}</div>
+                              <div className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-300">
+                                {cluster.pageCount} pages
+                              </div>
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {cluster.keywords.slice(0, 4).length > 0 ? (
+                                cluster.keywords.slice(0, 4).map((keyword) => (
+                                  <span
+                                    key={`${cluster.id}-${keyword}`}
+                                    className="rounded-full border border-emerald-400/15 bg-emerald-500/10 px-2.5 py-1 text-xs text-emerald-100"
+                                  >
+                                    {keyword}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-sm text-slate-400">Ключи появятся после следующего scan</span>
+                              )}
                             </div>
                           </div>
                         ))
@@ -588,21 +656,27 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                   </section>
                 </div>
 
-                <section className="app-dark-card p-4 sm:p-5">
+                <section className="app-dark-card relative overflow-hidden p-4 sm:p-5">
+                  <div className="pointer-events-none absolute right-10 top-0 h-24 w-24 rounded-full bg-amber-400/10 blur-3xl" />
                   <div className="flex items-center gap-2 text-white font-semibold text-lg">
                     <Radar className="w-5 h-5 text-emerald-300" />
                     Мы vs Они
                   </div>
+                  <p className="mt-2 text-sm text-slate-300">
+                    Смотрим, где конкурент уже усилил тему, а нашему проекту ещё не хватает покрытия или глубины структуры.
+                  </p>
                   <div className="space-y-3 mt-4">
                     {selectedComparisons.length === 0 ? (
-                      <div className="text-sm text-slate-300">Сравнение тем появится после baseline scan и анализа покрытий.</div>
+                      <div className="rounded-[22px] border border-dashed border-white/10 bg-black/10 px-4 py-8 text-center text-sm text-slate-400">
+                        Сравнение тем появится после baseline scan и анализа покрытий.
+                      </div>
                     ) : (
                       selectedComparisons.slice(0, 8).map((comparison) => (
-                        <div key={comparison.id} className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
+                        <div key={comparison.id} className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(15,23,42,0.18))] px-4 py-4">
                           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
-                            <div>
+                            <div className="min-w-0">
                               <div className="text-white font-semibold">{comparison.theirTopic}</div>
-                              <div className="text-sm text-slate-300 mt-1">{comparison.gapSummary}</div>
+                              <div className="text-sm text-slate-300 mt-1 leading-relaxed">{comparison.gapSummary}</div>
                             </div>
                             <div className="flex items-center gap-2 text-xs uppercase tracking-wide">
                               <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-slate-300">
@@ -613,7 +687,13 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                               </span>
                             </div>
                           </div>
-                          <div className="mt-3 rounded-[18px] border border-white/10 bg-black/10 px-3 py-3 text-sm text-slate-200">
+
+                          <div className="mt-4 space-y-3">
+                            <CoverageBar label="Они" value={comparison.theirCoverage} max={comparisonScale} tone="amber" />
+                            <CoverageBar label="Мы" value={comparison.ourCoverage} max={comparisonScale} tone={comparison.theirCoverage > comparison.ourCoverage ? 'emerald' : 'sky'} />
+                          </div>
+
+                          <div className="mt-4 rounded-[18px] border border-white/10 bg-black/15 px-4 py-4 text-sm text-slate-200 leading-relaxed">
                             {comparison.recommendation}
                           </div>
                         </div>
@@ -642,6 +722,12 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
   );
 };
 
+const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+    {children}
+  </label>
+);
+
 const SummaryCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({ label, value, icon }) => (
   <div className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4 shadow-[0_12px_30px_rgba(2,6,23,0.18)]">
     <div className="flex items-center gap-2 text-slate-400 text-xs uppercase tracking-wide">
@@ -658,6 +744,27 @@ const CompactMetric: React.FC<{ label: string; value: string }> = ({ label, valu
     <div className="mt-1 text-white font-semibold">{value}</div>
   </div>
 );
+
+const CoverageBar: React.FC<{ label: string; value: number; max: number; tone: 'amber' | 'emerald' | 'sky' }> = ({ label, value, max, tone }) => {
+  const percent = Math.max(8, Math.round((value / Math.max(max, 1)) * 100));
+  const toneClasses = {
+    amber: 'from-amber-400 to-amber-300',
+    emerald: 'from-emerald-400 to-emerald-300',
+    sky: 'from-sky-400 to-cyan-300'
+  };
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.16em] text-slate-400">
+        <span>{label}</span>
+        <span className="text-slate-300">{value}</span>
+      </div>
+      <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+        <div className={`h-full rounded-full bg-gradient-to-r ${toneClasses[tone]}`} style={{ width: `${percent}%` }} />
+      </div>
+    </div>
+  );
+};
 
 const MetaCell: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="rounded-[20px] border border-white/10 bg-white/5 px-3 py-3">

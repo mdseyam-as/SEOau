@@ -203,10 +203,13 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
 
   return (
     <div className="space-y-5">
-      <section className="app-dark-card p-4 sm:p-6">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+      <section className="app-dark-card relative overflow-hidden p-4 sm:p-6">
+        <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-emerald-400/12 blur-3xl" />
+        <div className="pointer-events-none absolute left-10 top-14 h-28 w-28 rounded-full bg-sky-400/10 blur-3xl" />
+
+        <div className="relative flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
-            <div className="mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+            <div className="mb-3 inline-flex items-center rounded-full border border-emerald-400/15 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-200">
               Модуль "Мы"
             </div>
             <h3 className="text-xl font-bold text-white flex items-center gap-2 tracking-tight">
@@ -230,73 +233,119 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
         </div>
 
         {!site ? (
-          <form onSubmit={handleCreateSite} className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-3">
-            <input
-              type="url"
-              value={homepageUrl}
-              onChange={(event) => setHomepageUrl(event.target.value)}
-              placeholder="https://your-site.com"
-              className="app-input-dark lg:col-span-5"
-            />
-            <input
-              type="text"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Название сайта или бренда"
-              className="app-input-dark lg:col-span-3"
-            />
-            <select
-              value={scanFrequency}
-              onChange={(event) => setScanFrequency(event.target.value as MonitoringFrequency)}
-              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition-all focus:border-brand-green/40 focus:ring-4 focus:ring-brand-green/10 [&>option]:text-slate-900 lg:col-span-2"
-            >
-              {FREQUENCY_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="app-btn-primary lg:col-span-2 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <Plus className="w-4 h-4" />
-              Добавить сайт
-            </button>
-          </form>
+          <div className="relative mt-6 rounded-[26px] border border-white/10 bg-black/15 p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-white">Добавить основной сайт проекта</div>
+                <div className="text-xs text-slate-400">Этот домен станет базой для comparison с конкурентами и импорта внутренних ссылок.</div>
+              </div>
+              <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                Primary source
+              </div>
+            </div>
+
+            <form onSubmit={handleCreateSite} className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+              <div className="lg:col-span-5">
+                <FieldLabel>Основной домен</FieldLabel>
+                <input
+                  type="url"
+                  value={homepageUrl}
+                  onChange={(event) => setHomepageUrl(event.target.value)}
+                  placeholder="https://your-site.com"
+                  className="app-input-dark"
+                />
+              </div>
+              <div className="lg:col-span-3">
+                <FieldLabel>Название</FieldLabel>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Название сайта или бренда"
+                  className="app-input-dark"
+                />
+              </div>
+              <div className="lg:col-span-2">
+                <FieldLabel>Частота</FieldLabel>
+                <select
+                  value={scanFrequency}
+                  onChange={(event) => setScanFrequency(event.target.value as MonitoringFrequency)}
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition-all focus:border-brand-green/40 focus:ring-4 focus:ring-brand-green/10 [&>option]:text-slate-900"
+                >
+                  {FREQUENCY_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="lg:col-span-2 lg:self-end">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="app-btn-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Plus className="w-4 h-4" />
+                  Добавить сайт
+                </button>
+              </div>
+            </form>
+          </div>
         ) : (
           <div className="mt-6 space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-              <input
-                type="url"
-                value={homepageUrl}
-                onChange={(event) => setHomepageUrl(event.target.value)}
-                className="app-input-dark lg:col-span-5"
-              />
-              <input
-                type="text"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Название сайта"
-                className="app-input-dark lg:col-span-3"
-              />
-              <select
-                value={scanFrequency}
-                onChange={(event) => setScanFrequency(event.target.value as MonitoringFrequency)}
-                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition-all focus:border-brand-green/40 focus:ring-4 focus:ring-brand-green/10 [&>option]:text-slate-900 lg:col-span-2"
-              >
-                {FREQUENCY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={handleSaveSite}
-                disabled={isSaving}
-                className="app-btn-secondary lg:col-span-2 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <Save className="w-4 h-4" />
-                Сохранить
-              </button>
+            <div className="rounded-[26px] border border-white/10 bg-black/15 p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-white">Настройки основного сайта</div>
+                  <div className="text-xs text-slate-400">Отсюда обновляется домен, частота сканирования и статус фонового сбора страниц.</div>
+                </div>
+                <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${statusStyles[site.lastStatus || 'healthy'] || statusStyles.healthy}`}>
+                  {site.lastStatus || 'healthy'}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+                <div className="lg:col-span-5">
+                  <FieldLabel>Основной домен</FieldLabel>
+                  <input
+                    type="url"
+                    value={homepageUrl}
+                    onChange={(event) => setHomepageUrl(event.target.value)}
+                    className="app-input-dark"
+                  />
+                </div>
+                <div className="lg:col-span-3">
+                  <FieldLabel>Название</FieldLabel>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Название сайта"
+                    className="app-input-dark"
+                  />
+                </div>
+                <div className="lg:col-span-2">
+                  <FieldLabel>Частота</FieldLabel>
+                  <select
+                    value={scanFrequency}
+                    onChange={(event) => setScanFrequency(event.target.value as MonitoringFrequency)}
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition-all focus:border-brand-green/40 focus:ring-4 focus:ring-brand-green/10 [&>option]:text-slate-900"
+                  >
+                    {FREQUENCY_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="lg:col-span-2 lg:self-end">
+                  <button
+                    type="button"
+                    onClick={handleSaveSite}
+                    disabled={isSaving}
+                    className="app-btn-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Save className="w-4 h-4" />
+                    Сохранить
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -313,7 +362,7 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
                 type="button"
                 onClick={handleImportLinks}
                 disabled={isImporting}
-                className="app-btn-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                className="app-btn-dark disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Download className="w-4 h-4" />
                 Импортировать ссылки
@@ -321,7 +370,7 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
               <button
                 type="button"
                 onClick={handleToggleActive}
-                className="app-btn-secondary"
+                className="app-btn-dark"
               >
                 {site.isActive ? <PauseCircle className="w-4 h-4" /> : <PlayCircle className="w-4 h-4" />}
                 {site.isActive ? 'Пауза' : 'Включить'}
@@ -337,12 +386,9 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-4">
-              <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+              <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(15,23,42,0.18))] p-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <h4 className="text-base font-semibold text-white">{site.name || site.domain}</h4>
-                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${statusStyles[site.lastStatus || 'healthy'] || statusStyles.healthy}`}>
-                    {site.lastStatus || 'healthy'}
-                  </span>
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-sm text-slate-300">
                   <Globe className="w-4 h-4 text-slate-400" />
@@ -358,7 +404,7 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
                 </div>
               </div>
 
-              <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+              <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(15,23,42,0.18))] p-4">
                 <div className="flex items-center gap-2">
                   <BookOpenText className="w-4 h-4 text-emerald-300" />
                   <h4 className="text-base font-semibold text-white">Тематическое покрытие</h4>
@@ -367,14 +413,22 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
                   {site.topicCoverage.length > 0 ? site.topicCoverage.map((topic) => (
                     <div
                       key={topic.topicKey}
-                      className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2"
+                      className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3"
                     >
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium text-white">{topic.label}</div>
-                        <div className="text-xs uppercase tracking-[0.12em] text-slate-400">{topic.pageType}</div>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-medium text-white">{topic.label}</div>
+                          <div className="text-xs uppercase tracking-[0.12em] text-slate-400">{topic.pageType}</div>
+                        </div>
+                        <div className="ml-3 rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-slate-200">
+                          {topic.count}
+                        </div>
                       </div>
-                      <div className="ml-3 rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-slate-200">
-                        {topic.count}
+                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300"
+                          style={{ width: `${Math.max(10, Math.min(100, topic.count * 12))}%` }}
+                        />
                       </div>
                     </div>
                   )) : (
@@ -410,7 +464,7 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
               {site.currentPages.length > 0 ? site.currentPages.slice(0, 18).map((page) => (
                 <div
                   key={page.id}
-                  className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4 transition-all hover:border-brand-green/20 hover:bg-white/[0.06]"
+                  className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(15,23,42,0.18))] p-4 transition-all hover:border-brand-green/20 hover:bg-white/[0.06]"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -485,8 +539,14 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
   );
 };
 
+const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+    {children}
+  </label>
+);
+
 const SummaryCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({ label, value, icon }) => (
-  <div className="rounded-[22px] border border-white/10 bg-white/[0.04] px-4 py-3">
+  <div className="rounded-[22px] border border-white/10 bg-white/[0.04] px-4 py-3 shadow-[0_12px_30px_rgba(2,6,23,0.18)]">
     <div className="flex items-center gap-2 text-slate-300 text-xs uppercase tracking-[0.12em]">
       <span className="text-emerald-300">{icon}</span>
       {label}
@@ -503,7 +563,7 @@ const MiniInfo: React.FC<{ label: string; value: string }> = ({ label, value }) 
 );
 
 const UsageCard: React.FC<{ icon: React.ReactNode; title: string; text: string }> = ({ icon, title, text }) => (
-  <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
+  <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(15,23,42,0.18))] p-4">
     <div className="flex items-center gap-2 text-white font-semibold">
       {icon}
       {title}
