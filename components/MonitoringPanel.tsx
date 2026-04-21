@@ -21,6 +21,10 @@ const severityStyles: Record<MonitoringSeverity, string> = {
   info: 'border border-sky-400/20 bg-sky-500/10 text-sky-300'
 };
 
+const fieldShellClass = 'rounded-[20px] border border-white/12 bg-[linear-gradient(180deg,rgba(2,6,23,0.32),rgba(15,23,42,0.72))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_10px_25px_rgba(2,6,23,0.16)]';
+const fieldInputClass = 'w-full bg-transparent p-0 text-white outline-none placeholder:text-slate-500';
+const fieldSelectClass = 'w-full appearance-none bg-transparent p-0 text-white outline-none [&>option]:text-slate-900';
+
 export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) => {
   const toast = useToast();
   const [pages, setPages] = useState<MonitoredPage[]>([]);
@@ -168,10 +172,15 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
 
   return (
     <div className="space-y-5">
-      <section className="app-dark-card p-4 sm:p-6">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+      <section className="app-dark-card relative overflow-hidden p-4 sm:p-6">
+        <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-emerald-400/12 blur-3xl" />
+        <div className="pointer-events-none absolute left-10 top-14 h-28 w-28 rounded-full bg-sky-400/10 blur-3xl" />
+
+        <div className="relative flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
-            <div className="mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">Monitoring</div>
+            <div className="mb-3 inline-flex items-center rounded-full border border-emerald-400/15 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-200">
+              Monitoring
+            </div>
             <h3 className="text-xl font-bold text-white flex items-center gap-2 tracking-tight">
               <BellRing className="w-5 h-5 text-emerald-300" />
               SEO Monitoring + Alerts
@@ -189,41 +198,70 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
           </div>
         </div>
 
-        <form onSubmit={handleCreatePage} className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-3">
-          <input
-            type="url"
-            value={newUrl}
-            onChange={(event) => setNewUrl(event.target.value)}
-            placeholder="https://example.com/pricing"
-            className="app-input-dark lg:col-span-5"
-          />
-          <input
-            type="text"
-            value={newLabel}
-            onChange={(event) => setNewLabel(event.target.value)}
-            placeholder="Название или комментарий"
-            className="app-input-dark lg:col-span-3"
-          />
-          <select
-            value={newFrequency}
-            onChange={(event) => setNewFrequency(event.target.value as MonitoringFrequency)}
-            className="lg:col-span-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition-all focus:border-brand-green/40 focus:ring-4 focus:ring-brand-green/10 [&>option]:text-slate-900"
-          >
-            {FREQUENCY_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="app-btn-primary lg:col-span-2 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <Plus className="w-4 h-4" />
-            Добавить
-          </button>
-        </form>
+        <div className="relative mt-6 rounded-[26px] border border-white/10 bg-black/15 p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold text-white">Добавить URL в мониторинг</div>
+              <div className="text-xs text-slate-400">Выберите страницу, частоту проверки и краткую пометку для команды.</div>
+            </div>
+            <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+              Live alerts
+            </div>
+          </div>
+
+          <form onSubmit={handleCreatePage} className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+            <div className="lg:col-span-5">
+              <FieldLabel>URL страницы</FieldLabel>
+              <div className={fieldShellClass}>
+                <input
+                  type="url"
+                  value={newUrl}
+                  onChange={(event) => setNewUrl(event.target.value)}
+                  placeholder="https://example.com/pricing"
+                  className={fieldInputClass}
+                />
+              </div>
+            </div>
+            <div className="lg:col-span-3">
+              <FieldLabel>Подпись</FieldLabel>
+              <div className={fieldShellClass}>
+                <input
+                  type="text"
+                  value={newLabel}
+                  onChange={(event) => setNewLabel(event.target.value)}
+                  placeholder="Название или комментарий"
+                  className={fieldInputClass}
+                />
+              </div>
+            </div>
+            <div className="lg:col-span-2">
+              <FieldLabel>Частота</FieldLabel>
+              <div className={fieldShellClass}>
+                <select
+                  value={newFrequency}
+                  onChange={(event) => setNewFrequency(event.target.value as MonitoringFrequency)}
+                  className={fieldSelectClass}
+                >
+                  {FREQUENCY_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="lg:col-span-2 lg:self-end">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="app-btn-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Plus className="w-4 h-4" />
+                Добавить
+              </button>
+            </div>
+          </form>
+        </div>
       </section>
 
       {isLoading ? (
@@ -280,7 +318,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
                       <select
                         value={page.frequency}
                         onChange={(event) => handleChangeFrequency(page.id, event.target.value as MonitoringFrequency)}
-                        className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white [&>option]:text-slate-900"
+                        className="rounded-2xl border border-white/12 bg-[linear-gradient(180deg,rgba(2,6,23,0.28),rgba(15,23,42,0.72))] px-3 py-2 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] [&>option]:text-slate-900"
                       >
                         {FREQUENCY_OPTIONS.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -347,6 +385,12 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
     </div>
   );
 };
+
+const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+    {children}
+  </label>
+);
 
 const SummaryCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({ label, value, icon }) => (
   <div className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4 shadow-[0_12px_30px_rgba(2,6,23,0.18)]">
