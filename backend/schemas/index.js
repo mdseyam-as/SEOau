@@ -81,6 +81,29 @@ export const updateMonitoredPageSchema = z.object({
     message: 'At least one field must be provided'
 });
 
+// ==================== Competitor Watcher Schemas ====================
+
+export const competitorPrioritySchema = z.enum(['high', 'medium', 'low']);
+
+export const createCompetitorSchema = z.object({
+    homepageUrl: z.string().url('Invalid competitor URL').max(2000),
+    name: z.string().max(160).optional().default(''),
+    priority: competitorPrioritySchema.optional().default('medium'),
+    scanFrequency: monitoringFrequencySchema.optional().default('1d'),
+    notes: z.string().max(3000).optional().default('')
+});
+
+export const updateCompetitorSchema = z.object({
+    homepageUrl: z.string().url('Invalid competitor URL').max(2000).optional(),
+    name: z.string().max(160).optional(),
+    priority: competitorPrioritySchema.optional(),
+    scanFrequency: monitoringFrequencySchema.optional(),
+    notes: z.string().max(3000).optional(),
+    isActive: z.boolean().optional()
+}).refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided'
+});
+
 // ==================== Generation Schemas ====================
 
 const keywordSchema = z.object({

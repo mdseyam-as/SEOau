@@ -278,6 +278,127 @@ export interface MonitoredPage {
   recentEvents: MonitoringEvent[];
 }
 
+export type CompetitorPriority = 'high' | 'medium' | 'low';
+export type CompetitorStatus = 'healthy' | 'warning' | 'error';
+
+export interface CompetitorPageChangeDiffChange {
+  type: string;
+  severity: MonitoringSeverity;
+  before?: string | null;
+  after?: string | null;
+  changed: string;
+  risk: string;
+  deltaPercent?: number;
+}
+
+export interface CompetitorPageChange {
+  id: string;
+  competitorId: string;
+  url: string;
+  normalizedUrl: string;
+  severity: MonitoringSeverity;
+  changeType: string;
+  changeTypes: string[];
+  pageType?: string | null;
+  topicKey?: string | null;
+  significanceScore: number;
+  impactScore: number;
+  isImportant: boolean;
+  title: string;
+  summary: string;
+  diff: {
+    summary: string;
+    changes: CompetitorPageChangeDiffChange[];
+    explainability?: {
+      whyImportant?: string;
+      recommendation?: string;
+      significanceScore?: number;
+      impactScore?: number;
+      pageType?: string;
+      topicKey?: string | null;
+      llmModel?: string | null;
+    };
+    metrics?: {
+      previousWordCount?: number;
+      currentWordCount?: number;
+      deltaPercent?: number;
+    };
+  };
+  notifiedAt?: string | null;
+  detectedAt: string;
+}
+
+export interface TopicCluster {
+  id: string;
+  competitorId: string;
+  key: string;
+  name: string;
+  keywords: string[];
+  pageCount: number;
+  trendScore: number;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CompetitorComparison {
+  id: string;
+  competitorId: string;
+  topicKey: string;
+  ourTopic: string;
+  theirTopic: string;
+  ourCoverage: number;
+  theirCoverage: number;
+  gapSummary: string;
+  recommendation: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CompetitorWeeklySummary {
+  periodDays: number;
+  headline: string;
+  llmModel?: string;
+  metrics: {
+    importantChanges: number;
+    criticalChanges: number;
+    newPages: number;
+    newClusters: number;
+    topicGaps: number;
+  };
+  bullets: string[];
+  recommendations: string[];
+}
+
+export interface Competitor {
+  id: string;
+  projectId: string;
+  name: string;
+  domain: string;
+  normalizedDomain: string;
+  homepageUrl: string;
+  priority: CompetitorPriority;
+  scanFrequency: MonitoringFrequency;
+  frequencyMinutes: number;
+  notes?: string | null;
+  isActive: boolean;
+  lastScannedAt?: string | null;
+  nextScanAt: string;
+  lastStatus?: CompetitorStatus | string | null;
+  lastPageCount: number;
+  lastChangeCount: number;
+  lastClusterCount: number;
+  lastSummary?: string | null;
+  lastSeverity?: MonitoringSeverity | null;
+  lastImportantChangeAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  recentChanges: CompetitorPageChange[];
+  topClusters: TopicCluster[];
+  comparisonItems: CompetitorComparison[];
+}
+
 export interface HistoryItem {
   id: string;
   projectId: string;

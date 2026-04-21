@@ -9,13 +9,14 @@ import {
   History,
   ListTree,
   BellRing,
+  Radar,
   Menu,
   X,
   ArrowUpRight,
 } from 'lucide-react';
 import { Project } from '../types';
 
-type ProjectTab = 'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp' | 'monitoring';
+type ProjectTab = 'generator' | 'outline' | 'history' | 'audit' | 'rewrite' | 'serp' | 'monitoring' | 'competitors';
 
 interface ProjectHeaderProps {
   project: Project;
@@ -103,6 +104,17 @@ const tabs: TabConfig[] = [
     iconSurfaceClass: 'bg-rose-50',
     activeSurfaceClass: 'from-rose-600 via-orange-500 to-amber-400',
     glowClass: 'shadow-[0_22px_50px_rgba(244,63,94,0.22)]',
+  },
+  {
+    id: 'competitors',
+    label: 'Competitors',
+    description: 'Отслеживайте кластеры и стратегические сдвиги у конкурентов',
+    icon: <Radar className="w-4 h-4" />,
+    colorClass: 'text-cyan-600',
+    bgClass: 'bg-white text-cyan-600 shadow-sm',
+    iconSurfaceClass: 'bg-cyan-50',
+    activeSurfaceClass: 'from-cyan-600 via-sky-500 to-emerald-400',
+    glowClass: 'shadow-[0_22px_50px_rgba(6,182,212,0.22)]',
   },
   {
     id: 'history',

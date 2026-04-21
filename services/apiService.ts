@@ -1,4 +1,20 @@
-import { User, SubscriptionPlan, Project, HistoryItem, GenerationConfig, SeoResult, SerpAnalysisResult, MonitoredPage, MonitoringEvent, MonitoringFrequency } from '../types';
+import {
+    User,
+    SubscriptionPlan,
+    Project,
+    HistoryItem,
+    GenerationConfig,
+    SeoResult,
+    SerpAnalysisResult,
+    MonitoredPage,
+    MonitoringEvent,
+    MonitoringFrequency,
+    Competitor,
+    CompetitorComparison,
+    CompetitorPageChange,
+    CompetitorPriority,
+    CompetitorWeeklySummary
+} from '../types';
 
 // Безопасно читаем переменные окружения Vite через any-каст,
 // чтобы не ломать типы в TypeScript и не требовать глобальных переменных.
@@ -167,6 +183,49 @@ class ApiService {
 
     async getMonitoringEvents(pageId: string, limit: number = 20): Promise<{ events: MonitoringEvent[] }> {
         return this.request(`/monitoring/pages/${pageId}/events?limit=${limit}`);
+    }
+
+    // Competitor Watcher
+    async getCompetitors(projectId: string): Promise<{ competitors: Competitor[] }> {
+        return this.request(`/competitors/projects/${projectId}/competitors`);
+    }
+
+    async createCompetitor(projectId: string, data: { homepageUrl: string; name?: string; priority: CompetitorPriority; scanFrequency: MonitoringFrequency; notes?: string }): Promise<{ competitor: Competitor }> {
+        return this.request(`/competitors/projects/${projectId}/competitors`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async updateCompetitor(competitorId: string, data: { homepageUrl?: string; name?: string; priority?: CompetitorPriority; scanFrequency?: MonitoringFrequency; notes?: string; isActive?: boolean }): Promise<{ competitor: Competitor }> {
+        return this.request(`/competitors/${competitorId}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async deleteCompetitor(competitorId: string): Promise<{ success: boolean }> {
+        return this.request(`/competitors/${competitorId}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async scanCompetitor(competitorId: string): Promise<{ competitor: Competitor; changes: CompetitorPageChange[]; weeklySummary: CompetitorWeeklySummary }> {
+        return this.request(`/competitors/${competitorId}/scan`, {
+            method: 'POST'
+        });
+    }
+
+    async getCompetitorChanges(competitorId: string, limit: number = 20): Promise<{ changes: CompetitorPageChange[] }> {
+        return this.request(`/competitors/${competitorId}/changes?limit=${limit}`);
+    }
+
+    async getCompetitorComparison(competitorId: string): Promise<{ comparisons: CompetitorComparison[] }> {
+        return this.request(`/competitors/${competitorId}/comparison`);
+    }
+
+    async getCompetitorWeeklySummary(competitorId: string, days: number = 7): Promise<{ summary: CompetitorWeeklySummary }> {
+        return this.request(`/competitors/${competitorId}/summary?days=${days}`);
     }
 
     // History

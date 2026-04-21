@@ -101,6 +101,7 @@ model Project {
   // Relations
   history     History[]
   monitoredPages MonitoredPage[]
+  competitors Competitor[]
   
   @@index([userId])
   @@index([userId, createdAt(sort: Desc)])
@@ -191,6 +192,157 @@ model MonitoringEvent {
   @@index([monitoredPageId])
   @@index([monitoredPageId, createdAt(sort: Desc)])
   @@index([severity])
+}
+
+// ==================== COMPETITOR WATCHER ====================
+
+model Competitor {
+  id                    String                 @id @default(uuid())
+  projectId             String
+  project               Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  name                  String
+  domain                String
+  normalizedDomain      String
+  homepageUrl           String
+  priority              String                 @default("medium")
+  scanFrequency         String                 @default("1d")
+  frequencyMinutes      Int                    @default(1440)
+  notes                 String?                @db.Text
+  isActive              Boolean                @default(true)
+
+  lastScannedAt         DateTime?
+  nextScanAt            DateTime               @default(now())
+  lastStatus            String?
+  lastPageCount         Int                    @default(0)
+  lastChangeCount       Int                    @default(0)
+  lastClusterCount      Int                    @default(0)
+  lastSummary           String?                @db.Text
+  lastSeverity          String?
+  lastImportantChangeAt DateTime?
+
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  pageSnapshots         CompetitorPageSnapshot[]
+  pageChanges           CompetitorPageChange[]
+  topicClusters         TopicCluster[]
+  comparisons           CompetitorComparison[]
+
+  @@unique([projectId, normalizedDomain])
+  @@index([projectId])
+  @@index([projectId, createdAt(sort: Desc)])
+  @@index([isActive, nextScanAt])
+}
+
+model CompetitorPageSnapshot {
+  id                 String                  @id @default(uuid())
+  competitorId       String
+  competitor         Competitor              @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+
+  url                String
+  normalizedUrl      String
+  finalUrl           String?
+  statusCode         Int
+  title              String?
+  h1                 String?
+  h2List             String[]                @default([])
+  h3List             String[]                @default([])
+  metaDescription    String?
+  canonical          String?
+  faqQuestions       String[]                @default([])
+  contentText        String?                 @db.Text
+  wordCount          Int                     @default(0)
+  contentHash        String?
+  structureHash      String?
+  ctaText            String?
+  internalLinks      String[]                @default([])
+  pageType           String?
+  topicKey           String?
+  semanticSummary    String?                 @db.Text
+  fetchError         String?
+  isDeletedPage      Boolean                 @default(false)
+
+  scannedAt          DateTime                @default(now())
+
+  changesCurrent     CompetitorPageChange[]  @relation("CompetitorSnapshotCurrent")
+  changesPrevious    CompetitorPageChange[]  @relation("CompetitorSnapshotPrevious")
+
+  @@index([competitorId])
+  @@index([competitorId, scannedAt(sort: Desc)])
+  @@index([competitorId, normalizedUrl])
+  @@index([competitorId, normalizedUrl, scannedAt(sort: Desc)])
+}
+
+model CompetitorPageChange {
+  id                 String                   @id @default(uuid())
+  competitorId       String
+  competitor         Competitor               @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+
+  snapshotId         String?
+  snapshot           CompetitorPageSnapshot?  @relation("CompetitorSnapshotCurrent", fields: [snapshotId], references: [id], onDelete: SetNull)
+  previousSnapshotId String?
+  previousSnapshot   CompetitorPageSnapshot?  @relation("CompetitorSnapshotPrevious", fields: [previousSnapshotId], references: [id], onDelete: SetNull)
+
+  url                String
+  normalizedUrl      String
+  severity           String
+  changeType         String
+  changeTypes        String[]                 @default([])
+  pageType           String?
+  topicKey           String?
+  significanceScore  Int                      @default(0)
+  impactScore        Int                      @default(0)
+  isImportant        Boolean                  @default(false)
+  title              String
+  summary            String                   @db.Text
+  diff               Json
+  notifiedAt         DateTime?
+  detectedAt         DateTime                 @default(now())
+
+  @@index([competitorId])
+  @@index([competitorId, detectedAt(sort: Desc)])
+  @@index([competitorId, isImportant, detectedAt(sort: Desc)])
+  @@index([severity])
+}
+
+model TopicCluster {
+  id          String      @id @default(uuid())
+  competitorId String
+  competitor  Competitor  @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+
+  key         String
+  name        String
+  keywords    String[]    @default([])
+  pageCount   Int         @default(0)
+  trendScore  Int         @default(0)
+  firstSeenAt DateTime    @default(now())
+  lastSeenAt  DateTime    @default(now())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([competitorId, key])
+  @@index([competitorId])
+}
+
+model CompetitorComparison {
+  id             String      @id @default(uuid())
+  competitorId   String
+  competitor     Competitor  @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+
+  topicKey       String
+  ourTopic       String
+  theirTopic     String
+  ourCoverage    Int         @default(0)
+  theirCoverage  Int         @default(0)
+  gapSummary     String      @db.Text
+  recommendation String      @db.Text
+
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([competitorId, topicKey])
+  @@index([competitorId])
 }
 
 // ==================== ИСТОРИЯ ГЕНЕРАЦИЙ ====================
