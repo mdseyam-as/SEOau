@@ -504,7 +504,7 @@ export default function App() {
 
     // --- Project Detail View ---
     return (
-      <div className="space-y-4 sm:space-y-5 lg:space-y-6">
+      <div className="space-y-4 sm:space-y-5 lg:space-y-6 md:pl-[19rem]">
         {/* Project Header & Breadcrumbs */}
         <ProjectHeader
           project={currentProject}
@@ -744,7 +744,7 @@ export default function App() {
           )}
         </Header>
 
-        <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 xl:max-w-7xl">
+        <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 xl:max-w-[1600px]">
           {renderContent()}
         </main>
 
