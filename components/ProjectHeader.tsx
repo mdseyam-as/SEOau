@@ -105,9 +105,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   }, [isMobileMenuOpen]);
 
   const tabButtonClass = (isActive: boolean) => (
-    `group flex w-full items-center gap-3 rounded-[18px] px-4 py-3 text-left transition-all duration-300 ${
+    `group flex w-full items-center gap-3 px-6 py-4 text-left transition-all duration-300 ${
       isActive
-        ? 'bg-emerald-400/10 text-emerald-300 shadow-[0_0_20px_rgba(69,249,156,0.10)]'
+        ? 'border-r-2 border-[#ff2d78] bg-[#ff2d78]/5 text-[#ff2d78] shadow-[0_0_15px_rgba(255,45,120,0.10)]'
         : 'text-slate-500 hover:bg-white/5 hover:text-slate-200'
     }`
   );
@@ -125,12 +125,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         }}
         className={tabButtonClass(isActive)}
       >
-        <span className={`transition-colors ${isActive ? 'text-emerald-300' : 'text-slate-500 group-hover:text-emerald-300'}`}>
+        <span className={`transition-colors ${isActive ? 'text-[#ff2d78]' : 'text-slate-500 group-hover:text-slate-200'}`}>
           {tab.icon}
         </span>
         <span className="flex-1 min-w-0">
-          <span className="block truncate font-semibold text-sm">{tab.label}</span>
-          <span className={`mt-1 block truncate text-xs ${isActive ? 'text-emerald-200/80' : 'text-slate-500 group-hover:text-slate-400'}`}>
+          <span className="block truncate text-[10px] font-bold uppercase tracking-[0.10em]">{tab.label}</span>
+          <span className={`mt-1 block truncate text-[11px] ${isActive ? 'text-[#ffb1c0]' : 'text-slate-500 group-hover:text-slate-400'}`}>
             {tab.description}
           </span>
         </span>
@@ -146,8 +146,16 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   const renderSidebarContent = (mobile = false) => (
     <>
       <div className="mb-7 mt-2 shrink-0">
-        <div className="text-emerald-300 font-black tracking-[-0.04em] text-xl">SEO Command</div>
-        <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-500">AI Optimization Active</div>
+        <div className="text-lg font-black tracking-[-0.04em] text-white uppercase">AURA SEO</div>
+        <div className="mt-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ffb1c0]/30 bg-[#ff2d78]/10 text-[#ffb1c0]">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-white">Core Engine</div>
+            <div className="text-[11px] uppercase tracking-[0.12em] text-[#ab888e]">v2.4 Neural Link</div>
+          </div>
+        </div>
       </div>
 
       <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-2">
@@ -164,7 +172,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             </span>
             <span className="flex-1">
               <span className="block font-semibold text-sm">Monitoring</span>
-              <span className={`mt-1 block text-xs ${isMonitoringSectionActive ? 'text-emerald-200/80' : 'text-slate-500 group-hover:text-slate-400'}`}>
+              <span className={`mt-1 block text-xs ${isMonitoringSectionActive ? 'text-[#ffb1c0]' : 'text-slate-500 group-hover:text-slate-400'}`}>
                 SEO monitoring, competitors и ваш сайт
               </span>
             </span>
@@ -186,18 +194,18 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         <button
           type="button"
           onClick={onBackToProjects}
-          className="w-full rounded-[18px] bg-[linear-gradient(135deg,#45f99c_0%,#00dc82_100%)] px-4 py-3 font-bold text-[#00391d] shadow-[0_0_20px_rgba(69,249,156,0.25)] transition-all hover:scale-[0.99]"
+          className="w-full rounded-[6px] border border-[#ff2d78] bg-[#ff2d78]/10 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[#ffb1c0] transition-all hover:bg-[#ff2d78]/20"
         >
-          Все проекты
+          All Projects
         </button>
 
-        <div className="flex items-center gap-3 rounded-[18px] border border-white/5 bg-white/[0.02] px-3 py-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-emerald-300">
+        <div className="flex items-center gap-3 rounded-[8px] border border-white/5 bg-white/[0.02] px-3 py-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2c1b1e] text-[#ffb1c0]">
             <FolderKanban className="w-4 h-4" />
           </div>
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold text-white">{project.name}</div>
-            <div className="truncate text-xs text-slate-500">Project workspace</div>
+            <div className="truncate text-[11px] uppercase tracking-[0.12em] text-[#ab888e]">Project workspace</div>
           </div>
         </div>
       </div>
@@ -206,12 +214,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
   return (
     <>
-      <aside className="fixed left-0 top-[92px] bottom-0 z-30 hidden w-[18rem] flex-col overflow-y-auto border-r border-white/5 bg-slate-900/80 px-6 py-6 shadow-[40px_0_80px_rgba(0,0,0,0.38)] backdrop-blur-[40px] xl:flex">
+      <aside className="fixed left-0 top-[72px] bottom-0 z-30 hidden w-[16rem] flex-col overflow-y-auto border-r border-white/5 bg-[#020305]/80 py-8 shadow-[40px_0_80px_rgba(0,0,0,0.38)] backdrop-blur-[20px] xl:flex">
         {renderSidebarContent(false)}
       </aside>
 
       <div className="space-y-5">
-        <div className="rounded-[24px] border border-white/8 bg-slate-950/60 px-4 py-4 shadow-[0_24px_60px_rgba(2,6,23,0.24)] backdrop-blur-[40px] sm:rounded-[28px] md:px-6">
+        <div className="rounded-[10px] border border-white/10 bg-[#020305]/80 px-4 py-4 shadow-[0_16px_44px_rgba(0,0,0,0.35)] backdrop-blur-[20px] md:px-6">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <nav className="mb-2 flex items-center text-sm text-slate-500" aria-label="Навигация">
@@ -221,10 +229,10 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                   aria-label="Вернуться к списку проектов"
                 >
                   <Home className="w-3 h-3" />
-                  Home
+                  Dashboard
                 </button>
                 <ChevronRight className="mx-1 h-4 w-4 text-slate-600" />
-                <span className="text-slate-300">Projects</span>
+                <span className="text-slate-300">{activeTab.label}</span>
               </nav>
               <div className="flex items-center gap-3">
                 <button
@@ -236,8 +244,8 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                   <Menu className="w-5 h-5" />
                 </button>
                 <div>
-                  <h2 className="text-xl font-black tracking-[-0.04em] text-white sm:text-2xl xl:text-[2.1rem]">{activeTab.label}</h2>
-                  <p className="mt-1 max-w-2xl text-sm text-slate-400 md:text-base">
+                  <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl">{activeTab.label}</h2>
+                  <p className="mt-1 max-w-2xl text-sm text-[#ab888e] md:text-base">
                     {activeTab.description}
                   </p>
                 </div>
@@ -245,7 +253,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="hidden rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300 lg:inline-flex">
+              <div className="hidden rounded-[6px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300 lg:inline-flex">
                 {isMonitoringSectionActive ? 'Monitoring stack' : 'Content workspace'}
               </div>
               <div className="flex flex-wrap gap-2 sm:justify-end">
@@ -254,9 +262,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                     key={action.label}
                     type="button"
                     onClick={action.onClick}
-                    className={`inline-flex items-center gap-2 rounded-full border px-4 py-3 text-sm font-medium transition-colors ${
+                    className={`inline-flex items-center gap-2 rounded-[6px] border px-4 py-3 text-sm font-medium transition-colors ${
                       action.isActive
-                        ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-200'
+                        ? 'border-[#ffb1c0] bg-[#ffb1c0] text-[#660029]'
                         : 'border-white/10 bg-white/5 text-slate-300 hover:border-white/15 hover:text-white'
                     }`}
                     title={action.description}
@@ -269,7 +277,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                     )}
                   </button>
                 ))}
-                <div className="max-w-full rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
+                <div className="max-w-full rounded-[6px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
                   {project.name}
                 </div>
               </div>
@@ -277,32 +285,32 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(23,27,38,0.94),rgba(15,19,29,0.92))] shadow-[0_32px_80px_rgba(15,19,29,0.18)] sm:rounded-[32px]">
+        <div className="overflow-hidden rounded-[10px] border border-white/10 bg-[linear-gradient(180deg,rgba(31,15,18,0.96),rgba(15,18,24,0.92))] shadow-[0_32px_80px_rgba(0,0,0,0.28)]">
           <div className="relative overflow-hidden border-b border-white/6 px-5 py-6 md:px-8 md:py-8">
-            <div className="pointer-events-none absolute -right-20 top-0 h-48 w-48 rounded-full bg-emerald-400/10 blur-[100px]" />
-            <div className="pointer-events-none absolute left-10 top-4 h-28 w-28 rounded-full bg-sky-400/10 blur-[90px]" />
+            <div className="pointer-events-none absolute -right-20 top-0 h-48 w-48 rounded-full bg-[#ff2d78]/10 blur-[100px]" />
+            <div className="pointer-events-none absolute left-10 top-4 h-28 w-28 rounded-full bg-[#46fa9c]/10 blur-[90px]" />
 
             <div className="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
               <div>
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(69,249,156,0.7)]" />
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#ff2d78]/20 bg-[#ff2d78]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#ffb1c0]">
+                  <span className="h-2 w-2 rounded-full bg-[#ff2d78] shadow-[0_0_12px_rgba(255,45,120,0.7)]" />
                   {activeTab.label}
                 </div>
-                <h3 className="max-w-3xl text-2xl font-black tracking-[-0.04em] text-white sm:text-3xl xl:text-[3rem]">
+                <h3 className="max-w-3xl text-2xl font-bold tracking-tight text-white sm:text-3xl xl:text-[3.25rem]">
                   {project.name}
                 </h3>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400 md:text-base">
-                  {activeTab.description} Рабочее пространство объединяет генерацию, анализ, monitoring и историю проекта в одном тёмном editorial canvas.
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#ab888e] md:text-base">
+                  {activeTab.description} Signal-driven workspace для генерации, анализа, monitoring и управления проектом.
                 </p>
               </div>
 
               <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:w-auto xl:min-w-[320px]">
-                <div className="rounded-[22px] border border-white/8 bg-white/5 px-4 py-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Project</div>
+                <div className="rounded-[8px] border border-white/10 bg-white/[0.03] px-4 py-4">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-[#ab888e]">Project</div>
                   <div className="mt-2 break-words text-lg font-bold text-white">{project.name}</div>
                 </div>
-                <div className="rounded-[22px] border border-white/8 bg-white/5 px-4 py-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">History</div>
+                <div className="rounded-[8px] border border-white/10 bg-white/[0.03] px-4 py-4">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-[#ab888e]">History</div>
                   <div className="mt-2 text-lg font-bold text-white">{historyCount}</div>
                 </div>
               </div>
@@ -322,7 +330,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           aria-label="Закрыть мобильную навигацию"
         />
         <aside
-          className={`absolute left-0 top-0 h-full w-[88vw] max-w-[22rem] overflow-y-auto border-r border-white/10 bg-slate-950/95 px-5 py-5 shadow-[20px_0_60px_rgba(0,0,0,0.45)] backdrop-blur-[40px] transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          className={`absolute left-0 top-0 h-full w-[88vw] max-w-[22rem] overflow-y-auto border-r border-white/10 bg-[#020305]/95 py-5 shadow-[20px_0_60px_rgba(0,0,0,0.45)] backdrop-blur-[24px] transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
           role="dialog"
           aria-modal="true"
           aria-label="Навигация проекта"

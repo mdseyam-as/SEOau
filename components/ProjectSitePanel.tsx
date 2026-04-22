@@ -35,8 +35,8 @@ const statusStyles: Record<string, string> = {
   error: 'border border-red-400/20 bg-red-500/10 text-red-300'
 };
 
-const fieldShellClass = 'rounded-[20px] border border-white/12 bg-[linear-gradient(180deg,rgba(2,6,23,0.32),rgba(15,23,42,0.72))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_10px_25px_rgba(2,6,23,0.16)]';
-const fieldInputClass = 'w-full bg-transparent p-0 text-white outline-none placeholder:text-slate-500';
+const fieldShellClass = 'rounded-[6px] border border-[#5b3f44] bg-[rgba(2,3,5,0.78)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]';
+const fieldInputClass = 'w-full bg-transparent p-0 text-white outline-none placeholder:text-[#ab888e]';
 const fieldSelectClass = 'w-full appearance-none bg-transparent p-0 text-white outline-none [&>option]:text-slate-900';
 
 export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId }) => {
@@ -208,19 +208,19 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
   return (
     <div className="space-y-5">
       <section className="app-dark-card relative overflow-hidden p-4 sm:p-6">
-        <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-emerald-400/12 blur-3xl" />
-        <div className="pointer-events-none absolute left-10 top-14 h-28 w-28 rounded-full bg-sky-400/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-[#ff2d78]/12 blur-3xl" />
+        <div className="pointer-events-none absolute left-10 top-14 h-28 w-28 rounded-full bg-[#46fa9c]/10 blur-3xl" />
 
         <div className="relative flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
-            <div className="mb-3 inline-flex items-center rounded-full border border-emerald-400/15 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-200">
+            <div className="mb-3 inline-flex items-center rounded-full border border-[#ff2d78]/20 bg-[#ff2d78]/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#ffb1c0]">
               Модуль "Мы"
             </div>
             <h3 className="text-xl font-bold text-white flex items-center gap-2 tracking-tight">
-              <ShieldCheck className="w-5 h-5 text-emerald-300" />
+              <ShieldCheck className="w-5 h-5 text-[#ffb1c0]" />
               Собственный сайт проекта
             </h3>
-            <p className="text-slate-300 text-sm mt-2 max-w-3xl leading-relaxed">
+            <p className="text-[#ab888e] text-sm mt-2 max-w-3xl leading-relaxed">
               Пользователь сам добавляет свой сайт, а затем мы используем его страницы для сравнения с конкурентами,
               отслеживания покрытия тем и импорта внутренних ссылок в генератор.
             </p>
@@ -237,15 +237,15 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
         </div>
 
         {!site ? (
-          <div className="relative mt-6 rounded-[26px] border border-white/10 bg-black/15 p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <div className="relative mt-6 rounded-[8px] border border-white/10 bg-black/15 p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-white">Добавить основной сайт проекта</div>
-                <div className="text-xs text-slate-400">Этот домен станет базой для comparison с конкурентами и импорта внутренних ссылок.</div>
-              </div>
-              <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                Primary source
-              </div>
+              <div className="text-xs text-[#ab888e]">Этот домен станет базой для comparison, topic coverage и импорта внутренних ссылок.</div>
+            </div>
+            <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#ab888e]">
+              Primary source
+            </div>
             </div>
 
             <form onSubmit={handleCreateSite} className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
@@ -562,9 +562,9 @@ const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 const SummaryCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({ label, value, icon }) => (
-  <div className="rounded-[22px] border border-white/10 bg-white/[0.04] px-4 py-3 shadow-[0_12px_30px_rgba(2,6,23,0.18)]">
-    <div className="flex items-center gap-2 text-slate-300 text-xs uppercase tracking-[0.12em]">
-      <span className="text-emerald-300">{icon}</span>
+  <div className="rounded-[8px] border border-white/10 bg-[rgba(15,18,24,0.78)] px-4 py-3 shadow-[0_12px_30px_rgba(2,6,23,0.18)]">
+    <div className="flex items-center gap-2 text-[#ab888e] text-[11px] uppercase tracking-[0.14em]">
+      <span className="text-[#46fa9c]">{icon}</span>
       {label}
     </div>
     <div className="mt-2 break-words text-lg font-bold text-white sm:text-2xl">{value}</div>

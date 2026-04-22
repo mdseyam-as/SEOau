@@ -2,279 +2,279 @@
 
 ## Purpose
 
-This document describes the current UI of the application as implemented in code, so another AI agent can recreate it as closely as possible.
+This document describes the current shipped frontend design of the application.
 
-This is not a generic design direction. It is a reconstruction spec for the current product UI.
+Its job is not to suggest improvements. Its job is to let another AI agent recreate the UI as closely as possible from the current implementation.
 
-If the agent must choose between:
+If there is any conflict between this document and the code, the code is the source of truth.
 
-- inventing a nicer design
-- matching the current shipped design
+## Best 6 Source Files
 
-it must choose matching the current shipped design.
+If another AI agent can only ingest 6 files, use these:
 
-## Source of truth
+1. [DESIGN.md](./DESIGN.md)
+2. [index.css](./index.css)
+3. [App.tsx](./App.tsx)
+4. [components/Header.tsx](./components/Header.tsx)
+5. [components/ProjectHeader.tsx](./components/ProjectHeader.tsx)
+6. [components/ProjectList.tsx](./components/ProjectList.tsx)
 
-Primary files:
+These 6 files define the shell, the global look, the main navigation pattern, and the visual structure of the workspace.
 
-- [index.css](./index.css)
-- [App.tsx](./App.tsx)
-- [components/Header.tsx](./components/Header.tsx)
-- [components/ProjectHeader.tsx](./components/ProjectHeader.tsx)
-- [components/ProjectList.tsx](./components/ProjectList.tsx)
-- [components/EmptyState.tsx](./components/EmptyState.tsx)
+## Wider UI Source of Truth
+
+For a more complete reconstruction, also inspect:
+
 - [components/MonitoringPanel.tsx](./components/MonitoringPanel.tsx)
 - [components/CompetitorWatcherPanel.tsx](./components/CompetitorWatcherPanel.tsx)
 - [components/ProjectSitePanel.tsx](./components/ProjectSitePanel.tsx)
+- [components/SettingsForm.tsx](./components/SettingsForm.tsx)
+- [components/ResultView.tsx](./components/ResultView.tsx)
+- [components/AuthScreen.tsx](./components/AuthScreen.tsx)
+- [components/EmptyState.tsx](./components/EmptyState.tsx)
+- [components/Toast.tsx](./components/Toast.tsx)
 
-If this document and the code disagree, the code wins.
+## High-Level Design Intent
 
-## Design intent
+The app is a premium dark AI workspace with emerald and cyan accents.
 
-The UI is a premium dark productivity interface with bright emerald/cyan highlights.
+It should feel:
 
-Core feel:
+- dark, deep, and layered
+- premium but not flashy
+- calm and focused
+- dense enough for “power-user” work
+- readable inside Telegram WebApp framing
+- modern and slightly futuristic
 
-- dark atmospheric workspace
-- glassy and blurred layers
-- rounded oversized cards
-- white and slate text on dark surfaces
+This is not a playful consumer UI.
+This is not a minimal white SaaS dashboard.
+This is not a purple-first design system.
+
+## Global Aesthetic
+
+### Overall feel
+
+The current UI is built around:
+
+- a dark animated mesh background
+- translucent dark cards with blur
+- large radii
+- soft glows instead of sharp contrast
 - bright emerald primary actions
-- soft glows instead of hard borders
-- strong visual separation between “workspace shell” and “content cards”
+- white and slate text on dark surfaces
 
-The app should feel:
+### What the app should never become
 
-- modern
-- premium
-- calm
-- slightly futuristic
-- dense enough for power users
-- readable inside Telegram WebApp dark framing
+Do not turn this UI into:
 
-## Global layout
+- flat black with no depth
+- generic Tailwind gray-on-gray SaaS
+- a white dashboard with green accents
+- a highly colorful gradient-heavy Dribbble mock
+- a purple-dominant cyber UI
 
-The app root uses a dark animated mesh background.
+## Global Layout
 
 From [App.tsx](./App.tsx):
 
-- root wrapper uses `min-h-screen bg-mesh-animated text-slate-100 font-sans`
+- the app uses `min-h-screen`
+- root background uses `bg-mesh-animated`
+- text defaults to `text-slate-100`
+- the main container uses responsive horizontal padding and a wide `xl:max-w-[1600px]`
+
+The app has 3 main shell layers:
+
+1. global top header
+2. project/workspace shell
+3. content cards
+
+## Background System
 
 From [index.css](./index.css):
 
-- `.bg-mesh-animated`
-  - base gradient: `#0B0F19 -> #1a1f2e -> #0B0F19`
-  - animated background-size `400% 400%`
-  - animated radial overlays in emerald, sky, and purple/pink tones
+- `.bg-mesh-animated` is the app background
+- it uses a dark multi-stop gradient with subtle animated color fields
+- depth comes from radial overlays and slow motion, not visible texture
 
-This means:
+The background should always suggest atmosphere.
+It should never look like a flat solid fill.
 
-- never place the full app on a flat black background
-- there should always be subtle spatial depth in the page background
+## Core Color Direction
 
-## Core tokens
+### Primary accents
 
-Defined in `:root` in [index.css](./index.css).
+- emerald / green is the main action color
+- cyan / sky is the secondary accent
 
-### Brand colors
+### Main dark tones
 
-- Brand green: `rgb(0 220 130)` visually used as emerald accents and glow
-- Accent blue: `rgb(56 189 248)`
-- Dark background: `rgb(11 15 25)`
-- Supporting purple/pink tokens exist but are secondary
+- deep navy / slate / near-black backgrounds
+- white primary text
+- slate-300 / slate-400 supporting text
 
-### Backgrounds
+### Secondary tones
 
-- `--bg-primary`: `11 15 25`
-- `--bg-secondary`: `21 25 37`
-- `--bg-tertiary`: `26 31 46`
-- `--bg-elevated`: white
+- amber for warnings
+- red for destructive or critical states
+- sky/cyan for informational states
 
-### Text
-
-- Main dark-surface text: white
-- Secondary dark-surface text: slate-300 / slate-400 style
-- Light-surface text: slate-900 / slate-700
-
-### Radius
-
-The product consistently prefers large radii:
-
-- small controls: `rounded-xl` to `rounded-2xl`
-- cards: `rounded-[22px]` to `rounded-[28px]`
-- pills/badges: `rounded-full`
-
-Anything boxy or sharp-cornered is wrong.
+Purple/pink exists only as an occasional highlight, not as the brand center.
 
 ## Typography
 
-Typography is not expressive/editorial. It is clean sans-serif product typography.
+Typography is clean, product-oriented, and sans-serif.
 
-The app uses Tailwind `font-sans` and utility-based sizing.
+It should feel:
 
-Important typography helpers from [index.css](./index.css):
+- compact
+- bold in headings
+- calm in body text
+- never decorative or editorial
 
-- `.text-display`
-  - `clamp(1.5rem, 4vw, 2.5rem)`
-  - `font-weight: 700`
-  - `line-height: 1.2`
-  - `letter-spacing: -0.02em`
-- `.text-title`
-  - `clamp(1.125rem, 3vw, 1.5rem)`
-  - `font-weight: 600`
-  - `line-height: 1.3`
-  - `letter-spacing: -0.01em`
-- `.text-body`
-  - `clamp(0.875rem, 2vw, 1rem)`
-  - `line-height: 1.6`
+### Typical hierarchy
 
-In practice:
+- page/hero titles: `text-2xl`, `text-3xl`, occasionally larger on wide screens
+- section headings: `text-lg`, `text-xl`
+- body text: `text-sm` to `text-base`
+- helper text: `text-xs`, `text-sm`
+- labels: uppercase `text-[11px]` with wide tracking
 
-- page titles: bold, white or slate-900, slightly tight tracking
-- section titles: `text-lg` or `text-xl`, semibold or bold
-- body copy: `text-sm` or `text-base`, slate-300 on dark surfaces
-- labels: tiny uppercase, `text-[11px]`, large tracking
+### Tone rules
 
-## Surface system
+- dark surfaces: white title, slate-300 body, slate-400 labels
+- light surfaces: slate-900 title, slate-600 body
 
-The UI is built from a small number of reusable surface recipes.
+Never use dark gray text on dark translucent surfaces.
 
-### 1. Main dark content card
+## Shape Language
 
-Class:
+Large radii are mandatory.
+
+Typical shape system:
+
+- pills and badges: `rounded-full`
+- controls: `rounded-2xl`
+- inner cards: around `rounded-[20px]` to `rounded-[24px]`
+- major cards: around `rounded-[24px]` to `rounded-[32px]`
+
+Anything sharp, square, or boxy is visually wrong.
+
+## Surface System
+
+### 1. Main dark workspace card
+
+Primary reusable class:
 
 - `.app-dark-card`
 
-Definition:
+Use for:
 
-- `rounded-[24px]`
-- `border border-white/10`
-- `background: linear-gradient(180deg, rgba(15,23,42,0.88), rgba(15,23,42,0.72))`
-- `backdrop-blur-xl`
-- `shadow-[0_24px_60px_rgba(2,6,23,0.35)]`
-
-Use this for:
-
-- project workspace hero cards
 - monitoring panels
-- competitor watcher sections
-- lists
+- competitor panels
+- project site panels
+- result containers
+- dark modals
 - empty states
-- modal bodies in dark mode
 
-### 2. Main light shell card
+Visual behavior:
 
-Class:
+- translucent dark fill
+- blur
+- white/10 border
+- soft shadow
+- premium, not heavy
+
+### 2. Light shell card
+
+Primary reusable class:
 
 - `.app-shell-card`
 
-Definition:
+Use for:
 
-- near-white gradient surface
-- subtle inner highlight
-- stronger soft shadow
-- decorative emerald/sky radial overlays via `::before`
+- selective light contrast surfaces
+- premium shells already present in the app
 
-Use this for:
+Important:
 
-- premium light containers
-- light summary shells
-- areas that need contrast against the dark app background
+- do not overuse light cards
+- the current design is mostly dark-first
 
 ### 3. Light card
 
-Class:
+Primary reusable class:
 
 - `.app-light-card`
 
-Use for:
+Use sparingly for:
 
-- lighter sub-panels
-- soft high-contrast content blocks
-
-### 4. Light soft card
-
-Class:
-
-- `.app-light-soft`
-
-Use for:
-
-- smaller lighter supporting panels
-- softer containers inside light areas
+- specific lighter content blocks
+- some alerts and structured content areas
 
 ## Buttons
 
-Buttons are oversized, rounded, tactile, and slightly lifted.
+Buttons are large, tactile, and rounded.
 
-### Primary button
+### Primary buttons
 
-Class:
+Main class:
 
 - `.app-btn-primary`
 
-Recipe:
+Visual pattern:
 
-- emerald -> teal -> sky gradient
-- white text
-- `rounded-2xl`
-- medium-heavy shadow in emerald
-- hover lifts upward slightly
-- active scales down slightly
+- emerald -> teal -> cyan gradient
+- strong contrast
+- rounded shape
+- elevated shadow
+- slight lift or press feedback
 
 Use for:
 
 - create
 - save
-- primary CTA
-- scan / generate actions when they are the dominant action
+- scan
+- generate
+- add URL / add competitor / add site
 
-### Secondary light button
+### Secondary dark buttons
 
-Class:
-
-- `.app-btn-secondary`
-
-Recipe:
-
-- white background
-- slate text
-- subtle border and gray shadow
-
-Use for:
-
-- light-surface secondary actions
-
-### Dark secondary button
-
-Class:
+Main class:
 
 - `.app-btn-dark`
 
-Recipe:
+Visual pattern:
 
-- white/5 translucent fill
+- dark translucent fill
 - white/10 border
 - white text
-- slight lift on hover
+- subtle hover brightening
 
 Use for:
 
-- secondary actions inside dark cards
+- secondary actions
+- pause / enable
+- import / supporting actions
 
 ### Danger buttons
 
-Danger buttons are not based on the generic button helpers. They are inline utility recipes:
+Danger buttons are custom utility recipes, not a generic helper.
 
-- red border with low-opacity red background
+Pattern:
+
+- low-opacity red background
+- red border
 - red text
-- hover strengthens red fill slightly
 
-Use for delete and destructive actions.
+Use for:
 
-## Form controls
+- delete
+- destructive confirmations
 
-This app now uses two levels of input styling.
+## Inputs and Form Fields
+
+The current design uses 2 input families.
 
 ### Legacy dark input
 
@@ -282,437 +282,446 @@ Class:
 
 - `.app-input-dark`
 
-Recipe:
+This still exists in older or broader generator flows.
 
-- `rounded-2xl`
-- `border-white/10`
-- `bg-white/5`
-- white text
-- slate placeholder
-- emerald focus ring
+### Preferred field-shell system
 
-This still exists in parts of the app.
+This is the preferred style for the Monitoring family and newer modules.
 
-### Preferred monitoring-module field shell
+Pattern:
 
-Used in:
-
-- [components/MonitoringPanel.tsx](./components/MonitoringPanel.tsx)
-- [components/CompetitorWatcherPanel.tsx](./components/CompetitorWatcherPanel.tsx)
-- [components/ProjectSitePanel.tsx](./components/ProjectSitePanel.tsx)
-
-Exact pattern:
-
-- outer wrapper:
-  - `rounded-[20px]`
-  - `border border-white/12`
-  - `bg-[linear-gradient(180deg,rgba(2,6,23,0.32),rgba(15,23,42,0.72))]`
-  - `px-4 py-3`
-  - inset highlight shadow and soft dark drop shadow
-- inner input/select/textarea:
+- outer shell:
+  - rounded around 20px
+  - border `white/12`
+  - dark vertical gradient
+  - inner highlight
+  - soft depth shadow
+- inner control:
   - transparent background
   - no own border
   - white text
   - slate placeholder
 
-Field labels:
+Labels:
 
 - uppercase
 - `text-[11px]`
-- `font-semibold`
-- `tracking-[0.16em]`
-- `text-slate-400`
-- margin bottom `0.5rem`
+- large tracking
+- slate-400
 
-This is the preferred input style for the whole Monitoring family.
+This field-shell style is used in:
 
-### Selects
+- [components/MonitoringPanel.tsx](./components/MonitoringPanel.tsx)
+- [components/CompetitorWatcherPanel.tsx](./components/CompetitorWatcherPanel.tsx)
+- [components/ProjectSitePanel.tsx](./components/ProjectSitePanel.tsx)
 
-Selects should not look like browser defaults. In the current UI they are:
+## Pills, Badges, and Status Chips
 
-- wrapped in the same dark shell as inputs
-- transparent inside
-- white text
-- dropdown options can use dark-on-light defaults inside the browser popup
+These are essential to the information architecture.
 
-## Badges and pills
+### Generic section badge
 
-Badges are everywhere and define state.
+Pattern:
 
-### Section badge
-
-Common section badge pattern:
-
-- inline-flex
+- tiny uppercase text
 - rounded-full
-- uppercase
-- tiny text (`11px`)
-- generous tracking (`0.14em` to `0.18em`)
-- low-opacity emerald or white tint background
+- tracked letter spacing
+- low-opacity emerald or white tint
 
-Examples:
+Used for:
 
-- “Monitoring”
-- “Competitor Watcher”
-- “Модуль "Мы"”
-- “Workspace”
-- “App”
+- section identity
+- mode identity
+- small context labels
 
-### Status pills
+### Status chips
 
-For active/paused/severity:
+Pattern:
 
 - rounded-full
+- border + tinted fill
 - text-xs
-- thin border
-- low-opacity fill
 
 Severity mapping:
 
-- critical: red
-- warning: amber
-- info: sky
+- critical = red
+- warning = amber
+- info = sky
 
-Active state mapping:
+State mapping:
 
-- active: emerald tint
-- paused: white/5 tint
+- active = emerald
+- paused/inactive = muted white/gray
 
-## Header design
+## Global Header
 
 From [components/Header.tsx](./components/Header.tsx):
 
-- sticky top header
-- semi-transparent dark gradient background
-- strong blur
-- bottom border `border-white/10`
-- shadow downward into content
+The global header is:
 
-Logo block:
+- sticky
+- dark glass
+- blurred
+- shallow but premium
+- compact on mobile
 
-- rounded square icon surface
-- emerald/sky translucent gradient
-- white dashboard icon
-- brand title in white
-- small `App` badge in emerald
+Key pieces:
 
-Header should feel:
+- logo block with emerald/cyan gradient tile
+- app title in white
+- small `App` badge on wider screens
+- admin/subscription controls on the right
+- user identity pill on large screens
 
-- premium
-- compact
-- persistent
-- not too tall
+This header should always feel like a stable top shell, not a hero section.
 
-## Project header and drawer navigation
+## Project Workspace Shell
 
 From [components/ProjectHeader.tsx](./components/ProjectHeader.tsx):
 
-This is a light card sitting inside the dark workspace.
+This is the most important shell pattern in the app right now.
 
-Structure:
+### Current structure
 
-- left side: breadcrumbs + project name
-- right side:
-  - current mode card
-  - dark glossy burger button
+The workspace shell consists of:
 
-Burger button:
+- a persistent left sidebar on wide screens
+- a mobile slide-over navigation on smaller screens
+- a dark top project bar
+- a dark hero card with project context and current mode
 
-- dark glossy gradient from near-black to dark slate
-- white text
-- internal radial sheen
-- green status dot on larger screens
+### Desktop sidebar
 
-Drawer:
+Behavior:
 
-- slides in from the right
-- has a light premium background with faint radial color glows
-- overlay behind it is darkened and lightly blurred
-- cards in drawer use colorful gradients per feature
-- `Monitoring` is a parent item with expanding sub-items
+- visible from `xl` and up
+- fixed on the left
+- dark translucent background
+- blurred
+- scrollable vertically
 
-Navigation rule:
+Content:
 
-- primary modules are visually card-like
-- monitoring family is grouped under one expandable section
+- brand/workspace label
+- primary navigation items
+- `Monitoring` parent item with expanding children
+- bottom CTA back to all projects
+- current project identity tile
 
-## Project list screen
+Important:
+
+- this is not a decorative sidebar
+- all visible buttons should map to real navigation
+
+### Mobile navigation
+
+Behavior:
+
+- opened by burger button
+- slides in from the left
+- dark overlay behind it
+- scrollable
+- visually consistent with the desktop sidebar
+
+### Project top bar
+
+This top bar is dark, not light.
+
+It includes:
+
+- breadcrumbs
+- current section title
+- section description
+- contextual quick actions
+- current project pill
+
+It should not contain fake search controls or fake utility buttons.
+
+### Project hero card
+
+The hero card below the top bar is:
+
+- dark
+- rounded
+- softly glowing
+- strongly contextual
+
+It contains:
+
+- active section badge
+- project name
+- current section description
+- small summary cards
+
+## Project List Screen
 
 From [components/ProjectList.tsx](./components/ProjectList.tsx):
 
-Hero card:
+This is the dashboard-style screen shown before entering a project.
 
-- dark card
-- badge “Workspace”
-- large title “Мои проекты”
-- emerald/cyan icon tile
-- primary CTA button on the right
+### Layout
 
-Project cards:
+- left functional filter sidebar on wide screens
+- top search and quick controls
+- large dark hero card
+- project card grid below
 
-- dark cards
-- hover raises card slightly
-- subtle emerald glow blob appears in top-right on hover
-- top-left icon tile uses emerald/cyan gradient
-- delete action is subtle until hover
-- project title shifts toward emerald on hover
-- bottom row shows date and an “Открыть” affordance sliding in
+### Left sidebar
 
-Create project modal:
+The current sidebar must be functional, not decorative.
 
-- dark modal card
-- top 1px accent bar in emerald -> sky -> pink
-- white title and slate description
-- dark inputs
-- dark cancel button + primary create button
+It contains:
 
-## Empty states
+- real filters
+- count indicators
+- create project CTA
+- active filter status
+
+### Search area
+
+The search field is real and should filter the visible project list.
+
+### Hero block
+
+The project dashboard hero uses:
+
+- dark premium card
+- section badge
+- large title
+- supporting description
+- create project CTA
+
+### Project cards
+
+Project cards are:
+
+- dark
+- rounded
+- slightly elevated
+- hover-lifted
+
+Key details:
+
+- icon tile at top-left
+- subtle status pill
+- quiet delete action
+- date in muted tone
+- “Open” affordance on the bottom-right
+
+## Monitoring Family
+
+The following 3 modules must feel like one coherent subsystem:
+
+- SEO Monitoring
+- Competitor Watcher
+- Project Site / “Мы”
+
+### Shared design rules
+
+- main outer section uses `app-dark-card`
+- decorative blurred accent circles in the hero section
+- small section badge
+- strong white heading with icon
+- KPI cards aligned on the right on wide layouts
+- inner form panel with darker inset shell
+- field-shell inputs instead of raw browser-style controls
+- list/detail cards with dark layered backgrounds
+
+## SEO Monitoring
+
+From [components/MonitoringPanel.tsx](./components/MonitoringPanel.tsx):
+
+Important pieces:
+
+- section badge `Monitoring`
+- heading `SEO Monitoring + Alerts`
+- KPI cards
+- add-URL form
+- monitored page cards
+- expandable event history and diff sections
+
+Page cards include:
+
+- severity chip
+- activity chip
+- frequency chip
+- title or label
+- URL
+- meta info tiles
+- right-side action buttons
+- expandable diff/history footer
+
+## Competitor Watcher
+
+From [components/CompetitorWatcherPanel.tsx](./components/CompetitorWatcherPanel.tsx):
+
+Important pieces:
+
+- section badge `Competitor Watcher`
+- heading `Growth Intelligence по конкурентам`
+- KPI cards
+- add-competitor form
+- competitor list
+- selected competitor detail area
+
+Detail area includes:
+
+- selected competitor hero
+- weekly summary
+- topic clusters
+- `Мы vs Они` comparison
+- change history cards
+
+### Comparison bars
+
+The comparison bars are important:
+
+- uppercase label row
+- numeric value aligned right
+- muted track
+- gradient fill
+
+Color mapping:
+
+- competitor = amber
+- our side = emerald or sky
+
+## Project Site / “Мы”
+
+From [components/ProjectSitePanel.tsx](./components/ProjectSitePanel.tsx):
+
+Important pieces:
+
+- section badge `Модуль "Мы"`
+- heading `Собственный сайт проекта`
+- KPI cards when site exists
+- create/edit form
+- action buttons
+- site summary card
+- topic coverage block
+- current pages list
+- “Как это используется” cards
+
+This module belongs visually to the Monitoring family and should not look like a separate product.
+
+## Empty States
 
 From [components/EmptyState.tsx](./components/EmptyState.tsx):
 
 Pattern:
 
-- centered inside `app-dark-card`
-- large rounded icon surface
-- icon color depends on variant
-- title in white
-- supporting text in slate-300
+- centered
+- large icon tile
+- white title
+- slate support text
+- always inside a premium card, usually dark
 
-Variants:
+They should feel polished, not like plain placeholder text.
 
-- default
-- locked
-- premium
-
-Premium variant uses purple/pink gradient accents, but this is secondary to the app’s emerald identity.
-
-## Monitoring family design
-
-The three related modules:
-
-- SEO Monitoring
-- Competitors
-- Мы
-
-must feel like the same family.
-
-Shared rules across these three modules:
-
-- main wrapper uses `app-dark-card`
-- top hero section includes blurred accent circles
-- small tinted section badge
-- bold white heading with icon
-- KPI summary cards on the right
-- form area is inside an inner dark translucent rounded panel
-- field-shell controls are used instead of plain inputs
-- supporting cards use gradients from very low-opacity white to dark slate, never flat gray
-
-### SEO Monitoring
-
-From [components/MonitoringPanel.tsx](./components/MonitoringPanel.tsx):
-
-Top block:
-
-- section badge “Monitoring”
-- heading “SEO Monitoring + Alerts”
-- 4 KPI cards: URL / Active / Critical / Warning
-- inner form panel titled “Добавить URL в мониторинг”
-
-URL cards:
-
-- severity badge
-- active badge
-- frequency badge
-- title/url block
-- small meta cells
-- action row on the right
-- expandable history/diff section below
-
-### Competitor Watcher
-
-From [components/CompetitorWatcherPanel.tsx](./components/CompetitorWatcherPanel.tsx):
-
-Top block:
-
-- section badge “Competitor Watcher”
-- heading “Growth Intelligence по конкурентам”
-- KPI cards
-- inner form panel titled “Добавить конкурента”
-
-List column:
-
-- competitor entries are large rounded cards
-- active card gets emerald-tinted gradient and stronger glow
-- inactive cards are muted translucent dark cards
-
-Detail area:
-
-- selected competitor hero card
-- weekly summary card
-- topic clusters card
-- “Мы vs Они” comparison card with horizontal coverage bars
-- detailed change cards with diff blocks
-
-### Module “Мы”
-
-From [components/ProjectSitePanel.tsx](./components/ProjectSitePanel.tsx):
-
-Top block:
-
-- section badge `Модуль "Мы"`
-- heading `Собственный сайт проекта`
-- KPI cards if the site already exists
-- setup/edit panel inside a dark translucent inner card
-
-Supporting areas:
-
-- site summary card
-- topic coverage card with progress bars
-- list of current pages
-- “Как это используется” explanatory cards
-
-## Comparison bars
-
-Used in Competitor Watcher comparison blocks.
-
-Pattern:
-
-- small uppercase label row
-- right-aligned numeric value
-- low-opacity track
-- bright gradient fill
-
-Color mapping:
-
-- competitor coverage: amber
-- our coverage: emerald or sky depending on relative position
-
-## Meta cells and KPI cards
-
-Meta cells:
-
-- small rounded dark tiles
-- uppercase muted label
-- white or slate-100 value
-
-KPI cards:
-
-- rounded `[22px]`
-- translucent or lightly elevated surface
-- small uppercase label row with icon
-- large bold numeric value
-
-## Motion and interaction
-
-The UI has motion, but motion is restrained.
-
-Rules:
-
-- hover lift is usually `translateY(-2px)` to `translateY(-0.5)`
-- active press is a slight scale down
-- focus states use emerald ring
-- glows are soft and blurry, not neon-hard
-- mobile disables some more playful animations to avoid jitter
-
-Existing helpers:
-
-- `.focus-ring-brand`
-- `.animate-fade-in-scale`
-- `.btn-ripple`
-- `.btn-magnetic`
-- `.icon-bounce`
-
-Do not add aggressive bouncy motion or overshoot springs.
-
-## Readability rules
-
-Very important for this codebase:
-
-- do not use dark text on dark translucent surfaces
-- do not place nearly-black text on emerald/teal glass without a solid backing
-- on dark cards:
-  - title: white
-  - body: slate-300
-  - labels: slate-400
-- on light cards:
-  - title: slate-900
-  - body: slate-600 or slate-500
-
-If a field/control feels like it visually floats awkwardly above the card, wrap it in a dedicated field shell.
-
-## Responsive behavior
-
-The app is mobile-first.
-
-Key rules:
-
-- minimum touch target is `44px`
-- grid layouts collapse vertically on mobile
-- icon tap areas are enlarged on mobile
-- sticky header remains compact
-- side drawer navigation still works on mobile and should feel full-screen enough
-
-Do not create tiny controls or tightly packed desktop-only layouts.
-
-## Implementation rules for another agent
-
-If recreating the UI:
-
-1. Keep the dark mesh app background.
-2. Use `app-dark-card` for most main workspace sections.
-3. Use large radii everywhere.
-4. Keep emerald/cyan as the primary accent family.
-5. Use white/slate text on dark surfaces.
-6. Use light premium cards only where the current app already uses them.
-7. For Monitoring family forms, use wrapped field-shell inputs, not plain inputs.
-8. Keep the burger drawer navigation exactly as a premium slide-over, not a simple dropdown.
-9. Preserve badge-heavy information architecture.
-10. Preserve the current hierarchy: header, project header, content cards, expandable sections.
-
-## Things that would be wrong
-
-Do not do the following:
-
-- flat black backgrounds with no depth
-- generic Tailwind gray cards everywhere
-- square corners
-- default browser select styling
-- purple-first redesign
-- minimal monochrome redesign
-- thin hairline-only cards with no shadows
-- black text on semi-dark cards
-- replacing dark glass cards with flat white cards
-- turning the burger drawer into top tabs again
-
-## Quick recreation checklist
-
-For a close 1:1 recreation, verify all of these:
-
-- app root uses dark animated mesh background
-- sticky dark glass header exists
-- project header is a light premium card with burger drawer
-- major content cards use `app-dark-card`
-- primary buttons use emerald -> teal -> sky gradient
-- badges are tiny uppercase rounded pills
-- monitoring family uses matching inner form shells
-- competitor comparison includes visual bars
-- project cards hover upward and reveal subtle affordances
-- empty states are centered dark cards with large icon tiles
-
-## Recommended workflow for another AI agent
-
-When recreating the UI:
-
-1. Rebuild global tokens and surface helpers from [index.css](./index.css).
-2. Rebuild the dark app shell and sticky header.
-3. Rebuild the light project header and drawer navigation.
-4. Rebuild `ProjectList`.
-5. Rebuild the Monitoring family as one coherent subsystem:
-   - SEO Monitoring
-   - Competitors
-   - Мы
-6. Match spacing, corner radius, text color hierarchy, and shadows before refining content details.
-
-If the recreated UI feels cleaner but less premium, it is wrong.
-If it feels generic SaaS, it is wrong.
-If it feels like the current app but more structurally consistent, it is correct.
+## Motion and Interaction
+
+Motion should be subtle and premium.
+
+Use:
+
+- small hover lift
+- small press feedback
+- soft fade/slide entrances
+- blur-backed overlays
+- quiet glow changes
+
+Avoid:
+
+- aggressive spring motion
+- bouncing panels
+- flashy neon pulsing
+- large parallax effects
+
+## Responsive Rules
+
+The design is mobile-first, but current optimization priority is:
+
+- mobile
+- tablet
+- desktop
+- wide desktop
+
+### Rules that define the current responsive behavior
+
+1. The main workspace sidebar appears only on `xl`.
+2. On smaller widths, navigation becomes a slide-over.
+3. Summary blocks should not depend on hard `min-width` before `xl`.
+4. Major forms should collapse early:
+   - single column on narrow widths
+   - 2 columns on medium widths where needed
+   - 12-column desktop layout only on wide enough screens
+5. Large headings must scale down on smaller widths.
+6. Long project names, URLs, and values must wrap instead of forcing overflow.
+7. Cards should stack earlier rather than compress awkwardly.
+
+### Practical responsive goals
+
+- text should not drift outside cards
+- action groups should wrap naturally
+- KPI cards should reflow rather than overflow
+- hero blocks should remain readable at narrow window heights and widths
+- side navigation should scroll if content exceeds viewport height
+
+## Readability Rules
+
+These rules are critical in this codebase:
+
+- never use near-black text on dark translucent surfaces
+- never place raw browser-styled inputs on premium cards
+- do not let long values overflow silently if they can wrap
+- white is for headings and key values
+- slate-300 is for body copy
+- slate-400 is for labels and helper text
+
+If a form or control feels visually detached, wrap it in a field shell.
+
+## What Another Agent Must Preserve
+
+If another AI agent recreates the UI, it must preserve:
+
+- dark animated mesh app background
+- sticky dark glass global header
+- dark workspace shell with responsive sidebar/drawer navigation
+- large-radius premium cards
+- emerald/cyan action language
+- badge-heavy information architecture
+- Monitoring-family consistency
+- soft, blurred, premium layering
+- practical responsive behavior instead of fixed-width layouts
+
+## What Would Be Wrong
+
+The following would be inaccurate reconstructions:
+
+- reintroducing top tabs instead of the current workspace shell
+- turning the project header into a white card
+- using flat gray blocks with no depth
+- making the monitoring modules visually different from each other
+- relying on browser-default selects and inputs
+- using decorative sidebar buttons that do nothing
+- using dark text on dark surfaces
+- forcing fixed widths that break tablet layouts
+
+## Recreation Checklist
+
+For a close reconstruction, verify:
+
+- app root uses dark mesh background
+- global header is sticky and glassy
+- workspace shell uses left sidebar on wide screens and drawer on smaller screens
+- project list has functional filtering and search
+- major cards use dark premium surfaces
+- primary CTA buttons are emerald/cyan gradients
+- Monitoring, Competitors, and “Мы” share one visual language
+- field-shell inputs are used in the newer modules
+- text wraps safely in cards and meta areas
+- layouts reflow rather than overflow on medium window sizes
+
+If the result looks cleaner but less premium, it is wrong.
+If it looks generic SaaS, it is wrong.
+If it looks like the shipped UI but slightly more structurally consistent, it is correct.

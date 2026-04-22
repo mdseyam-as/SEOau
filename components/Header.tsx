@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, LogOut, ShieldCheck, Crown, ChevronRight } from 'lucide-react';
+import { Search, Bell, Sparkles, LogOut, ShieldCheck, Crown, ChevronRight } from 'lucide-react';
 import { User } from '../services/authService';
 
 interface HeaderProps {
@@ -20,30 +20,21 @@ export const Header: React.FC<HeaderProps> = ({
   children
 }) => {
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[linear-gradient(180deg,rgba(7,11,19,0.84),rgba(11,15,25,0.68))] backdrop-blur-2xl shadow-[0_16px_44px_rgba(2,6,23,0.28)]">
-      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 md:py-4 xl:max-w-7xl">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#020305]/80 backdrop-blur-[20px] shadow-[0_8px_32px_rgba(0,0,0,0.8)]">
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 xl:max-w-[1600px]">
         <div className="flex items-center justify-between gap-3">
           <div
-            className="flex items-center gap-3 sm:gap-4 cursor-pointer min-w-0 group"
+            className="flex items-center gap-3 cursor-pointer min-w-0 group"
             onClick={() => {
               onToggleAdmin?.();
             }}
           >
-            <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden border border-white/15 bg-[linear-gradient(135deg,rgba(16,185,129,0.22),rgba(56,189,248,0.18))] shadow-[0_18px_40px_rgba(16,185,129,0.18)]">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.24),transparent_58%)]" />
-              <LayoutDashboard className="relative text-white w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate text-white">
-                  SEO Generator
-                </h1>
-                <span className="hidden md:inline-flex items-center rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">
-                  App
-                </span>
+              <div className="text-[1.05rem] font-black uppercase tracking-[-0.04em] text-white sm:text-lg">
+                AURA SEO
               </div>
-              <p className="hidden sm:block text-xs text-slate-400 mt-0.5">
-                Контент, анализ и monitoring в одном рабочем пространстве
+              <p className="hidden sm:block text-[11px] uppercase tracking-[0.14em] text-[#ab888e] mt-1">
+                Operator workspace
               </p>
             </div>
           </div>
@@ -58,14 +49,33 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <div className="hidden sm:flex items-center gap-2 sm:gap-3 md:gap-4">
+              <button
+                className="hidden h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-400 transition-colors hover:text-white lg:inline-flex"
+                aria-label="Search"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+              <button
+                className="hidden h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-400 transition-colors hover:text-white lg:inline-flex"
+                aria-label="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+              </button>
+              <button
+                className="hidden h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-400 transition-colors hover:text-white lg:inline-flex"
+                aria-label="AI actions"
+              >
+                <Sparkles className="w-4 h-4" />
+              </button>
+
               {user.role === 'admin' && onToggleAdmin && (
                 <button
                   onClick={onToggleAdmin}
                   className={`
-                    px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-full font-medium flex items-center gap-2 transition-all duration-300 whitespace-nowrap btn-magnetic btn-ripple
+                    px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-[6px] font-medium flex items-center gap-2 transition-all duration-300 whitespace-nowrap btn-magnetic btn-ripple border
                     ${showAdmin
-                      ? 'bg-white text-brand-dark shadow-[0_14px_30px_rgba(255,255,255,0.18)]'
-                      : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'}
+                      ? 'border-[#ffb1c0] bg-[#ffb1c0] text-[#660029] shadow-[0_0_24px_rgba(255,177,192,0.18)]'
+                      : 'border-white/10 bg-white/5 text-white hover:bg-white/10'}
                   `}
                   aria-label={showAdmin ? 'Выйти из админки' : 'Открыть админку'}
                 >
@@ -77,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
               {user.role !== 'admin' && onOpenSubscription && (
                 <button
                   onClick={onOpenSubscription}
-                  className="subscription-buy-button px-2.5 md:px-3 py-2 text-[11px] md:text-xs lg:text-sm rounded-full font-medium flex items-center gap-1.5 md:gap-2 transition-all duration-300 whitespace-nowrap bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(56,189,248,0.12))] text-emerald-300 hover:text-white border border-emerald-400/20 shadow-[0_16px_36px_rgba(16,185,129,0.14)] focus-ring-brand"
+                  className="subscription-buy-button px-2.5 md:px-3 py-2 text-[11px] md:text-xs lg:text-sm rounded-[6px] font-semibold flex items-center gap-1.5 md:gap-2 transition-all duration-300 whitespace-nowrap border border-[#ff2d78] bg-[#ff2d78]/10 text-[#ffb1c0] hover:bg-[#ff2d78]/20 hover:text-white focus-ring-brand"
                   aria-label="Купить подписку"
                 >
                   <Crown className="w-3 h-3 md:w-[14px] md:h-[14px] shrink-0" />
@@ -89,7 +99,7 @@ export const Header: React.FC<HeaderProps> = ({
               {children}
 
               <div className="hidden lg:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs sm:text-sm text-slate-300 max-w-[220px] xl:max-w-none truncate font-medium">
-                <div className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
+                <div className="h-2 w-2 rounded-full bg-[#46fa9c] shadow-[0_0_12px_rgba(70,250,156,0.8)]" />
                 <span className="truncate">{user.firstName} {user.username ? `(@${user.username})` : ''}</span>
               </div>
 
@@ -112,7 +122,7 @@ export const Header: React.FC<HeaderProps> = ({
           {user.role !== 'admin' && onOpenSubscription && (
             <button
               onClick={onOpenSubscription}
-              className="subscription-buy-mobile shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-full font-medium transition-all duration-300 bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(56,189,248,0.12))] text-emerald-300 border border-emerald-400/20 shadow-[0_16px_36px_rgba(16,185,129,0.14)] focus-ring-brand"
+              className="subscription-buy-mobile shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-[6px] font-medium transition-all duration-300 border border-[#ff2d78] bg-[#ff2d78]/10 text-[#ffb1c0] focus-ring-brand"
               aria-label="Открыть тарифы подписки"
             >
               <Crown className="w-3.5 h-3.5 shrink-0" />

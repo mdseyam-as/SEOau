@@ -45,13 +45,13 @@ const PRIORITY_OPTIONS: Array<{ value: CompetitorPriority; label: string }> = [
 ];
 
 const severityStyles: Record<MonitoringSeverity, string> = {
-  critical: 'border border-red-400/20 bg-red-500/10 text-red-300',
-  warning: 'border border-amber-400/20 bg-amber-500/10 text-amber-300',
-  info: 'border border-sky-400/20 bg-sky-500/10 text-sky-300'
+  critical: 'border border-[#ffb4ab]/20 bg-[#93000a]/30 text-[#ffdad6]',
+  warning: 'border border-[#ffb1c0]/20 bg-[#ff2d78]/10 text-[#ffb1c0]',
+  info: 'border border-[#46fa9c]/20 bg-[#46fa9c]/10 text-[#7efd8b]'
 };
 
-const fieldShellClass = 'rounded-[20px] border border-white/12 bg-[linear-gradient(180deg,rgba(2,6,23,0.32),rgba(15,23,42,0.72))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_10px_25px_rgba(2,6,23,0.16)]';
-const fieldInputClass = 'w-full bg-transparent p-0 text-white outline-none placeholder:text-slate-500';
+const fieldShellClass = 'rounded-[6px] border border-[#5b3f44] bg-[rgba(2,3,5,0.78)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]';
+const fieldInputClass = 'w-full bg-transparent p-0 text-white outline-none placeholder:text-[#ab888e]';
 const fieldSelectClass = 'w-full appearance-none bg-transparent p-0 text-white outline-none [&>option]:text-slate-900';
 
 export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ projectId }) => {
@@ -324,19 +324,19 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
   return (
     <div className="space-y-5">
       <section className="app-dark-card relative overflow-hidden p-4 sm:p-6">
-        <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-emerald-400/12 blur-3xl" />
-        <div className="pointer-events-none absolute left-10 top-14 h-28 w-28 rounded-full bg-sky-400/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-[#ff2d78]/12 blur-3xl" />
+        <div className="pointer-events-none absolute left-10 top-14 h-28 w-28 rounded-full bg-[#46fa9c]/10 blur-3xl" />
 
         <div className="relative flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
-            <div className="mb-3 inline-flex items-center rounded-full border border-emerald-400/15 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-200">
+            <div className="mb-3 inline-flex items-center rounded-full border border-[#ff2d78]/20 bg-[#ff2d78]/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#ffb1c0]">
               Competitor Watcher
             </div>
             <h3 className="text-xl font-bold text-white flex items-center gap-2 tracking-tight">
-              <Radar className="w-5 h-5 text-emerald-300" />
+              <Radar className="w-5 h-5 text-[#ffb1c0]" />
               Growth Intelligence по конкурентам
             </h3>
-            <p className="text-slate-300 text-sm mt-2 max-w-3xl leading-relaxed">
+            <p className="text-[#ab888e] text-sm mt-2 max-w-3xl leading-relaxed">
               Ловим новые URL, изменения title/H1/FAQ/структуры, ищем новые кластеры и показываем,
               где у конкурента покрытие тем уже сильнее нашего.
             </p>
@@ -350,13 +350,13 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
           </div>
         </div>
 
-        <div className="relative mt-6 rounded-[26px] border border-white/10 bg-black/15 p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+        <div className="relative mt-6 rounded-[8px] border border-white/10 bg-black/15 p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="text-sm font-semibold text-white">Добавить конкурента</div>
-              <div className="text-xs text-slate-400">Новый домен, рабочий приоритет и заметки для сигналов.</div>
+              <div className="text-xs text-[#ab888e]">Новый домен, рабочий приоритет и заметки для intelligence-сигналов.</div>
             </div>
-            <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+            <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#ab888e]">
               New watcher
             </div>
           </div>
@@ -743,8 +743,8 @@ const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 const SummaryCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({ label, value, icon }) => (
-  <div className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4 shadow-[0_12px_30px_rgba(2,6,23,0.18)]">
-    <div className="flex items-center gap-2 text-slate-400 text-xs uppercase tracking-wide">
+  <div className="rounded-[8px] border border-white/10 bg-[rgba(15,18,24,0.78)] px-4 py-4 shadow-[0_12px_30px_rgba(2,6,23,0.18)]">
+    <div className="flex items-center gap-2 text-[#ab888e] text-[11px] uppercase tracking-[0.14em]">
       {icon}
       {label}
     </div>
@@ -781,8 +781,8 @@ const CoverageBar: React.FC<{ label: string; value: number; max: number; tone: '
 };
 
 const MetaCell: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="rounded-[20px] border border-white/10 bg-white/5 px-3 py-3">
-    <div className="text-slate-400 text-xs uppercase tracking-wide">{label}</div>
+  <div className="rounded-[8px] border border-white/10 bg-white/5 px-3 py-3">
+    <div className="text-[#ab888e] text-[11px] uppercase tracking-[0.14em]">{label}</div>
     <div className="text-white mt-1 break-words whitespace-pre-wrap">{value}</div>
   </div>
 );

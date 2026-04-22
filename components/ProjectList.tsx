@@ -97,14 +97,22 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[18rem_minmax(0,1fr)]">
-        <aside className="hidden xl:flex xl:flex-col rounded-[28px] border border-white/8 bg-slate-900/80 px-6 py-6 shadow-[40px_0_80px_rgba(0,0,0,0.35)] backdrop-blur-[40px] min-h-[calc(100vh-10rem)] sticky top-28">
+        <aside className="hidden xl:flex xl:flex-col rounded-[10px] border border-white/5 bg-[#020305]/80 px-0 py-8 shadow-[40px_0_80px_rgba(0,0,0,0.35)] backdrop-blur-[20px] min-h-[calc(100vh-10rem)] sticky top-24">
           <div className="mb-8">
-            <div className="text-xl font-black tracking-[-0.04em] text-emerald-300">SEO Command</div>
-            <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-500">AI Optimization Active</div>
+            <div className="px-6 text-lg font-black tracking-[-0.04em] text-white uppercase">AURA SEO</div>
+            <div className="mt-4 px-6 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ffb1c0]/30 bg-[#ff2d78]/10 text-[#ffb1c0]">
+                <LayoutDashboard className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-white">Core Engine</div>
+                <div className="text-[11px] uppercase tracking-[0.12em] text-[#ab888e]">v2.4 Neural Link</div>
+              </div>
+            </div>
           </div>
 
           <nav className="flex-1 space-y-2">
-            <div className="mb-3 text-[11px] uppercase tracking-[0.18em] text-slate-500">Фильтры</div>
+            <div className="mb-3 px-6 text-[11px] uppercase tracking-[0.18em] text-[#ab888e]">Фильтры</div>
             {filterButtons.map((filter) => {
               const isActive = activeFilter === filter.id;
               return (
@@ -112,56 +120,56 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                   key={filter.id}
                   type="button"
                   onClick={() => setActiveFilter(filter.id)}
-                  className={`flex w-full items-center gap-3 rounded-[18px] px-4 py-3 text-left text-sm font-semibold transition-all ${
+                  className={`flex w-full items-center gap-3 px-6 py-4 text-left transition-all ${
                     isActive
-                      ? 'bg-emerald-400/10 text-emerald-300 shadow-[0_0_20px_rgba(69,249,156,0.10)]'
+                      ? 'border-r-2 border-[#ff2d78] bg-[#ff2d78]/5 text-[#ff2d78] shadow-[0_0_15px_rgba(255,45,120,0.10)]'
                       : 'text-slate-500 hover:bg-white/5 hover:text-slate-200'
                   }`}
                 >
-                  <span className={`${isActive ? 'text-emerald-300' : 'text-slate-500'}`}>{filter.icon}</span>
+                  <span className={`${isActive ? 'text-[#ff2d78]' : 'text-slate-500'}`}>{filter.icon}</span>
                   <span className="flex-1">
-                    <span className="block">{filter.label}</span>
-                    <span className={`mt-1 block text-xs ${isActive ? 'text-emerald-200/80' : 'text-slate-500'}`}>{filter.hint}</span>
+                    <span className="block text-[10px] font-bold uppercase tracking-[0.10em]">{filter.label}</span>
+                    <span className={`mt-1 block text-[11px] ${isActive ? 'text-[#ffb1c0]' : 'text-slate-500'}`}>{filter.hint}</span>
                   </span>
                 </button>
               );
             })}
           </nav>
 
-          <div className="mt-auto space-y-4 border-t border-white/5 pt-6">
+          <div className="mt-auto space-y-4 border-t border-white/5 px-6 pt-6">
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-[18px] border border-white/5 bg-white/[0.03] px-4 py-3">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Всего</div>
+              <div className="rounded-[8px] border border-white/5 bg-white/[0.03] px-4 py-3">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-[#ab888e]">Всего</div>
                 <div className="mt-2 text-xl font-bold text-white">{projects.length}</div>
               </div>
-              <div className="rounded-[18px] border border-white/5 bg-white/[0.03] px-4 py-3">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">В поиске</div>
+              <div className="rounded-[8px] border border-white/5 bg-white/[0.03] px-4 py-3">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-[#ab888e]">В поиске</div>
                 <div className="mt-2 text-xl font-bold text-white">{filteredProjects.length}</div>
               </div>
             </div>
             <button
               onClick={() => setIsCreating(true)}
-              className="w-full rounded-[18px] bg-[linear-gradient(135deg,#45f99c_0%,#00dc82_100%)] px-4 py-3 font-bold text-[#00391d] shadow-[0_0_20px_rgba(69,249,156,0.25)] transition-all hover:scale-[0.99]"
+              className="w-full rounded-[6px] border border-[#ff2d78] bg-[#ff2d78]/10 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[#ffb1c0] transition-all hover:bg-[#ff2d78]/20"
             >
               Create Project
             </button>
-            <div className="flex items-center gap-3 rounded-[18px] border border-white/5 bg-white/[0.02] px-3 py-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-emerald-300">
+            <div className="flex items-center gap-3 rounded-[8px] border border-white/5 bg-white/[0.02] px-3 py-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2c1b1e] text-[#ffb1c0]">
                 <Filter className="w-4 h-4" />
               </div>
               <div>
                 <div className="text-sm font-semibold text-white">Активный фильтр</div>
-                <div className="text-xs text-slate-500">{filterButtons.find((filter) => filter.id === activeFilter)?.label}</div>
+                <div className="text-[11px] uppercase tracking-[0.12em] text-[#ab888e]">{filterButtons.find((filter) => filter.id === activeFilter)?.label}</div>
               </div>
             </div>
           </div>
         </aside>
 
         <section className="space-y-6">
-          <div className="rounded-[24px] border border-white/8 bg-slate-950/60 px-4 py-4 shadow-[0_24px_60px_rgba(2,6,23,0.24)] backdrop-blur-[40px] sm:rounded-[28px] sm:px-5 sm:py-5">
+          <div className="rounded-[10px] border border-white/10 bg-[#020305]/80 px-4 py-4 shadow-[0_24px_60px_rgba(0,0,0,0.24)] backdrop-blur-[20px] sm:px-5 sm:py-5">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex flex-1 flex-col gap-3">
-                <div className="flex items-center rounded-full border border-white/8 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                <div className="flex items-center rounded-[6px] border border-[#5b3f44] bg-[rgba(2,3,5,0.78)] px-4 py-3 text-sm text-[#ab888e]">
                   <Search className="h-4 w-4" />
                   <input
                     type="text"
@@ -172,7 +180,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                   />
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2">
+                  <span className="inline-flex items-center gap-2 rounded-[6px] border border-white/10 bg-white/5 px-3 py-2 uppercase tracking-[0.10em]">
                     <LayoutDashboard className="h-3.5 w-3.5" />
                     Workspace hub
                   </span>
@@ -208,7 +216,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                 </div>
               </div>
               <div className="flex items-center gap-3 self-end">
-                <div className="hidden rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400 sm:inline-flex">
+                <div className="hidden rounded-[6px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400 sm:inline-flex">
                   {filteredProjects.length} видимо сейчас
                 </div>
                 <button
@@ -222,7 +230,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
             </div>
           </div>
 
-          <div className="rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(23,27,38,0.94),rgba(15,19,29,0.92))] px-4 py-5 shadow-[0_32px_80px_rgba(15,19,29,0.18)] sm:rounded-[32px] sm:px-5 sm:py-6 md:px-8 md:py-8">
+          <div className="rounded-[10px] border border-white/10 bg-[linear-gradient(180deg,rgba(31,15,18,0.96),rgba(15,18,24,0.92))] px-4 py-5 shadow-[0_32px_80px_rgba(0,0,0,0.18)] sm:px-5 sm:py-6 md:px-8 md:py-8">
             <nav className="mb-3 flex items-center text-sm text-slate-500">
               <span className="flex items-center gap-1 text-slate-400">
                 <HomeDot />
@@ -234,23 +242,23 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
 
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div>
-                <div className="mb-4 inline-flex items-center rounded-full border border-emerald-400/15 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-200">
+                <div className="mb-4 inline-flex items-center rounded-full border border-[#ff2d78]/20 bg-[#ff2d78]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#ffb1c0]">
                   Projects
                 </div>
-                <h2 className="text-2xl font-black tracking-[-0.04em] text-white sm:text-3xl xl:text-[3rem]">
-                  Мои проекты
+                <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl xl:text-[3rem]">
+                  Workspace Overview
                 </h2>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400 md:text-base">
-                  Управляйте мониторингом, генерацией и AI-driven SEO campaigns внутри отдельных рабочих пространств.
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#ab888e] md:text-base">
+                  Система в норме. Управляйте проектами, сигналами мониторинга и AI-driven SEO workflows из одного операторского пространства.
                 </p>
               </div>
 
               <button
                 onClick={() => setIsCreating(true)}
-                className="inline-flex items-center gap-2 rounded-[18px] bg-[linear-gradient(135deg,#45f99c_0%,#00dc82_100%)] px-5 py-3 text-sm font-bold text-[#00391d] shadow-[0_0_20px_rgba(69,249,156,0.25)] transition-all hover:scale-[0.99]"
+                className="inline-flex items-center gap-2 rounded-[6px] border border-[#ffb1c0] bg-[#ffb1c0] px-5 py-3 text-sm font-bold text-[#660029] shadow-[0_0_24px_rgba(255,177,192,0.18)] transition-all hover:bg-[#ff4c83] hover:text-white"
               >
                 <FolderPlus className="w-4 h-4" />
-                Create Project
+                Initiate Workspace
               </button>
             </div>
 
@@ -277,17 +285,17 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                 {filteredProjects.map((project) => (
                   <div
                     key={project.id}
-                    className="group relative overflow-hidden rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(28,31,42,0.96),rgba(23,27,38,0.9))] p-5 shadow-[0_24px_60px_rgba(15,19,29,0.16)] transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.06] cursor-pointer"
+                    className="group relative overflow-hidden rounded-[8px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,18,24,0.84),rgba(15,18,24,0.72))] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.04] cursor-pointer"
                     onClick={() => onSelectProject(project)}
                   >
-                    <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-emerald-400/10 blur-[70px] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-[#ff2d78]/10 blur-[70px] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                     <div className="relative z-10">
                   <div className="mb-5 flex items-start justify-between gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-white/10 text-sky-300 shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-[6px] border border-white/10 bg-[#2c1b1e] text-[#ffb1c0] shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
                           <Folder className="w-5 h-5" />
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-300">
+                          <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${project.description ? 'border-[#46fa9c]/20 bg-[#46fa9c]/10 text-[#7efd8b]' : 'border-white/10 bg-white/5 text-slate-300'}`}>
                             {project.description ? 'Active' : 'Draft'}
                           </span>
                           <button
@@ -300,7 +308,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                         </div>
                       </div>
 
-                      <h3 className="max-w-full text-xl font-bold leading-tight text-white transition-colors group-hover:text-emerald-300">
+                      <h3 className="max-w-full text-xl font-bold leading-tight text-white transition-colors group-hover:text-[#ffb1c0]">
                         {project.name}
                       </h3>
                       <p className="mt-2 min-h-[3rem] text-sm leading-relaxed text-slate-400">
@@ -312,7 +320,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                           <Clock className="w-3.5 h-3.5" />
                           {formatDate(project.createdAt)}
                         </div>
-                        <div className="flex items-center gap-1 text-sm font-semibold text-emerald-300 transition-all duration-300 group-hover:translate-x-0.5">
+                        <div className="flex items-center gap-1 text-sm font-semibold text-[#ffb1c0] transition-all duration-300 group-hover:translate-x-0.5">
                           Open
                           <ChevronRight className="w-4 h-4" />
                         </div>
