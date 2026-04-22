@@ -41,6 +41,11 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
 
   const isDisabled = disabled || isLocked;
   const isOverLimit = userPlan ? config.maxChars > userPlan.maxChars : false;
+  const sectionClass = 'rounded-[10px] border border-white/10 bg-white/[0.03] p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]';
+  const sectionLabelClass = 'mb-2 flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-[0.14em] text-[#d7c1c7] sm:text-sm';
+  const inputClass = 'app-input-dark';
+  const selectClass = 'app-input-dark [&>option]:bg-[#0f1218] [&>option]:text-white';
+  const modeButtonBase = 'relative rounded-[8px] border p-3 text-left transition-all';
 
 
 
@@ -195,12 +200,12 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
       onClick={onSubmit}
       disabled={isDisabled || !config.topic || !config.websiteName || isOverLimit}
       className={`
-        w-full py-3.5 md:py-4.5 rounded-2xl font-bold shadow-lg transition-all mt-4 text-sm md:text-base flex items-center justify-center gap-2
+        w-full py-3.5 md:py-4.5 rounded-[8px] font-bold shadow-lg transition-all mt-4 text-sm md:text-base flex items-center justify-center gap-2
         ${isLocked
-          ? 'border border-white/10 bg-slate-700/95 text-slate-100 cursor-not-allowed'
+          ? 'border border-white/10 bg-white/[0.06] text-slate-100 cursor-not-allowed'
           : (disabled || !config.topic || !config.websiteName || isOverLimit)
-            ? 'border border-white/10 bg-slate-700/95 text-slate-200 cursor-not-allowed'
-            : 'bg-[linear-gradient(135deg,#10b981_0%,#14b8a6_45%,#38bdf8_100%)] text-white hover:shadow-[0_22px_52px_rgba(16,185,129,0.28)] transform hover:-translate-y-0.5 active:scale-95'}
+            ? 'border border-white/10 bg-white/[0.06] text-slate-200 cursor-not-allowed'
+            : 'border border-[#ffb1c0] bg-[#ffb1c0] text-[#660029] hover:bg-[#ff4c83] hover:text-white hover:shadow-[0_22px_52px_rgba(255,76,131,0.20)] transform hover:-translate-y-0.5 active:scale-95'}
       `}
     >
       {isLocked ? (
@@ -218,15 +223,15 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
   return (
     <div className={`app-dark-card flex flex-col ${isLocked ? 'opacity-85' : ''}`}>
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/10 p-4 sm:p-5 bg-white/[0.04] rounded-t-[24px] backdrop-blur-sm">
+      <div className="flex items-center justify-between border-b border-white/10 p-4 sm:p-5 bg-white/[0.03] rounded-t-[10px] backdrop-blur-sm">
         <h3 className="font-bold text-white flex items-center gap-2.5 text-base sm:text-lg">
-          <div className="p-1.5 bg-brand-green/15 rounded-xl border border-brand-green/20">
-            <Settings2 className="w-4 h-4 sm:w-5 sm:h-5 text-brand-green" />
+          <div className="p-1.5 bg-[rgba(255,76,131,0.08)] rounded-[8px] border border-[#ffb1c0]/20">
+            <Settings2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#ffb1c0]" />
           </div>
           Настройки генерации
         </h3>
-        <span className="hidden sm:inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-          Setup
+        <span className="hidden sm:inline-flex items-center rounded-full border border-[#5b3f44] bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#ab888e]">
+          Operator Setup
         </span>
       </div>
 
@@ -236,32 +241,32 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
         )}
 
         {/* Context & Brand Section */}
-        <div className="bg-white/[0.04] p-3 sm:p-4 rounded-[22px] border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] space-y-3 sm:space-y-4">
-          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-300 border-b border-white/10 pb-3 mb-2">
-            <Globe className="w-3 h-3 sm:w-4 sm:h-4 text-brand-green" />
+        <div className={`${sectionClass} space-y-3 sm:space-y-4`}>
+          <div className={sectionLabelClass}>
+            <Globe className="w-3 h-3 sm:w-4 sm:h-4 text-[#46fa9c]" />
             Контекст Бренда
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-200 mb-1.5">Название сайта/бренда</label>
+              <label className="block text-xs font-bold text-[#f7d6dc] mb-1.5">Название сайта/бренда</label>
               <input
                 type="text"
                 value={config.websiteName}
                 onChange={(e) => handleChange('websiteName', e.target.value)}
                 placeholder="Например: MyShop, CryptoBlog"
-                className="w-full p-2.5 sm:p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none text-sm placeholder-slate-400 transition-all"
+                className={inputClass}
                 disabled={isDisabled}
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-200 mb-1.5">Целевая страна/регион</label>
+              <label className="block text-xs font-bold text-[#f7d6dc] mb-1.5">Целевая страна/регион</label>
               <input
                 type="text"
                 value={config.targetCountry}
                 onChange={(e) => handleChange('targetCountry', e.target.value)}
                 placeholder="Казахстан, РФ, США..."
-                className="w-full p-2.5 sm:p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none text-sm placeholder-slate-400 transition-all"
+                className={inputClass}
                 disabled={isDisabled}
               />
             </div>
@@ -269,13 +274,13 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1">
+              <label className="block text-xs font-bold text-[#f7d6dc] mb-1.5 flex items-center gap-1">
                 <Globe className="w-3 h-3" /> Язык текста
               </label>
               <select
                 value={config.language}
                 onChange={(e) => handleChange('language', e.target.value)}
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none text-sm [&>option]:text-slate-900 transition-all"
+                className={selectClass}
                 disabled={isDisabled}
               >
                 {Object.values(ContentLanguage).map(lang => (
@@ -284,13 +289,13 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1">
+              <label className="block text-xs font-bold text-[#f7d6dc] mb-1.5 flex items-center gap-1">
                 <Mic className="w-3 h-3" /> Тон голоса (Tone of Voice)
               </label>
               <select
                 value={config.tone}
                 onChange={(e) => handleChange('tone', e.target.value)}
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none text-sm [&>option]:text-slate-900 transition-all"
+                className={selectClass}
                 disabled={isDisabled}
               >
                 {Object.values(TextTone).map(t => (
@@ -299,13 +304,13 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1">
+              <label className="block text-xs font-bold text-[#f7d6dc] mb-1.5 flex items-center gap-1">
                 <Feather className="w-3 h-3" /> Стиль текста (Style)
               </label>
               <select
                 value={config.style}
                 onChange={(e) => handleChange('style', e.target.value)}
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none text-sm [&>option]:text-slate-900 transition-all"
+                className={selectClass}
                 disabled={isDisabled}
               >
                 {Object.values(TextStyle).map(s => (
@@ -317,9 +322,9 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
         </div>
 
         {/* Generation Mode Toggle */}
-        <div className="bg-[linear-gradient(135deg,rgba(139,92,246,0.10),rgba(56,189,248,0.08))] p-3 sm:p-4 rounded-[22px] border border-purple-500/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-300 border-b border-white/10 pb-2 sm:pb-3 mb-3">
-            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-purple-400" />
+        <div className={`${sectionClass} bg-[linear-gradient(135deg,rgba(255,76,131,0.08),rgba(255,177,192,0.04))] border-[#5b3f44]`}>
+          <div className={sectionLabelClass}>
+            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#ffb1c0]" />
             Режим генерации
           </div>
 
@@ -330,16 +335,16 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               onClick={() => handleChange('generationMode', 'seo' as GenerationMode)}
               disabled={isDisabled}
               className={`
-                relative p-2.5 sm:p-3 rounded-xl border-2 transition-all text-left
+                ${modeButtonBase}
                 ${config.generationMode === 'seo'
-                  ? 'border-brand-green bg-brand-green/10 shadow-lg shadow-brand-green/20'
-                  : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'}
+                  ? 'border-[#46fa9c]/40 bg-[rgba(70,250,156,0.08)] shadow-lg shadow-[#46fa9c]/10'
+                  : 'border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.05]'}
                 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
               `}
             >
               <div className="flex items-start gap-2 sm:gap-3">
-                <div className={`p-1.5 sm:p-2 rounded-lg shrink-0 ${config.generationMode === 'seo' ? 'bg-brand-green/20' : 'bg-white/10'}`}>
-                  <Search className={`w-4 h-4 sm:w-5 sm:h-5 ${config.generationMode === 'seo' ? 'text-brand-green' : 'text-slate-400'}`} />
+                <div className={`p-1.5 sm:p-2 rounded-[6px] shrink-0 ${config.generationMode === 'seo' ? 'bg-[#46fa9c]/12' : 'bg-white/10'}`}>
+                  <Search className={`w-4 h-4 sm:w-5 sm:h-5 ${config.generationMode === 'seo' ? 'text-[#46fa9c]' : 'text-slate-400'}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1 sm:gap-2">
@@ -354,7 +359,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                 </div>
               </div>
               {config.generationMode === 'seo' && (
-                <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-brand-green rounded-full animate-pulse" />
+                <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#46fa9c] rounded-full animate-pulse" />
               )}
             </button>
 
@@ -364,16 +369,16 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               onClick={() => handleChange('generationMode', 'geo' as GenerationMode)}
               disabled={isDisabled}
               className={`
-                relative p-2.5 sm:p-3 rounded-xl border-2 transition-all text-left
+                ${modeButtonBase}
                 ${config.generationMode === 'geo'
-                  ? 'border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20'
-                  : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'}
+                  ? 'border-[#ffb1c0]/40 bg-[rgba(255,76,131,0.08)] shadow-lg shadow-[#ffb1c0]/10'
+                  : 'border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.05]'}
                 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
               `}
             >
               <div className="flex items-start gap-2 sm:gap-3">
-                <div className={`p-1.5 sm:p-2 rounded-lg shrink-0 ${config.generationMode === 'geo' ? 'bg-purple-500/20' : 'bg-white/10'}`}>
-                  <Sparkles className={`w-4 h-4 sm:w-5 sm:h-5 ${config.generationMode === 'geo' ? 'text-purple-400' : 'text-slate-400'}`} />
+                <div className={`p-1.5 sm:p-2 rounded-[6px] shrink-0 ${config.generationMode === 'geo' ? 'bg-[#ff4c83]/12' : 'bg-white/10'}`}>
+                  <Sparkles className={`w-4 h-4 sm:w-5 sm:h-5 ${config.generationMode === 'geo' ? 'text-[#ffb1c0]' : 'text-slate-400'}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1 sm:gap-2">
@@ -388,14 +393,14 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                 </div>
               </div>
               {config.generationMode === 'geo' && (
-                <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full animate-pulse" />
+                <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#ffb1c0] rounded-full animate-pulse" />
               )}
             </button>
           </div>
 
           {config.generationMode === 'geo' && (
-            <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
-              <p className="text-[10px] sm:text-xs text-purple-300">
+            <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-[rgba(255,76,131,0.08)] rounded-[8px] border border-[#ffb1c0]/20">
+              <p className="text-[10px] sm:text-xs text-[#f7d6dc]">
                 <strong>GEO</strong> — контент с таблицами, FAQ для AI-поисковиков.
               </p>
             </div>
@@ -405,33 +410,33 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
         {/* Topic & URL */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
-            <label className="block text-xs sm:text-sm font-bold text-slate-200 mb-1.5 sm:mb-2">Тема статьи</label>
+            <label className="block text-xs sm:text-sm font-bold text-[#f7d6dc] mb-1.5 sm:mb-2">Тема статьи</label>
             <input
               type="text"
               value={config.topic}
               onChange={(e) => handleChange('topic', e.target.value)}
               placeholder="Например: Обзор смартфонов 2024"
-              className="w-full p-2.5 sm:p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none shadow-sm placeholder-slate-400 text-sm transition-all"
+              className={inputClass}
               disabled={isDisabled}
             />
           </div>
           <div>
-            <label className="block text-xs sm:text-sm font-bold text-slate-200 mb-1.5 sm:mb-2">URL страницы (Slug)</label>
+            <label className="block text-xs sm:text-sm font-bold text-[#f7d6dc] mb-1.5 sm:mb-2">URL страницы (Slug)</label>
             <input
               type="text"
               value={config.targetUrl}
               onChange={(e) => handleChange('targetUrl', e.target.value)}
               placeholder="/blog/smartphones-2024"
-              className="w-full p-2.5 sm:p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none shadow-sm placeholder-slate-400 text-sm transition-all"
+              className={inputClass}
               disabled={isDisabled}
             />
           </div>
         </div>
 
         {/* Competitor Links & Files */}
-        <div className="p-3 sm:p-4 bg-white/[0.04] rounded-[22px] border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-          <label className="block text-xs sm:text-sm font-bold text-slate-200 mb-2 sm:mb-3 flex items-center gap-2">
-            <LinkIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-green" /> Ссылки на конкурентов
+        <div className={sectionClass}>
+          <label className={sectionLabelClass}>
+            <LinkIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#46fa9c]" /> Ссылки на конкурентов
           </label>
 
           <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
@@ -443,13 +448,13 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                   onChange={(e) => updateCompetitorLink(idx, e.target.value)}
                   onPaste={(e) => handleLinkPaste(e, idx)}
                   placeholder="https://competitor.com/..."
-                  className="flex-1 p-2 sm:p-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none shadow-sm placeholder-slate-400 text-xs sm:text-sm transition-all"
+                  className={`${inputClass} text-xs sm:text-sm`}
                   disabled={isDisabled}
                 />
                 <button
                   onClick={() => removeCompetitorLink(idx)}
                   disabled={isDisabled}
-                  className="p-2 sm:p-2.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors border border-transparent hover:border-red-500/20"
+                  className="p-2 sm:p-2.5 text-slate-400 hover:text-red-300 hover:bg-red-500/10 rounded-[8px] transition-colors border border-transparent hover:border-red-500/20"
                   title="Удалить ссылку"
                 >
                   <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -461,9 +466,9 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
           {competitorFiles.length > 0 && (
             <div className="space-y-2 mb-4">
               {competitorFiles.map((file, idx) => (
-                <div key={`file-${idx}`} className="flex items-center justify-between p-3 bg-brand-green/10 border border-brand-green/20 rounded-xl">
+                <div key={`file-${idx}`} className="flex items-center justify-between p-3 bg-[rgba(70,250,156,0.08)] border border-[#46fa9c]/20 rounded-[8px]">
                   <div className="flex items-center gap-3">
-                    <div className="bg-white/10 p-2 rounded-lg">
+                    <div className="bg-white/10 p-2 rounded-[6px]">
                       {file.name.endsWith('.xlsx') || file.name.endsWith('.xls') ? (
                         <FileSpreadsheet className="w-4 h-4 text-green-400" />
                       ) : (
@@ -488,7 +493,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
             <button
               onClick={addCompetitorLink}
               disabled={isDisabled}
-              className="flex-1 py-3 border border-white/10 bg-white/5 rounded-xl text-slate-300 font-bold hover:bg-white/10 transition-colors flex items-center justify-center gap-2 text-sm shadow-sm"
+              className="app-btn-dark flex-1 py-3 text-sm"
             >
               <Plus className="w-4 h-4" /> Добавить ссылку
             </button>
@@ -505,10 +510,10 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               <button
                 onClick={() => !isDisabled && competitorFileRef.current?.click()}
                 disabled={isDisabled || isFileLoading}
-                className="w-full h-full py-3 border border-white/10 bg-white/5 rounded-xl text-slate-300 font-bold hover:bg-white/10 transition-colors flex items-center justify-center gap-2 text-sm shadow-sm"
+                className="app-btn-dark w-full h-full py-3 text-sm"
               >
                 {isFileLoading ? (
-                  <div className="w-4 h-4 border-2 border-brand-green border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-4 h-4 border-2 border-[#ffb1c0] border-t-transparent rounded-full animate-spin"></div>
                 ) : (
                   <Upload className="w-4 h-4" />
                 )}
@@ -516,7 +521,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               </button>
             </div>
           </div>
-          <p className="text-[10px] md:text-xs text-slate-500 mt-3">
+          <p className="text-[10px] md:text-xs text-[#ab888e] mt-3">
             Укажите ссылки или загрузите файлы конкурентов для анализа структуры.
             Файлы .docx и Excel будут использованы как контекст.
           </p>
@@ -524,17 +529,17 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
 
         {/* Example Content (DOCX Upload) */}
         <div>
-          <label className="block text-sm font-bold text-slate-200 mb-2 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-brand-green" /> Пример текста (файл .docx)
+          <label className="block text-sm font-bold text-[#f7d6dc] mb-2 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-[#46fa9c]" /> Пример текста (файл .docx)
           </label>
 
           {!docxFileName ? (
             <div
               onClick={() => !isDisabled && fileInputRef.current?.click()}
               className={`
-                border-2 border-dashed border-white/10 rounded-xl p-6 
-                text-center transition-all bg-white/5
-                ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-brand-green hover:bg-white/10'}
+                border-2 border-dashed border-[#5b3f44] rounded-[8px] p-6 
+                text-center transition-all bg-white/[0.03]
+                ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-[#ffb1c0] hover:bg-white/[0.05]'}
               `}
             >
               <input
@@ -547,27 +552,27 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               />
               {isDocxLoading ? (
                 <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
-                  <div className="w-4 h-4 border-2 border-brand-green border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-4 h-4 border-2 border-[#ffb1c0] border-t-transparent rounded-full animate-spin"></div>
                   Чтение...
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-2">
-                  <Upload className="w-6 h-6 text-slate-400" />
-                  <span className="text-sm text-slate-400 font-medium">Загрузить .docx</span>
+                  <Upload className="w-6 h-6 text-[#ab888e]" />
+                  <span className="text-sm text-[#ab888e] font-medium">Загрузить .docx</span>
                 </div>
               )}
             </div>
           ) : (
-            <div className="flex items-center justify-between bg-brand-green/10 border border-brand-green/30 rounded-xl p-3">
+            <div className="flex items-center justify-between bg-[rgba(70,250,156,0.08)] border border-[#46fa9c]/30 rounded-[8px] p-3">
               <div className="flex items-center gap-3 overflow-hidden">
-                <div className="bg-white/10 p-2 rounded-full flex-shrink-0">
-                  <FileText className="w-4 h-4 text-brand-green" />
+                <div className="bg-white/10 p-2 rounded-[6px] flex-shrink-0">
+                  <FileText className="w-4 h-4 text-[#46fa9c]" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-white truncate">
                     {docxFileName}
                   </p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-[#ab888e]">
                     {config.exampleContent ? `${config.exampleContent.length} символов` : 'Файл загружен'}
                   </p>
                 </div>
@@ -585,26 +590,26 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
 
         {/* LSI Keywords */}
         <div>
-          <label className="block text-sm font-bold text-slate-200 mb-2 flex items-center gap-2">
-            <Settings2 className="w-4 h-4 text-brand-green" /> LSI ключи (набор слов)
+          <label className="block text-sm font-bold text-[#f7d6dc] mb-2 flex items-center gap-2">
+            <Settings2 className="w-4 h-4 text-[#46fa9c]" /> LSI ключи (набор слов)
           </label>
           <textarea
             value={config.lsiKeywords}
             onChange={(e) => handleChange('lsiKeywords', e.target.value)}
             placeholder="дополнительные тематические слова через запятую..."
-            className="w-full p-3.5 bg-white/5 border border-white/10 rounded-xl text-white h-20 md:h-24 focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none resize-none shadow-sm placeholder-slate-400 text-sm transition-all"
+            className="app-input-dark h-20 md:h-24 resize-none"
             disabled={isDisabled}
           />
         </div>
 
         {/* Length Controls */}
-        <div className="p-4 sm:p-5 bg-white/[0.04] rounded-[22px] border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+        <div className={sectionClass}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
             <div>
-              <label className="block text-sm font-bold text-slate-200 mb-2 flex items-center gap-2 justify-between">
-                <span className="flex items-center gap-2"><Type className="w-4 h-4 text-brand-green" /> Количество символов</span>
+              <label className="block text-sm font-bold text-[#f7d6dc] mb-2 flex items-center gap-2 justify-between">
+                <span className="flex items-center gap-2"><Type className="w-4 h-4 text-[#46fa9c]" /> Количество символов</span>
                 {userPlan && (
-                  <span className="text-[10px] text-slate-500 font-normal">Лимит: {userPlan.maxChars}</span>
+                  <span className="text-[10px] text-[#ab888e] font-normal">Лимит: {userPlan.maxChars}</span>
                 )}
               </label>
               <div className="flex items-center gap-3">
@@ -612,16 +617,16 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                   type="number"
                   value={config.minChars}
                   onChange={(e) => handleChange('minChars', parseNumericInput(e.target.value, config.minChars))}
-                  className="w-full p-2.5 bg-white/5 border border-white/10 rounded-xl text-white shadow-sm focus:ring-1 focus:ring-brand-green text-sm outline-none"
+                  className={inputClass}
                   placeholder="Мин"
                   disabled={isDisabled}
                 />
-                <span className="text-slate-500 font-bold">-</span>
+                <span className="text-[#ab888e] font-bold">-</span>
                 <input
                   type="number"
                   value={config.maxChars}
                   onChange={(e) => handleChange('maxChars', parseNumericInput(e.target.value, config.maxChars))}
-                  className={`w-full p-2.5 bg-white/5 border rounded-xl text-white shadow-sm focus:ring-1 text-sm outline-none ${isOverLimit ? 'border-red-500 focus:ring-red-500' : 'border-white/10 focus:ring-brand-green'}`}
+                  className={`app-input-dark ${isOverLimit ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                   placeholder="Макс"
                   disabled={isDisabled}
                 />
@@ -629,24 +634,24 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-slate-200 mb-2 flex items-center gap-2">
-                <AlignLeft className="w-4 h-4 text-brand-green" /> Абзацы
+              <label className="block text-sm font-bold text-[#f7d6dc] mb-2 flex items-center gap-2">
+                <AlignLeft className="w-4 h-4 text-[#46fa9c]" /> Абзацы
               </label>
               <div className="flex items-center gap-3">
                 <input
                   type="number"
                   value={config.minParas}
                   onChange={(e) => handleChange('minParas', parseNumericInput(e.target.value, config.minParas))}
-                  className="w-full p-2.5 bg-white/5 border border-white/10 rounded-xl text-white shadow-sm focus:ring-1 focus:ring-brand-green text-sm outline-none"
+                  className={inputClass}
                   placeholder="Мин"
                   disabled={isDisabled}
                 />
-                <span className="text-slate-500 font-bold">-</span>
+                <span className="text-[#ab888e] font-bold">-</span>
                 <input
                   type="number"
                   value={config.maxParas}
                   onChange={(e) => handleChange('maxParas', parseNumericInput(e.target.value, config.maxParas))}
-                  className="w-full p-2.5 bg-white/5 border border-white/10 rounded-xl text-white shadow-sm focus:ring-1 focus:ring-brand-green text-sm outline-none"
+                  className={inputClass}
                   placeholder="Макс"
                   disabled={isDisabled}
                 />
@@ -670,10 +675,10 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               onClick={onClear}
               disabled={isDisabled}
               className={`
-                w-full mt-2 py-3 rounded-2xl font-bold text-sm md:text-base flex items-center justify-center gap-2 transition-all
+                w-full mt-2 py-3 rounded-[8px] font-bold text-sm md:text-base flex items-center justify-center gap-2 transition-all
                 ${isDisabled
-                  ? 'bg-slate-800/60 text-slate-500 cursor-not-allowed'
-                  : 'bg-slate-900/60 text-slate-200 border border-white/10 hover:border-red-400 hover:text-red-300 hover:bg-red-500/5'}
+                  ? 'bg-white/[0.04] text-slate-500 cursor-not-allowed'
+                  : 'bg-white/[0.03] text-slate-200 border border-white/10 hover:border-red-400/30 hover:text-red-300 hover:bg-red-500/5'}
               `}
             >
               <Trash2 className="w-4 h-4" />

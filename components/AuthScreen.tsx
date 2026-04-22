@@ -105,29 +105,29 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const serverStatusConfig = {
     checking: {
       label: 'Проверяем backend',
-      classes: 'border-amber-200 bg-amber-50 text-amber-700'
+      classes: 'border-[#ffb168]/20 bg-[rgba(58,33,20,0.88)] text-[#ffcfad]'
     },
     online: {
       label: 'Backend online',
-      classes: 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      classes: 'border-[#46fa9c]/20 bg-[rgba(17,54,37,0.86)] text-[#8cf7ba]'
     },
     offline: {
       label: 'Backend offline',
-      classes: 'border-red-200 bg-red-50 text-red-600'
+      classes: 'border-red-500/20 bg-[rgba(74,23,29,0.88)] text-red-200'
     }
   } as const;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-mesh-animated">
-      <div className="absolute left-[8%] top-[14%] h-40 w-40 rounded-full bg-emerald-400/18 blur-3xl animate-pulse-slow sm:h-56 sm:w-56 lg:h-72 lg:w-72" />
-      <div className="absolute bottom-[10%] right-[8%] h-40 w-40 rounded-full bg-sky-400/18 blur-3xl animate-pulse-slow delay-1000 sm:h-56 sm:w-56 lg:h-72 lg:w-72" />
+      <div className="absolute left-[8%] top-[14%] h-40 w-40 rounded-full bg-[#ff4c83]/18 blur-3xl animate-pulse-slow sm:h-56 sm:w-56 lg:h-72 lg:w-72" />
+      <div className="absolute bottom-[10%] right-[8%] h-40 w-40 rounded-full bg-[#46fa9c]/14 blur-3xl animate-pulse-slow delay-1000 sm:h-56 sm:w-56 lg:h-72 lg:w-72" />
       <div className="absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.10),transparent_60%)]" />
 
       <div className="relative z-10 flex min-h-screen items-center justify-center p-3 sm:p-4 lg:p-6">
         <div className="app-shell-card w-full max-w-[calc(100vw-24px)] sm:max-w-5xl p-3 sm:p-4 lg:p-5 animate-in fade-in zoom-in duration-700">
           <div className="grid gap-3 lg:grid-cols-[1.05fr_0.95fr]">
             <section className="app-dark-card relative overflow-hidden p-6 sm:p-7 lg:p-8">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.18),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.18),transparent_34%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,76,131,0.16),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(70,250,156,0.14),transparent_34%)]" />
               <div className="relative">
                 <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] ${serverStatusConfig[serverStatus].classes}`}>
                   <span className="h-2 w-2 rounded-full bg-current opacity-80" />
@@ -135,8 +135,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 </div>
 
                 <div className="mt-6 flex items-start gap-4">
-                  <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-[24px] border border-white/15 bg-[linear-gradient(135deg,rgba(16,185,129,0.22),rgba(56,189,248,0.18))] shadow-[0_18px_40px_rgba(16,185,129,0.18)]">
-                    <div className="absolute inset-0 rounded-[24px] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.24),transparent_58%)]" />
+                  <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-[10px] border border-[#ffb1c0]/20 bg-[linear-gradient(135deg,rgba(255,76,131,0.14),rgba(255,177,192,0.08))] shadow-[0_18px_40px_rgba(255,76,131,0.12)]">
+                    <div className="absolute inset-0 rounded-[10px] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.16),transparent_58%)]" />
                     <LayoutDashboard className="relative h-7 w-7 text-white" />
                   </div>
                   <div>
@@ -145,10 +145,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                       Telegram Mini App
                     </div>
                     <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                      SEO Generator
+                      AURA SEO
                     </h1>
-                    <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-300 sm:text-base">
-                      Платформа для генерации, анализа, рерайта и SEO monitoring в одном аккуратном рабочем пространстве.
+                    <p className="mt-3 max-w-lg text-sm leading-relaxed text-[#d7c1c7] sm:text-base">
+                      Операторский интерфейс для генерации, анализа, monitoring и конкурентной разведки в одном рабочем пространстве.
                     </p>
                   </div>
                 </div>
@@ -159,41 +159,41 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                     { icon: <LayoutDashboard className="h-4 w-4" />, title: 'All-in-one', text: 'Генерация, аудит, outline, SERP и monitoring.' },
                     { icon: <Smartphone className="h-4 w-4" />, title: 'Mobile-ready', text: 'Удобно пользоваться прямо с телефона.' }
                   ].map((item) => (
-                    <div key={item.title} className="rounded-[22px] border border-white/10 bg-white/5 p-4 shadow-[0_12px_28px_rgba(2,6,23,0.16)] backdrop-blur-sm">
-                      <div className="mb-3 inline-flex rounded-2xl border border-white/10 bg-white/10 p-2 text-emerald-300">
+                    <div key={item.title} className="rounded-[10px] border border-white/10 bg-white/[0.03] p-4 shadow-[0_12px_28px_rgba(2,6,23,0.16)] backdrop-blur-sm">
+                      <div className="mb-3 inline-flex rounded-[8px] border border-[#ffb1c0]/20 bg-[rgba(255,76,131,0.08)] p-2 text-[#ffb1c0]">
                         {item.icon}
                       </div>
                       <div className="text-sm font-semibold text-white">{item.title}</div>
-                      <p className="mt-1 text-xs leading-relaxed text-slate-400">{item.text}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-[#ab888e]">{item.text}</p>
                     </div>
                   ))}
                 </div>
               </div>
             </section>
 
-            <section className="app-light-card p-5 sm:p-6 lg:p-8">
+            <section className="app-dark-card p-5 sm:p-6 lg:p-8">
               <div className="app-badge mb-3">Access</div>
-              <h2 className="text-2xl font-bold text-slate-900 sm:text-[2rem]">Вход в приложение</h2>
-              <p className="mt-2 text-sm leading-relaxed text-slate-500">
+              <h2 className="text-2xl font-bold text-white sm:text-[2rem]">Вход в приложение</h2>
+              <p className="mt-2 text-sm leading-relaxed text-[#ab888e]">
                 Сначала проверяем доступность backend, затем авторизуем пользователя через Telegram или dev-вход.
               </p>
 
               {error && (
-                <div className="mt-6 rounded-[22px] border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600 shadow-[0_12px_30px_rgba(239,68,68,0.08)] animate-in fade-in">
+                <div className="mt-6 rounded-[8px] border border-red-500/20 bg-[rgba(74,23,29,0.88)] px-4 py-3 text-sm text-red-200 shadow-[0_12px_30px_rgba(0,0,0,0.18)] animate-in fade-in">
                   {error}
                 </div>
               )}
 
               {serverStatus === 'offline' && (
                 <div className="mt-8 text-center">
-                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-[24px] border border-red-100 bg-red-50 shadow-[0_16px_36px_rgba(239,68,68,0.10)]">
-                    <ServerCrash className="h-8 w-8 text-red-500" />
+                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-[10px] border border-red-500/20 bg-[rgba(74,23,29,0.88)] shadow-[0_16px_36px_rgba(0,0,0,0.18)]">
+                    <ServerCrash className="h-8 w-8 text-red-200" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900">Сервер недоступен</h3>
-                  <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-500">
+                  <h3 className="text-xl font-bold text-white">Сервер недоступен</h3>
+                  <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-[#ab888e]">
                     Не удалось подключиться к API. Проверьте деплой или попробуйте повторить проверку через несколько секунд.
                   </p>
-                  <button onClick={checkServerHealth} className="app-btn-secondary mt-6">
+                  <button onClick={checkServerHealth} className="app-btn-dark mt-6">
                     <RefreshCw className="w-4 h-4" />
                     Повторить проверку
                   </button>
@@ -201,57 +201,57 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
               )}
 
               {serverStatus === 'checking' && (
-                <div className="mt-8 flex flex-col items-center justify-center rounded-[24px] border border-slate-200 bg-slate-50/90 px-6 py-10 text-center">
-                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-emerald-100 bg-white shadow-[0_14px_30px_rgba(16,185,129,0.10)]">
-                    <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
+                <div className="mt-8 flex flex-col items-center justify-center rounded-[10px] border border-white/10 bg-white/[0.03] px-6 py-10 text-center">
+                  <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-[8px] border border-[#ffb1c0]/20 bg-[rgba(255,76,131,0.08)] shadow-[0_14px_30px_rgba(0,0,0,0.16)]">
+                    <Loader2 className="h-6 w-6 animate-spin text-[#ffb1c0]" />
                   </div>
-                  <p className="font-semibold text-slate-800">Проверяем backend…</p>
-                  <p className="mt-2 text-sm text-slate-500">Это занимает несколько секунд перед авторизацией.</p>
+                  <p className="font-semibold text-white">Проверяем backend…</p>
+                  <p className="mt-2 text-sm text-[#ab888e]">Это занимает несколько секунд перед авторизацией.</p>
                 </div>
               )}
 
               {serverStatus === 'online' && (
                 <>
                   {isLoading ? (
-                    <div className="mt-8 flex flex-col items-center justify-center rounded-[24px] border border-slate-200 bg-slate-50/90 px-6 py-10 text-center">
-                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-emerald-100 bg-white shadow-[0_14px_30px_rgba(16,185,129,0.10)]">
-                        <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
+                    <div className="mt-8 flex flex-col items-center justify-center rounded-[10px] border border-white/10 bg-white/[0.03] px-6 py-10 text-center">
+                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-[8px] border border-[#ffb1c0]/20 bg-[rgba(255,76,131,0.08)] shadow-[0_14px_30px_rgba(0,0,0,0.16)]">
+                        <Loader2 className="h-6 w-6 animate-spin text-[#ffb1c0]" />
                       </div>
-                      <p className="font-semibold text-slate-800">Авторизация…</p>
-                      <p className="mt-2 text-sm text-slate-500">Подтверждаем доступ и загружаем ваш workspace.</p>
+                      <p className="font-semibold text-white">Авторизация…</p>
+                      <p className="mt-2 text-sm text-[#ab888e]">Подтверждаем доступ и загружаем ваш workspace.</p>
                     </div>
                   ) : isTelegramEnv ? (
-                    <div className="mt-8 rounded-[24px] border border-emerald-100 bg-[linear-gradient(135deg,rgba(16,185,129,0.08),rgba(56,189,248,0.08))] px-6 py-10 text-center shadow-[0_18px_40px_rgba(16,185,129,0.10)]">
-                      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-emerald-200 bg-white">
-                        <Send className="h-6 w-6 text-emerald-600" />
+                    <div className="mt-8 rounded-[10px] border border-[#46fa9c]/20 bg-[linear-gradient(135deg,rgba(70,250,156,0.08),rgba(255,76,131,0.06))] px-6 py-10 text-center shadow-[0_18px_40px_rgba(70,250,156,0.08)]">
+                      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[8px] border border-[#46fa9c]/20 bg-[rgba(70,250,156,0.08)]">
+                        <Send className="h-6 w-6 text-[#46fa9c]" />
                       </div>
-                      <p className="font-semibold text-slate-800">Подключаем Telegram-профиль…</p>
-                      <p className="mt-2 text-sm text-slate-500">Если вход не завершится автоматически, обновите Mini App.</p>
+                      <p className="font-semibold text-white">Подключаем Telegram-профиль…</p>
+                      <p className="mt-2 text-sm text-[#ab888e]">Если вход не завершится автоматически, обновите Mini App.</p>
                     </div>
                   ) : (
                     <div className="mt-8 space-y-6">
-                      <div className="rounded-[24px] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,250,252,0.88))] p-5">
-                        <div className="inline-flex rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-sky-700">
+                      <div className="rounded-[10px] border border-[#5b3f44] bg-[linear-gradient(180deg,rgba(43,27,30,0.92),rgba(31,15,18,0.88))] p-5">
+                        <div className="inline-flex rounded-full border border-[#ffb1c0]/20 bg-[rgba(255,76,131,0.08)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#ffb1c0]">
                           Dev access
                         </div>
-                        <h3 className="mt-3 text-xl font-bold text-slate-900">Вход вне Telegram</h3>
-                        <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                        <h3 className="mt-3 text-xl font-bold text-white">Вход вне Telegram</h3>
+                        <p className="mt-2 text-sm leading-relaxed text-[#ab888e]">
                           Приложение открыто не внутри Telegram. Используйте тестовый Telegram ID для dev-входа.
                         </p>
                       </div>
 
                       <form onSubmit={handleDevLogin} className="space-y-5">
                         <div className="space-y-2">
-                          <label className="ml-1 block text-sm font-bold text-slate-700">Telegram ID</label>
+                          <label className="ml-1 block text-sm font-bold text-[#f7d6dc]">Telegram ID</label>
                           <div className="relative">
                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                              <Smartphone className="h-5 w-5 text-slate-400" />
+                              <Smartphone className="h-5 w-5 text-[#ab888e]" />
                             </div>
                             <input
                               type="number"
                               value={devId}
                               onChange={(e) => setDevId(e.target.value)}
-                              className="app-input-light pl-12"
+                              className="app-input-dark pl-12"
                               placeholder="Например: 123456789"
                               required
                             />
@@ -273,7 +273,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                         </button>
                       </form>
 
-                      <p className="rounded-[20px] border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs leading-relaxed text-slate-500">
+                      <p className="rounded-[8px] border border-white/10 bg-white/[0.03] px-4 py-3 text-xs leading-relaxed text-[#ab888e]">
                         Для прав администратора добавьте Telegram ID в массив `ADMIN_IDS` в коде или выдайте роль через backend.
                       </p>
                     </div>
