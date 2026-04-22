@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Activity, AlertTriangle, BellRing, Clock3, ExternalLink, Globe, PauseCircle, PlayCircle, Plus, RefreshCw, ShieldAlert, Trash2 } from 'lucide-react';
 import { DiffViewer } from './DiffViewer';
+import { StyledSelect } from './StyledSelect';
 import { useToast } from './Toast';
 import { MonitoredPage, MonitoringEvent, MonitoringFrequency, MonitoringSeverity } from '../types';
 import { monitoringService } from '../services/monitoringService';
@@ -23,8 +24,6 @@ const severityStyles: Record<MonitoringSeverity, string> = {
 
 const fieldShellClass = 'rounded-[6px] border border-[#5b3f44] bg-[rgba(2,3,5,0.78)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]';
 const fieldInputClass = 'w-full bg-transparent p-0 text-white outline-none placeholder:text-[#ab888e]';
-const fieldSelectClass = 'w-full appearance-none bg-transparent p-0 text-white outline-none [&>option]:text-slate-900';
-
 export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) => {
   const toast = useToast();
   const [pages, setPages] = useState<MonitoredPage[]>([]);
@@ -236,19 +235,12 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
             </div>
             <div className="xl:col-span-2">
               <FieldLabel>Частота</FieldLabel>
-              <div className={fieldShellClass}>
-                <select
-                  value={newFrequency}
-                  onChange={(event) => setNewFrequency(event.target.value as MonitoringFrequency)}
-                  className={fieldSelectClass}
-                >
-                  {FREQUENCY_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <StyledSelect
+                value={newFrequency}
+                onChange={(value) => setNewFrequency(value as MonitoringFrequency)}
+                options={FREQUENCY_OPTIONS}
+                className={fieldShellClass}
+              />
             </div>
             <div className="md:col-span-2 xl:col-span-2 xl:self-end">
               <button
@@ -315,17 +307,13 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
                     </div>
 
                     <div className="flex flex-wrap gap-2 xl:w-[290px] xl:justify-end">
-                      <select
+                      <StyledSelect
                         value={page.frequency}
-                        onChange={(event) => handleChangeFrequency(page.id, event.target.value as MonitoringFrequency)}
-                        className="min-w-[10rem] rounded-[6px] border border-[#5b3f44] bg-[rgba(2,3,5,0.78)] px-3 py-2 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] [&>option]:text-slate-900"
-                      >
-                        {FREQUENCY_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(value) => handleChangeFrequency(page.id, value as MonitoringFrequency)}
+                        options={FREQUENCY_OPTIONS}
+                        className="min-w-[10rem] rounded-[6px] border border-[#5b3f44] bg-[rgba(2,3,5,0.78)] px-3 py-2 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                        buttonClassName="text-sm"
+                      />
 
                       <button
                         onClick={() => handleRunCheck(page.id)}

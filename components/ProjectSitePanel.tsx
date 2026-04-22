@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Trash2
 } from 'lucide-react';
+import { StyledSelect } from './StyledSelect';
 import { MonitoringFrequency, ProjectSite } from '../types';
 import { projectSiteService } from '../services/projectSiteService';
 import { useToast } from './Toast';
@@ -37,8 +38,6 @@ const statusStyles: Record<string, string> = {
 
 const fieldShellClass = 'rounded-[6px] border border-[#5b3f44] bg-[rgba(2,3,5,0.78)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]';
 const fieldInputClass = 'w-full bg-transparent p-0 text-white outline-none placeholder:text-[#ab888e]';
-const fieldSelectClass = 'w-full appearance-none bg-transparent p-0 text-white outline-none [&>option]:text-slate-900';
-
 export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId }) => {
   const toast = useToast();
   const [site, setSite] = useState<ProjectSite | null>(null);
@@ -275,17 +274,12 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
               </div>
               <div className="xl:col-span-2">
                 <FieldLabel>Частота</FieldLabel>
-                <div className={fieldShellClass}>
-                  <select
-                    value={scanFrequency}
-                    onChange={(event) => setScanFrequency(event.target.value as MonitoringFrequency)}
-                    className={fieldSelectClass}
-                  >
-                    {FREQUENCY_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </div>
+                <StyledSelect
+                  value={scanFrequency}
+                  onChange={(value) => setScanFrequency(value as MonitoringFrequency)}
+                  options={FREQUENCY_OPTIONS}
+                  className={fieldShellClass}
+                />
               </div>
               <div className="md:col-span-2 xl:col-span-2 xl:self-end">
                 <button
@@ -338,17 +332,12 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
                 </div>
                 <div className="xl:col-span-2">
                   <FieldLabel>Частота</FieldLabel>
-                  <div className={fieldShellClass}>
-                    <select
-                      value={scanFrequency}
-                      onChange={(event) => setScanFrequency(event.target.value as MonitoringFrequency)}
-                      className={fieldSelectClass}
-                    >
-                      {FREQUENCY_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <StyledSelect
+                    value={scanFrequency}
+                    onChange={(value) => setScanFrequency(value as MonitoringFrequency)}
+                    options={FREQUENCY_OPTIONS}
+                    className={fieldShellClass}
+                  />
                 </div>
                 <div className="md:col-span-2 xl:col-span-2 xl:self-end">
                   <button

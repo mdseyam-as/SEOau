@@ -8,6 +8,7 @@ import { SubscriptionPlan } from '../services/authService';
 import { useToast } from './Toast';
 import { KnowledgeBaseUploader } from './KnowledgeBaseUploader';
 import { InternalLinksManager } from './InternalLinksManager';
+import { StyledSelect } from './StyledSelect';
 
 interface SettingsFormProps {
   config: GenerationConfig;
@@ -44,7 +45,6 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
   const sectionClass = 'rounded-[10px] border border-white/10 bg-white/[0.03] p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]';
   const sectionLabelClass = 'mb-2 flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-[0.14em] text-[#d7c1c7] sm:text-sm';
   const inputClass = 'app-input-dark';
-  const selectClass = 'app-input-dark [&>option]:bg-[#0f1218] [&>option]:text-white';
   const modeButtonBase = 'relative rounded-[8px] border p-3 text-left transition-all';
 
 
@@ -277,46 +277,37 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               <label className="block text-xs font-bold text-[#f7d6dc] mb-1.5 flex items-center gap-1">
                 <Globe className="w-3 h-3" /> Язык текста
               </label>
-              <select
+              <StyledSelect
                 value={config.language}
-                onChange={(e) => handleChange('language', e.target.value)}
-                className={selectClass}
+                onChange={(value) => handleChange('language', value)}
+                className="app-input-dark"
                 disabled={isDisabled}
-              >
-                {Object.values(ContentLanguage).map(lang => (
-                  <option key={lang} value={lang}>{lang}</option>
-                ))}
-              </select>
+                options={Object.values(ContentLanguage).map((lang) => ({ value: lang, label: lang }))}
+              />
             </div>
             <div>
               <label className="block text-xs font-bold text-[#f7d6dc] mb-1.5 flex items-center gap-1">
                 <Mic className="w-3 h-3" /> Тон голоса (Tone of Voice)
               </label>
-              <select
+              <StyledSelect
                 value={config.tone}
-                onChange={(e) => handleChange('tone', e.target.value)}
-                className={selectClass}
+                onChange={(value) => handleChange('tone', value)}
+                className="app-input-dark"
                 disabled={isDisabled}
-              >
-                {Object.values(TextTone).map(t => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
+                options={Object.values(TextTone).map((tone) => ({ value: tone, label: tone }))}
+              />
             </div>
             <div>
               <label className="block text-xs font-bold text-[#f7d6dc] mb-1.5 flex items-center gap-1">
                 <Feather className="w-3 h-3" /> Стиль текста (Style)
               </label>
-              <select
+              <StyledSelect
                 value={config.style}
-                onChange={(e) => handleChange('style', e.target.value)}
-                className={selectClass}
+                onChange={(value) => handleChange('style', value)}
+                className="app-input-dark"
                 disabled={isDisabled}
-              >
-                {Object.values(TextStyle).map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+                options={Object.values(TextStyle).map((style) => ({ value: style, label: style }))}
+              />
             </div>
           </div>
         </div>
