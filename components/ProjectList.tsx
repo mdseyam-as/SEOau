@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Project } from '../types';
-import { FolderPlus, Folder, Trash2, ChevronRight, Clock } from 'lucide-react';
+import { FolderPlus, Folder, Trash2, ChevronRight, Clock, Search, Filter, FileText, Sparkles, LayoutDashboard, X } from 'lucide-react';
 import { useToast } from './Toast';
 
 interface ProjectListProps {
@@ -15,6 +15,8 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'recent' | 'described' | 'empty'>('all');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,39 +50,95 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
     toast.success('Проект удалён');
   };
 
+  const sortedProjects = useMemo(
+    () => [...projects].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [projects]
+  );
+
+  const filteredProjects = useMemo(() => {
+    const normalizedQuery = searchTerm.trim().toLowerCase();
+
+    return sortedProjects.filter((project, index) => {
+      const matchesSearch = !normalizedQuery || [project.name, project.description || '']
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedQuery);
+
+      if (!matchesSearch) return false;
+
+      switch (activeFilter) {
+        case 'recent':
+          return index < 6;
+        case 'described':
+          return Boolean(project.description?.trim());
+        case 'empty':
+          return !project.description?.trim();
+        default:
+          return true;
+      }
+    });
+  }, [sortedProjects, searchTerm, activeFilter]);
+
+  const describedProjects = useMemo(
+    () => projects.filter((project) => Boolean(project.description?.trim())).length,
+    [projects]
+  );
+
+  const recentProjectsCount = Math.min(sortedProjects.length, 6);
+  const emptyProjectsCount = Math.max(projects.length - describedProjects, 0);
+
+  const filterButtons: Array<{ id: 'all' | 'recent' | 'described' | 'empty'; label: string; hint: string; icon: React.ReactNode }> = [
+    { id: 'all', label: 'Все проекты', hint: `${projects.length} workspace`, icon: <Folder className="w-4 h-4" /> },
+    { id: 'recent', label: 'Недавние', hint: `Последние ${recentProjectsCount}`, icon: <Clock className="w-4 h-4" /> },
+    { id: 'described', label: 'С описанием', hint: `${describedProjects} готово`, icon: <FileText className="w-4 h-4" /> },
+    { id: 'empty', label: 'Нужна структура', hint: `${emptyProjectsCount} пустых`, icon: <Sparkles className="w-4 h-4" /> },
+  ];
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-[18rem_minmax(0,1fr)]">
-        <aside className="hidden md:flex md:flex-col rounded-[28px] border border-white/8 bg-slate-900/80 px-6 py-6 shadow-[40px_0_80px_rgba(0,0,0,0.35)] backdrop-blur-[40px] min-h-[calc(100vh-10rem)] sticky top-28">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[18rem_minmax(0,1fr)]">
+        <aside className="hidden xl:flex xl:flex-col rounded-[28px] border border-white/8 bg-slate-900/80 px-6 py-6 shadow-[40px_0_80px_rgba(0,0,0,0.35)] backdrop-blur-[40px] min-h-[calc(100vh-10rem)] sticky top-28">
           <div className="mb-8">
             <div className="text-xl font-black tracking-[-0.04em] text-emerald-300">SEO Command</div>
             <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-500">AI Optimization Active</div>
           </div>
 
           <nav className="flex-1 space-y-2">
-            <button className="flex w-full items-center gap-3 rounded-[18px] bg-emerald-400/10 px-4 py-3 text-left text-sm font-semibold text-emerald-300 shadow-[0_0_20px_rgba(69,249,156,0.10)]">
-              <SparkLineIcon />
-              Intelligence
-            </button>
-            <button className="flex w-full items-center gap-3 rounded-[18px] px-4 py-3 text-left text-sm font-semibold text-slate-500 transition-colors hover:bg-white/5 hover:text-slate-200">
-              <KeywordIcon />
-              Keywords
-            </button>
-            <button className="flex w-full items-center gap-3 rounded-[18px] px-4 py-3 text-left text-sm font-semibold text-slate-500 transition-colors hover:bg-white/5 hover:text-slate-200">
-              <Folder className="w-4 h-4" />
-              Content Lab
-            </button>
-            <button className="flex w-full items-center gap-3 rounded-[18px] px-4 py-3 text-left text-sm font-semibold text-slate-500 transition-colors hover:bg-white/5 hover:text-slate-200">
-              <ChevronRight className="w-4 h-4" />
-              Competitors
-            </button>
-            <button className="flex w-full items-center gap-3 rounded-[18px] px-4 py-3 text-left text-sm font-semibold text-slate-500 transition-colors hover:bg-white/5 hover:text-slate-200">
-              <Clock className="w-4 h-4" />
-              Settings
-            </button>
+            <div className="mb-3 text-[11px] uppercase tracking-[0.18em] text-slate-500">Фильтры</div>
+            {filterButtons.map((filter) => {
+              const isActive = activeFilter === filter.id;
+              return (
+                <button
+                  key={filter.id}
+                  type="button"
+                  onClick={() => setActiveFilter(filter.id)}
+                  className={`flex w-full items-center gap-3 rounded-[18px] px-4 py-3 text-left text-sm font-semibold transition-all ${
+                    isActive
+                      ? 'bg-emerald-400/10 text-emerald-300 shadow-[0_0_20px_rgba(69,249,156,0.10)]'
+                      : 'text-slate-500 hover:bg-white/5 hover:text-slate-200'
+                  }`}
+                >
+                  <span className={`${isActive ? 'text-emerald-300' : 'text-slate-500'}`}>{filter.icon}</span>
+                  <span className="flex-1">
+                    <span className="block">{filter.label}</span>
+                    <span className={`mt-1 block text-xs ${isActive ? 'text-emerald-200/80' : 'text-slate-500'}`}>{filter.hint}</span>
+                  </span>
+                </button>
+              );
+            })}
           </nav>
 
           <div className="mt-auto space-y-4 border-t border-white/5 pt-6">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-[18px] border border-white/5 bg-white/[0.03] px-4 py-3">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Всего</div>
+                <div className="mt-2 text-xl font-bold text-white">{projects.length}</div>
+              </div>
+              <div className="rounded-[18px] border border-white/5 bg-white/[0.03] px-4 py-3">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">В поиске</div>
+                <div className="mt-2 text-xl font-bold text-white">{filteredProjects.length}</div>
+              </div>
+            </div>
             <button
               onClick={() => setIsCreating(true)}
               className="w-full rounded-[18px] bg-[linear-gradient(135deg,#45f99c_0%,#00dc82_100%)] px-4 py-3 font-bold text-[#00391d] shadow-[0_0_20px_rgba(69,249,156,0.25)] transition-all hover:scale-[0.99]"
@@ -89,11 +147,11 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
             </button>
             <div className="flex items-center gap-3 rounded-[18px] border border-white/5 bg-white/[0.02] px-3 py-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-emerald-300">
-                <Folder className="w-4 h-4" />
+                <Filter className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-sm font-semibold text-white">Project Lead</div>
-                <div className="text-xs text-slate-500">Workspace control</div>
+                <div className="text-sm font-semibold text-white">Активный фильтр</div>
+                <div className="text-xs text-slate-500">{filterButtons.find((filter) => filter.id === activeFilter)?.label}</div>
               </div>
             </div>
           </div>
@@ -102,15 +160,56 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
         <section className="space-y-6">
           <div className="rounded-[28px] border border-white/8 bg-slate-950/60 px-5 py-5 shadow-[0_24px_60px_rgba(2,6,23,0.24)] backdrop-blur-[40px]">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="hidden items-center rounded-full border border-white/8 bg-white/5 px-4 py-3 text-sm text-slate-400 lg:flex lg:min-w-[18rem]">
-                  <SearchIcon />
-                  <span className="ml-2">Search projects...</span>
+              <div className="flex flex-1 flex-col gap-3">
+                <div className="flex items-center rounded-full border border-white/8 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                  <Search className="h-4 w-4" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder="Поиск по названию или описанию проекта"
+                    className="ml-2 w-full bg-transparent text-slate-200 outline-none placeholder:text-slate-500"
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2">
+                    <LayoutDashboard className="h-3.5 w-3.5" />
+                    Workspace hub
+                  </span>
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm('')}
+                      className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-slate-300 transition-colors hover:text-white"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      Сбросить поиск
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 xl:hidden">
+                  {filterButtons.map((filter) => {
+                    const isActive = activeFilter === filter.id;
+                    return (
+                      <button
+                        key={filter.id}
+                        type="button"
+                        onClick={() => setActiveFilter(filter.id)}
+                        className={`rounded-full px-3 py-2 text-xs font-semibold transition-colors ${
+                          isActive
+                            ? 'bg-emerald-400/10 text-emerald-300 border border-emerald-400/20'
+                            : 'bg-white/5 text-slate-400 border border-white/10 hover:text-slate-200'
+                        }`}
+                      >
+                        {filter.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               <div className="flex items-center gap-3 self-end">
-                <div className="hidden h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-400 lg:inline-flex">
-                  <Clock className="w-4 h-4" />
+                <div className="hidden rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400 sm:inline-flex">
+                  {filteredProjects.length} видимо сейчас
                 </div>
                 <button
                   onClick={() => setIsCreating(true)}
@@ -163,9 +262,19 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                 <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-white">Пока нет проектов</h3>
                 <p className="text-slate-300 text-sm sm:text-base mt-2 px-4 max-w-lg mx-auto leading-relaxed">Создайте первое рабочее пространство, чтобы вести генерации, аудит и мониторинг в одном месте.</p>
               </div>
+            ) : filteredProjects.length === 0 ? (
+              <div className="mt-10 app-dark-card text-center py-12 px-6">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[24px] border border-white/10 bg-white/5 text-slate-400">
+                  <Search className="w-7 h-7" />
+                </div>
+                <h3 className="text-xl font-semibold text-white">Ничего не найдено</h3>
+                <p className="mt-2 max-w-lg mx-auto text-sm leading-relaxed text-slate-400">
+                  Попробуйте изменить поисковый запрос или переключить фильтр слева.
+                </p>
+              </div>
             ) : (
-              <div className="mt-10 grid grid-cols-1 gap-4 lg:grid-cols-3">
-                {projects.map((project) => (
+              <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                {filteredProjects.map((project) => (
                   <div
                     key={project.id}
                     className="group relative overflow-hidden rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(28,31,42,0.96),rgba(23,27,38,0.9))] p-5 shadow-[0_24px_60px_rgba(15,19,29,0.16)] transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.06] cursor-pointer"
@@ -173,7 +282,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                   >
                     <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-emerald-400/10 blur-[70px] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                     <div className="relative z-10">
-                      <div className="mb-5 flex items-start justify-between gap-3">
+                  <div className="mb-5 flex items-start justify-between gap-3">
                         <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-white/10 text-sky-300 shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
                           <Folder className="w-5 h-5" />
                         </div>
@@ -195,7 +304,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                         {project.name}
                       </h3>
                       <p className="mt-2 min-h-[3rem] text-sm leading-relaxed text-slate-400">
-                        {project.description || 'Manage your SEO campaigns, monitoring and content intelligence from one workspace.'}
+                        {project.description || 'Добавьте описание, чтобы быстрее ориентироваться в задачах, мониторинге и контентных потоках.'}
                       </p>
 
                       <div className="mt-6 flex items-center justify-between border-t border-white/6 pt-4">
@@ -271,7 +380,4 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
   );
 };
 
-const SparkLineIcon = () => <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-300">⌁</span>;
-const KeywordIcon = () => <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-sky-400/15 text-sky-300">⌘</span>;
-const SearchIcon = () => <span className="inline-flex h-4 w-4 items-center justify-center text-slate-500">⌕</span>;
 const HomeDot = () => <span className="inline-flex h-4 w-4 items-center justify-center text-slate-500">•</span>;

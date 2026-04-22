@@ -504,7 +504,7 @@ export default function App() {
 
     // --- Project Detail View ---
     return (
-      <div className="space-y-4 sm:space-y-5 lg:space-y-6 md:pl-[19rem]">
+      <div className="space-y-4 sm:space-y-5 lg:space-y-6 xl:pl-[19rem]">
         {/* Project Header & Breadcrumbs */}
         <ProjectHeader
           project={currentProject}

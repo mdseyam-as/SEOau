@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Bell,
   BellRing,
   ChevronDown,
   ChevronRight,
@@ -68,6 +67,19 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     [currentTab]
   );
   const isMonitoringSectionActive = monitoringTabIds.includes(currentTab);
+  const quickActions = [
+    {
+      label: 'К проектам',
+      description: 'Вернуться к рабочим пространствам',
+      onClick: onBackToProjects,
+    },
+    {
+      label: 'История',
+      description: historyCount > 0 ? `${historyCount} сохранений` : 'Без сохранений',
+      onClick: () => onTabChange('history'),
+      isActive: currentTab === 'history',
+    },
+  ];
 
   useEffect(() => {
     if (!isMonitoringSectionActive) return;
@@ -194,7 +206,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
   return (
     <>
-      <aside className="fixed left-0 top-[92px] bottom-0 z-30 hidden w-[18rem] flex-col border-r border-white/5 bg-slate-900/80 px-6 py-6 shadow-[40px_0_80px_rgba(0,0,0,0.38)] backdrop-blur-[40px] md:flex">
+      <aside className="fixed left-0 top-[92px] bottom-0 z-30 hidden w-[18rem] flex-col border-r border-white/5 bg-slate-900/80 px-6 py-6 shadow-[40px_0_80px_rgba(0,0,0,0.38)] backdrop-blur-[40px] xl:flex">
         {renderSidebarContent(false)}
       </aside>
 
@@ -218,7 +230,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsMobileMenuOpen(true)}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-200 md:hidden"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-200 xl:hidden"
                   aria-label="Открыть навигацию проекта"
                 >
                   <Menu className="w-5 h-5" />
@@ -233,22 +245,33 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="hidden min-w-[16rem] items-center rounded-full border border-white/8 bg-white/5 px-4 py-3 text-sm text-slate-400 lg:flex">
-                <Search className="mr-2 h-4 w-4" />
-                <input
-                  type="text"
-                  placeholder="Search projects..."
-                  className="w-full bg-transparent text-slate-200 outline-none placeholder:text-slate-500"
-                />
+              <div className="hidden rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300 lg:inline-flex">
+                {isMonitoringSectionActive ? 'Monitoring stack' : 'Content workspace'}
               </div>
-              <button className="hidden h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-400 transition-colors hover:text-emerald-300 lg:inline-flex">
-                <Bell className="h-4 w-4" />
-              </button>
-              <button className="hidden h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-400 transition-colors hover:text-emerald-300 lg:inline-flex">
-                <Sparkles className="h-4 w-4" />
-              </button>
-              <div className="rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
-                {project.name}
+              <div className="flex flex-wrap gap-2 sm:justify-end">
+                {quickActions.map((action) => (
+                  <button
+                    key={action.label}
+                    type="button"
+                    onClick={action.onClick}
+                    className={`inline-flex items-center gap-2 rounded-full border px-4 py-3 text-sm font-medium transition-colors ${
+                      action.isActive
+                        ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-200'
+                        : 'border-white/10 bg-white/5 text-slate-300 hover:border-white/15 hover:text-white'
+                    }`}
+                    title={action.description}
+                  >
+                    {action.label}
+                    {action.label === 'История' && historyCount > 0 && (
+                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-bold text-white">
+                        {historyCount}
+                      </span>
+                    )}
+                  </button>
+                ))}
+                <div className="rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
+                  {project.name}
+                </div>
               </div>
             </div>
           </div>
@@ -289,7 +312,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       </div>
 
       <div
-        className={`fixed inset-0 z-50 transition-all duration-300 md:hidden ${isMobileMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        className={`fixed inset-0 z-50 transition-all duration-300 xl:hidden ${isMobileMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
         aria-hidden={!isMobileMenuOpen}
       >
         <button
