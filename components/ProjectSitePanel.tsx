@@ -37,7 +37,7 @@ const statusStyles: Record<string, string> = {
 };
 
 const fieldShellClass = 'rounded-[6px] border border-[#5b3f44] bg-[rgba(2,3,5,0.78)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]';
-const fieldInputClass = 'w-full bg-transparent p-0 text-white outline-none placeholder:text-[#ab888e]';
+const fieldInputClass = 'w-full appearance-none bg-transparent p-0 text-white outline-none placeholder:text-[#ab888e]';
 export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId }) => {
   const toast = useToast();
   const [site, setSite] = useState<ProjectSite | null>(null);

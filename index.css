@@ -333,6 +333,16 @@ input[type="submit"],
    Responsive Forms
    ============================================ */
 
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: none;
+}
+
 /* Stack form elements on mobile */
 @media (max-width: 767px) {
   .form-row {
@@ -588,6 +598,29 @@ html {
 
   .app-input-dark {
     @apply w-full rounded-[6px] border border-[#5b3f44] bg-[rgba(2,3,5,0.78)] px-4 py-3 text-white outline-none transition-all placeholder:text-[#ab888e] focus:border-[#46fa9c] focus:ring-2 focus:ring-[#46fa9c]/20;
+    background-color: rgba(2, 3, 5, 0.78) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: none !important;
+  }
+
+  .app-input-dark::placeholder {
+    color: #ab888e;
+    opacity: 1;
+  }
+
+  .app-input-dark:-webkit-autofill,
+  .app-input-dark:-webkit-autofill:hover,
+  .app-input-dark:-webkit-autofill:focus,
+  .app-input-dark:-webkit-autofill:active {
+    -webkit-text-fill-color: #ffffff !important;
+    -webkit-box-shadow: 0 0 0 1000px rgba(2, 3, 5, 0.78) inset !important;
+    box-shadow: 0 0 0 1000px rgba(2, 3, 5, 0.78) inset !important;
+    caret-color: #ffffff;
+    border: 1px solid rgba(91, 63, 68, 1) !important;
+    transition: background-color 9999s ease-in-out 0s;
   }
 
   .app-btn-primary {
