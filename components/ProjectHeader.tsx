@@ -145,12 +145,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
   const renderSidebarContent = (mobile = false) => (
     <>
-      <div className="mb-7 mt-2">
+      <div className="mb-7 mt-2 shrink-0">
         <div className="text-emerald-300 font-black tracking-[-0.04em] text-xl">SEO Command</div>
         <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-500">AI Optimization Active</div>
       </div>
 
-      <nav className="flex-1 space-y-2">
+      <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-2">
         {primaryTabs.map((tab) => renderTabButton(tab, mobile))}
 
         <div className="pt-2">
@@ -182,7 +182,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         </div>
       </nav>
 
-      <div className="mt-6 space-y-4 border-t border-white/5 pt-6">
+      <div className="mt-6 shrink-0 space-y-4 border-t border-white/5 pt-6">
         <button
           type="button"
           onClick={onBackToProjects}
@@ -206,7 +206,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
   return (
     <>
-      <aside className="fixed left-0 top-[92px] bottom-0 z-30 hidden w-[18rem] flex-col border-r border-white/5 bg-slate-900/80 px-6 py-6 shadow-[40px_0_80px_rgba(0,0,0,0.38)] backdrop-blur-[40px] xl:flex">
+      <aside className="fixed left-0 top-[92px] bottom-0 z-30 hidden w-[18rem] flex-col overflow-y-auto border-r border-white/5 bg-slate-900/80 px-6 py-6 shadow-[40px_0_80px_rgba(0,0,0,0.38)] backdrop-blur-[40px] xl:flex">
         {renderSidebarContent(false)}
       </aside>
 
@@ -322,7 +322,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           aria-label="Закрыть мобильную навигацию"
         />
         <aside
-          className={`absolute left-0 top-0 h-full w-[88vw] max-w-[22rem] border-r border-white/10 bg-slate-950/95 px-5 py-5 shadow-[20px_0_60px_rgba(0,0,0,0.45)] backdrop-blur-[40px] transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          className={`absolute left-0 top-0 h-full w-[88vw] max-w-[22rem] overflow-y-auto border-r border-white/10 bg-slate-950/95 px-5 py-5 shadow-[20px_0_60px_rgba(0,0,0,0.45)] backdrop-blur-[40px] transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
           role="dialog"
           aria-modal="true"
           aria-label="Навигация проекта"
