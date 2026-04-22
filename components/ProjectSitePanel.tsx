@@ -211,7 +211,7 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
         <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-emerald-400/12 blur-3xl" />
         <div className="pointer-events-none absolute left-10 top-14 h-28 w-28 rounded-full bg-sky-400/10 blur-3xl" />
 
-        <div className="relative flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div className="relative flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <div className="mb-3 inline-flex items-center rounded-full border border-emerald-400/15 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-200">
               Модуль "Мы"
@@ -227,7 +227,7 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
           </div>
 
           {site && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 min-w-full lg:min-w-[520px]">
+            <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4 xl:w-auto xl:min-w-[520px]">
               <SummaryCard label="Pages" value={String(stats.pages)} icon={<Globe className="w-4 h-4" />} />
               <SummaryCard label="Topics" value={String(stats.topics)} icon={<BookOpenText className="w-4 h-4" />} />
               <SummaryCard label="FAQ" value={String(stats.withFaq)} icon={<Activity className="w-4 h-4" />} />
@@ -248,8 +248,8 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
               </div>
             </div>
 
-            <form onSubmit={handleCreateSite} className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-              <div className="lg:col-span-5">
+            <form onSubmit={handleCreateSite} className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
+              <div className="md:col-span-2 xl:col-span-5">
                 <FieldLabel>Основной домен</FieldLabel>
                 <div className={fieldShellClass}>
                   <input
@@ -261,7 +261,7 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
                   />
                 </div>
               </div>
-              <div className="lg:col-span-3">
+              <div className="xl:col-span-3">
                 <FieldLabel>Название</FieldLabel>
                 <div className={fieldShellClass}>
                   <input
@@ -273,7 +273,7 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
                   />
                 </div>
               </div>
-              <div className="lg:col-span-2">
+              <div className="xl:col-span-2">
                 <FieldLabel>Частота</FieldLabel>
                 <div className={fieldShellClass}>
                   <select
@@ -287,7 +287,7 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
                   </select>
                 </div>
               </div>
-              <div className="lg:col-span-2 lg:self-end">
+              <div className="md:col-span-2 xl:col-span-2 xl:self-end">
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -312,8 +312,8 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-                <div className="lg:col-span-5">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
+                <div className="md:col-span-2 xl:col-span-5">
                   <FieldLabel>Основной домен</FieldLabel>
                   <div className={fieldShellClass}>
                     <input
@@ -324,7 +324,7 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
                     />
                   </div>
                 </div>
-                <div className="lg:col-span-3">
+                <div className="xl:col-span-3">
                   <FieldLabel>Название</FieldLabel>
                   <div className={fieldShellClass}>
                     <input
@@ -336,7 +336,7 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
                     />
                   </div>
                 </div>
-                <div className="lg:col-span-2">
+                <div className="xl:col-span-2">
                   <FieldLabel>Частота</FieldLabel>
                   <div className={fieldShellClass}>
                     <select
@@ -350,7 +350,7 @@ export const ProjectSitePanel: React.FC<ProjectSitePanelProps> = ({ projectId })
                     </select>
                   </div>
                 </div>
-                <div className="lg:col-span-2 lg:self-end">
+                <div className="md:col-span-2 xl:col-span-2 xl:self-end">
                   <button
                     type="button"
                     onClick={handleSaveSite}
@@ -567,14 +567,14 @@ const SummaryCard: React.FC<{ label: string; value: string; icon: React.ReactNod
       <span className="text-emerald-300">{icon}</span>
       {label}
     </div>
-    <div className="mt-2 text-2xl font-bold text-white">{value}</div>
+    <div className="mt-2 break-words text-lg font-bold text-white sm:text-2xl">{value}</div>
   </div>
 );
 
 const MiniInfo: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2">
     <div className="text-[11px] uppercase tracking-[0.12em] text-slate-400">{label}</div>
-    <div className="mt-1 text-sm font-medium text-white">{value}</div>
+    <div className="mt-1 break-words text-sm font-medium text-white">{value}</div>
   </div>
 );
 

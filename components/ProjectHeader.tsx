@@ -211,7 +211,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       </aside>
 
       <div className="space-y-5">
-        <div className="rounded-[28px] border border-white/8 bg-slate-950/60 px-4 py-4 shadow-[0_24px_60px_rgba(2,6,23,0.24)] backdrop-blur-[40px] md:px-6">
+        <div className="rounded-[24px] border border-white/8 bg-slate-950/60 px-4 py-4 shadow-[0_24px_60px_rgba(2,6,23,0.24)] backdrop-blur-[40px] sm:rounded-[28px] md:px-6">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <nav className="mb-2 flex items-center text-sm text-slate-500" aria-label="Навигация">
@@ -236,7 +236,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                   <Menu className="w-5 h-5" />
                 </button>
                 <div>
-                  <h2 className="text-2xl font-black tracking-[-0.04em] text-white md:text-[2.1rem]">{activeTab.label}</h2>
+                  <h2 className="text-xl font-black tracking-[-0.04em] text-white sm:text-2xl xl:text-[2.1rem]">{activeTab.label}</h2>
                   <p className="mt-1 max-w-2xl text-sm text-slate-400 md:text-base">
                     {activeTab.description}
                   </p>
@@ -269,7 +269,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                     )}
                   </button>
                 ))}
-                <div className="rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
+                <div className="max-w-full rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
                   {project.name}
                 </div>
               </div>
@@ -277,7 +277,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(23,27,38,0.94),rgba(15,19,29,0.92))] shadow-[0_32px_80px_rgba(15,19,29,0.18)]">
+        <div className="overflow-hidden rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(23,27,38,0.94),rgba(15,19,29,0.92))] shadow-[0_32px_80px_rgba(15,19,29,0.18)] sm:rounded-[32px]">
           <div className="relative overflow-hidden border-b border-white/6 px-5 py-6 md:px-8 md:py-8">
             <div className="pointer-events-none absolute -right-20 top-0 h-48 w-48 rounded-full bg-emerald-400/10 blur-[100px]" />
             <div className="pointer-events-none absolute left-10 top-4 h-28 w-28 rounded-full bg-sky-400/10 blur-[90px]" />
@@ -288,7 +288,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                   <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(69,249,156,0.7)]" />
                   {activeTab.label}
                 </div>
-                <h3 className="max-w-3xl text-3xl font-black tracking-[-0.04em] text-white md:text-[3rem]">
+                <h3 className="max-w-3xl text-2xl font-black tracking-[-0.04em] text-white sm:text-3xl xl:text-[3rem]">
                   {project.name}
                 </h3>
                 <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400 md:text-base">
@@ -296,10 +296,10 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 md:min-w-[320px]">
+              <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:w-auto xl:min-w-[320px]">
                 <div className="rounded-[22px] border border-white/8 bg-white/5 px-4 py-4">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Project</div>
-                  <div className="mt-2 text-lg font-bold text-white">{project.name}</div>
+                  <div className="mt-2 break-words text-lg font-bold text-white">{project.name}</div>
                 </div>
                 <div className="rounded-[22px] border border-white/8 bg-white/5 px-4 py-4">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">History</div>

@@ -327,7 +327,7 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
         <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-emerald-400/12 blur-3xl" />
         <div className="pointer-events-none absolute left-10 top-14 h-28 w-28 rounded-full bg-sky-400/10 blur-3xl" />
 
-        <div className="relative flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div className="relative flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <div className="mb-3 inline-flex items-center rounded-full border border-emerald-400/15 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-200">
               Competitor Watcher
@@ -342,7 +342,7 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 min-w-full lg:min-w-[500px]">
+          <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4 xl:w-auto xl:min-w-[500px]">
             <SummaryCard label="Competitors" value={String(stats.competitors)} icon={<Radar className="w-4 h-4" />} />
             <SummaryCard label="Pages" value={String(stats.trackedPages)} icon={<Activity className="w-4 h-4" />} />
             <SummaryCard label="Signals" value={String(stats.importantSignals)} icon={<ShieldAlert className="w-4 h-4" />} />
@@ -361,8 +361,8 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
             </div>
           </div>
 
-          <form onSubmit={handleCreateCompetitor} className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-            <div className="lg:col-span-4">
+          <form onSubmit={handleCreateCompetitor} className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
+            <div className="md:col-span-2 xl:col-span-4">
               <FieldLabel>Сайт конкурента</FieldLabel>
               <div className={fieldShellClass}>
                 <input
@@ -374,7 +374,7 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                 />
               </div>
             </div>
-            <div className="lg:col-span-2">
+            <div className="xl:col-span-2">
               <FieldLabel>Название</FieldLabel>
               <div className={fieldShellClass}>
                 <input
@@ -386,7 +386,7 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                 />
               </div>
             </div>
-            <div className="lg:col-span-2">
+            <div className="xl:col-span-2">
               <FieldLabel>Приоритет</FieldLabel>
               <div className={fieldShellClass}>
                 <select
@@ -400,7 +400,7 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                 </select>
               </div>
             </div>
-            <div className="lg:col-span-2">
+            <div className="xl:col-span-2">
               <FieldLabel>Частота</FieldLabel>
               <div className={fieldShellClass}>
                 <select
@@ -414,7 +414,7 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                 </select>
               </div>
             </div>
-            <div className="lg:col-span-2 lg:self-end">
+            <div className="md:col-span-2 xl:col-span-2 xl:self-end">
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -424,7 +424,7 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                 Добавить
               </button>
             </div>
-            <div className="lg:col-span-12">
+            <div className="md:col-span-2 xl:col-span-12">
               <FieldLabel>Заметки</FieldLabel>
               <div className={fieldShellClass}>
                 <textarea
@@ -579,7 +579,7 @@ export const CompetitorWatcherPanel: React.FC<CompetitorWatcherPanelProps> = ({ 
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
+                  <div className="grid grid-cols-2 gap-3 mt-5 xl:grid-cols-4">
                     <SummaryCard label="Последний scan" value={selectedCompetitor.lastScannedAt ? formatDateTime(selectedCompetitor.lastScannedAt) : '—'} icon={<Clock3 className="w-4 h-4" />} />
                     <SummaryCard label="Pages" value={String(selectedCompetitor.lastPageCount)} icon={<Activity className="w-4 h-4" />} />
                     <SummaryCard label="Changes" value={String(selectedCompetitor.lastChangeCount)} icon={<AlertTriangle className="w-4 h-4" />} />

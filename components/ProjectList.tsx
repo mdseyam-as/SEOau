@@ -158,7 +158,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
         </aside>
 
         <section className="space-y-6">
-          <div className="rounded-[28px] border border-white/8 bg-slate-950/60 px-5 py-5 shadow-[0_24px_60px_rgba(2,6,23,0.24)] backdrop-blur-[40px]">
+          <div className="rounded-[24px] border border-white/8 bg-slate-950/60 px-4 py-4 shadow-[0_24px_60px_rgba(2,6,23,0.24)] backdrop-blur-[40px] sm:rounded-[28px] sm:px-5 sm:py-5">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex flex-1 flex-col gap-3">
                 <div className="flex items-center rounded-full border border-white/8 bg-white/5 px-4 py-3 text-sm text-slate-400">
@@ -222,7 +222,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-white/8 bg-[linear-gradient(180deg,rgba(23,27,38,0.94),rgba(15,19,29,0.92))] px-5 py-6 shadow-[0_32px_80px_rgba(15,19,29,0.18)] md:px-8 md:py-8">
+          <div className="rounded-[26px] border border-white/8 bg-[linear-gradient(180deg,rgba(23,27,38,0.94),rgba(15,19,29,0.92))] px-4 py-5 shadow-[0_32px_80px_rgba(15,19,29,0.18)] sm:rounded-[32px] sm:px-5 sm:py-6 md:px-8 md:py-8">
             <nav className="mb-3 flex items-center text-sm text-slate-500">
               <span className="flex items-center gap-1 text-slate-400">
                 <HomeDot />
@@ -237,7 +237,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                 <div className="mb-4 inline-flex items-center rounded-full border border-emerald-400/15 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-200">
                   Projects
                 </div>
-                <h2 className="text-3xl font-black tracking-[-0.04em] text-white md:text-[3rem]">
+                <h2 className="text-2xl font-black tracking-[-0.04em] text-white sm:text-3xl xl:text-[3rem]">
                   Мои проекты
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400 md:text-base">
@@ -273,7 +273,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                 </p>
               </div>
             ) : (
-              <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              <div className="mt-10 grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
                 {filteredProjects.map((project) => (
                   <div
                     key={project.id}
@@ -300,7 +300,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onCreateProj
                         </div>
                       </div>
 
-                      <h3 className="max-w-[14rem] text-xl font-bold leading-tight text-white transition-colors group-hover:text-emerald-300">
+                      <h3 className="max-w-full text-xl font-bold leading-tight text-white transition-colors group-hover:text-emerald-300">
                         {project.name}
                       </h3>
                       <p className="mt-2 min-h-[3rem] text-sm leading-relaxed text-slate-400">
