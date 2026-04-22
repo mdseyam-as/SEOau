@@ -82,14 +82,16 @@ export const KnowledgeBaseUploader: React.FC<KnowledgeBaseUploaderProps> = ({ on
   };
 
   return (
-    <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+    <div className="app-dark-card p-4">
       <div className="flex items-center gap-2 mb-4">
-        <Database className="w-5 h-5 text-brand-green" />
+        <div className="flex h-9 w-9 items-center justify-center rounded-[8px] border border-[#46fa9c]/20 bg-[rgba(70,250,156,0.08)]">
+          <Database className="w-5 h-5 text-[#46fa9c]" />
+        </div>
         <h3 className="font-semibold text-white">База знаний</h3>
-        <span className="text-xs text-slate-400 ml-auto">{files.length}/10 файлов</span>
+        <span className="text-xs text-[#ab888e] ml-auto">{files.length}/10 файлов</span>
       </div>
 
-      <p className="text-sm text-slate-400 mb-4">
+      <p className="text-sm text-[#ab888e] mb-4 leading-relaxed">
         Загрузите PDF, DOCX или TXT файлы с информацией о компании, услугах и Tone of Voice.
         AI будет использовать эти данные при генерации контента.
       </p>
@@ -98,10 +100,10 @@ export const KnowledgeBaseUploader: React.FC<KnowledgeBaseUploaderProps> = ({ on
       <div
         onClick={() => !uploading && files.length < 10 && inputRef.current?.click()}
         className={`
-          border-2 border-dashed rounded-lg p-4 text-center transition-all
-          ${files.length >= 10 ? 'border-slate-600 bg-slate-800/30 cursor-not-allowed' :
-            uploading ? 'border-slate-600 bg-slate-800/50' :
-            'border-slate-600 hover:border-brand-green hover:bg-slate-800/30 cursor-pointer'}
+          border-2 border-dashed rounded-[8px] p-4 text-center transition-all
+          ${files.length >= 10 ? 'border-white/10 bg-white/[0.03] cursor-not-allowed' :
+            uploading ? 'border-[#5b3f44] bg-white/[0.04]' :
+            'border-[#5b3f44] hover:border-[#ffb1c0] hover:bg-white/[0.04] cursor-pointer'}
         `}
       >
         <input
@@ -115,30 +117,30 @@ export const KnowledgeBaseUploader: React.FC<KnowledgeBaseUploaderProps> = ({ on
 
         {uploading ? (
           <div className="flex items-center justify-center gap-2">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-green"></div>
-            <span className="text-slate-400">Загрузка...</span>
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#ffb1c0]"></div>
+            <span className="text-[#ab888e]">Загрузка...</span>
           </div>
         ) : files.length >= 10 ? (
-          <p className="text-slate-500 text-sm">Достигнут лимит файлов</p>
+          <p className="text-[#ab888e] text-sm">Достигнут лимит файлов</p>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <Upload className="w-6 h-6 text-slate-400" />
-            <p className="text-sm text-slate-400">Нажмите для загрузки</p>
-            <p className="text-xs text-slate-500">.pdf, .docx, .txt до 10MB</p>
+            <Upload className="w-6 h-6 text-[#ab888e]" />
+            <p className="text-sm text-[#d7c1c7]">Нажмите для загрузки</p>
+            <p className="text-xs text-[#ab888e]">.pdf, .docx, .txt до 10MB</p>
           </div>
         )}
       </div>
 
       {/* Messages */}
       {error && (
-        <div className="flex items-center gap-2 mt-3 text-red-400 text-sm bg-red-500/10 p-2 rounded-lg">
+        <div className="flex items-center gap-2 mt-3 text-red-200 text-sm bg-[rgba(74,23,29,0.88)] p-2 rounded-[8px] border border-red-500/20">
           <AlertCircle className="w-4 h-4 shrink-0" />
           {error}
         </div>
       )}
 
       {success && (
-        <div className="flex items-center gap-2 mt-3 text-green-400 text-sm bg-green-500/10 p-2 rounded-lg">
+        <div className="flex items-center gap-2 mt-3 text-[#8cf7ba] text-sm bg-[rgba(17,54,37,0.86)] p-2 rounded-[8px] border border-[#46fa9c]/20">
           <CheckCircle className="w-4 h-4 shrink-0" />
           {success}
         </div>
@@ -150,17 +152,17 @@ export const KnowledgeBaseUploader: React.FC<KnowledgeBaseUploaderProps> = ({ on
           {files.map(file => (
             <div
               key={file.id}
-              className="flex items-center gap-3 bg-slate-800/50 p-3 rounded-lg border border-slate-700"
+              className="flex items-center gap-3 bg-white/[0.03] p-3 rounded-[8px] border border-white/10"
             >
-              <div className="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center">
-                <span className="text-xs font-bold text-brand-green">
+              <div className="w-10 h-10 bg-[rgba(70,250,156,0.08)] rounded-[8px] border border-[#46fa9c]/20 flex items-center justify-center">
+                <span className="text-xs font-bold text-[#46fa9c]">
                   {getFileIcon(file.fileType)}
                 </span>
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-white truncate">{file.fileName}</p>
-                <p className="text-xs text-slate-500">{formatFileSize(file.fileSize)}</p>
+                <p className="text-sm text-white break-all">{file.fileName}</p>
+                <p className="text-xs text-[#ab888e]">{formatFileSize(file.fileSize)}</p>
               </div>
 
               <button

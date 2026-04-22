@@ -247,7 +247,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
             Контекст Бренда
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 2xl:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-xs font-bold text-[#f7d6dc] mb-1.5">Название сайта/бренда</label>
               <input
@@ -272,7 +272,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3 sm:gap-4">
             <div>
               <label className="block text-xs font-bold text-[#f7d6dc] mb-1.5 flex items-center gap-1">
                 <Globe className="w-3 h-3" /> Язык текста
@@ -319,7 +319,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
             Режим генерации
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             {/* Classic SEO Option */}
             <button
               type="button"
@@ -399,7 +399,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
         </div>
 
         {/* Topic & URL */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 2xl:grid-cols-2 gap-3 sm:gap-4">
           <div>
             <label className="block text-xs sm:text-sm font-bold text-[#f7d6dc] mb-1.5 sm:mb-2">Тема статьи</label>
             <input
@@ -466,7 +466,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                         <FileText className="w-4 h-4 text-blue-400" />
                       )}
                     </div>
-                    <span className="text-sm font-medium text-slate-200 truncate max-w-[200px]">{file.name}</span>
+                    <span className="min-w-0 text-sm font-medium text-slate-200 break-all">{file.name}</span>
                   </div>
                   <button
                     onClick={() => removeCompetitorFile(idx)}
@@ -595,7 +595,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
 
         {/* Length Controls */}
         <div className={sectionClass}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-bold text-[#f7d6dc] mb-2 flex items-center gap-2 justify-between">
                 <span className="flex items-center gap-2"><Type className="w-4 h-4 text-[#46fa9c]" /> Количество символов</span>

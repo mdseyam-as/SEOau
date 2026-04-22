@@ -81,29 +81,31 @@ export const InternalLinksManager: React.FC<InternalLinksManagerProps> = ({ onLi
   };
 
   return (
-    <div className="bg-slate-800/50 rounded-xl border border-slate-700">
+    <div className="app-dark-card">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between p-4"
       >
         <div className="flex items-center gap-2">
-          <Link2 className="w-5 h-5 text-brand-green" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-[8px] border border-[#46fa9c]/20 bg-[rgba(70,250,156,0.08)]">
+            <Link2 className="w-5 h-5 text-[#46fa9c]" />
+          </div>
           <span className="font-semibold text-white">Внутренние ссылки</span>
-          <span className="text-xs text-slate-400 bg-slate-700 px-2 py-0.5 rounded">
+          <span className="text-xs text-[#ab888e] bg-white/[0.03] border border-white/10 px-2 py-0.5 rounded-full">
             {links.length}/50
           </span>
         </div>
         {isExpanded ? (
-          <ChevronUp className="w-5 h-5 text-slate-400" />
+          <ChevronUp className="w-5 h-5 text-[#ab888e]" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-slate-400" />
+          <ChevronDown className="w-5 h-5 text-[#ab888e]" />
         )}
       </button>
 
       {isExpanded && (
-        <div className="px-4 pb-4 border-t border-slate-700 pt-4">
-          <p className="text-sm text-slate-400 mb-4">
+        <div className="px-4 pb-4 border-t border-white/10 pt-4">
+          <p className="text-sm text-[#ab888e] mb-4 leading-relaxed">
             Добавьте URL страниц вашего сайта. AI автоматически вставит ссылки в контент.
           </p>
 
@@ -114,16 +116,16 @@ export const InternalLinksManager: React.FC<InternalLinksManagerProps> = ({ onLi
               placeholder="URL страницы (https://...)"
               value={newLink.url}
               onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-brand-green focus:outline-none"
+              className="app-input-dark"
             />
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 2xl:grid-cols-2 gap-3">
               <input
                 type="text"
                 placeholder="Анкор текст"
                 value={newLink.anchorText}
                 onChange={(e) => setNewLink({ ...newLink, anchorText: e.target.value })}
-                className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-brand-green focus:outline-none"
+                className="app-input-dark"
               />
 
               <input
@@ -131,27 +133,27 @@ export const InternalLinksManager: React.FC<InternalLinksManagerProps> = ({ onLi
                 placeholder="Ключи через запятую"
                 value={newLink.keywords}
                 onChange={(e) => setNewLink({ ...newLink, keywords: e.target.value })}
-                className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-brand-green focus:outline-none"
+                className="app-input-dark"
               />
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col xl:flex-row gap-3">
               <div className="flex items-center gap-2">
-                <label className="text-sm text-slate-400">Приоритет:</label>
+                <label className="text-sm text-[#ab888e]">Приоритет:</label>
                 <input
                   type="number"
                   min="0"
                   max="10"
                   value={newLink.priority}
                   onChange={(e) => setNewLink({ ...newLink, priority: parseInt(e.target.value) || 0 })}
-                  className="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-sm text-white text-center focus:border-brand-green focus:outline-none"
+                  className="w-16 app-input-dark px-2 py-1 text-center"
                 />
               </div>
 
               <button
                 onClick={handleAddLink}
                 disabled={!newLink.url}
-                className="flex-1 flex items-center justify-center gap-2 bg-brand-green text-black px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand-green/90 transition-colors"
+                className="app-btn-primary flex-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="w-4 h-4" />
                 Добавить
@@ -160,7 +162,7 @@ export const InternalLinksManager: React.FC<InternalLinksManagerProps> = ({ onLi
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 mb-4 text-red-400 text-sm bg-red-500/10 p-2 rounded-lg">
+            <div className="flex items-center gap-2 mb-4 text-red-200 text-sm bg-[rgba(74,23,29,0.88)] p-2 rounded-[8px] border border-red-500/20">
               <AlertCircle className="w-4 h-4 shrink-0" />
               {error}
             </div>
@@ -170,7 +172,7 @@ export const InternalLinksManager: React.FC<InternalLinksManagerProps> = ({ onLi
           {links.length > 0 && (
             <div className="space-y-2">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-slate-400">Добавленные ссылки:</span>
+                <span className="text-sm text-[#ab888e]">Добавленные ссылки:</span>
                 <button
                   onClick={handleClearAll}
                   className="text-xs text-red-400 hover:text-red-300 transition-colors"
@@ -182,23 +184,23 @@ export const InternalLinksManager: React.FC<InternalLinksManagerProps> = ({ onLi
               {links.map(link => (
                 <div
                   key={link.id}
-                  className="flex items-center gap-3 bg-slate-900/50 p-3 rounded-lg border border-slate-700"
+                  className="flex items-center gap-3 bg-white/[0.03] p-3 rounded-[8px] border border-white/10"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white truncate">{link.url}</p>
+                    <p className="text-sm text-white break-all">{link.url}</p>
                     <div className="flex items-center gap-2 mt-1">
                       {link.anchorText && (
-                        <span className="text-xs text-brand-green bg-brand-green/10 px-2 py-0.5 rounded">
+                        <span className="text-xs text-[#46fa9c] bg-[#46fa9c]/10 px-2 py-0.5 rounded-full border border-[#46fa9c]/20">
                           {link.anchorText}
                         </span>
                       )}
                       {link.keywords.length > 0 && (
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-[#ab888e]">
                           {link.keywords.slice(0, 3).join(', ')}
                           {link.keywords.length > 3 && ` +${link.keywords.length - 3}`}
                         </span>
                       )}
-                      <span className="text-xs text-slate-500">P:{link.priority}</span>
+                      <span className="text-xs text-[#ab888e]">P:{link.priority}</span>
                     </div>
                   </div>
 
@@ -215,7 +217,7 @@ export const InternalLinksManager: React.FC<InternalLinksManagerProps> = ({ onLi
           )}
 
           {links.length === 0 && (
-            <p className="text-center text-slate-500 text-sm py-4">
+            <p className="text-center text-[#ab888e] text-sm py-4">
               Нет добавленных ссылок
             </p>
           )}

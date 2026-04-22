@@ -504,7 +504,7 @@ export default function App() {
 
     // --- Project Detail View ---
     return (
-      <div className="space-y-4 sm:space-y-5 lg:space-y-6 xl:pl-[19rem]">
+      <div className="space-y-4 sm:space-y-5 lg:space-y-6 xl:pl-[18rem] 2xl:pl-[19rem]">
         {/* Project Header & Breadcrumbs */}
         <ProjectHeader
           project={currentProject}
@@ -582,9 +582,9 @@ export default function App() {
             />
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 lg:gap-6 animate-in fade-in slide-in-from-bottom-2">
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(30rem,38rem)_minmax(0,1fr)] gap-4 sm:gap-5 lg:gap-6 animate-in fade-in slide-in-from-bottom-2 items-start">
             {/* Left Sidebar: Inputs */}
-            <div className="lg:col-span-4 space-y-4 sm:space-y-5 lg:space-y-6 order-1">
+            <div className="space-y-4 sm:space-y-5 lg:space-y-6 order-1 min-w-0">
 
               {/* Subscription Alert */}
               {isLocked && (
@@ -641,7 +641,7 @@ export default function App() {
             </div>
 
             {/* Right Area: Results & Status */}
-            <div className="lg:col-span-8 order-2">
+            <div className="order-2 min-w-0">
               {error && (
                 <div className="bg-red-50 border border-red-100 p-4 mb-6 rounded-[24px] animate-in fade-in shadow-[0_12px_30px_rgba(239,68,68,0.08)]">
                   <p className="text-red-700 font-medium text-sm md:text-base">Ошибка: {error}</p>
@@ -744,7 +744,7 @@ export default function App() {
           )}
         </Header>
 
-        <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 xl:max-w-[1600px]">
+        <main className="mx-auto w-full max-w-[1900px] px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
           {renderContent()}
         </main>
 
