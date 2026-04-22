@@ -582,7 +582,7 @@ export default function App() {
             />
           </div>
         ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(30rem,38rem)_minmax(0,1fr)] gap-4 sm:gap-5 lg:gap-6 animate-in fade-in slide-in-from-bottom-2 items-start">
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(38rem,46rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(42rem,50rem)_minmax(0,1fr)] gap-4 sm:gap-5 lg:gap-6 animate-in fade-in slide-in-from-bottom-2 items-start">
             {/* Left Sidebar: Inputs */}
             <div className="space-y-4 sm:space-y-5 lg:space-y-6 order-1 min-w-0">
 
