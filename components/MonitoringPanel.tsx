@@ -22,8 +22,8 @@ const severityStyles: Record<MonitoringSeverity, string> = {
   info: 'border border-[#46fa9c]/20 bg-[#46fa9c]/10 text-[#7efd8b]'
 };
 
-const fieldShellClass = 'rounded-[6px] border border-[#5b3f44] bg-[rgba(2,3,5,0.78)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]';
-const fieldInputClass = 'app-shell-input';
+const fieldShellClass = 'rounded-[8px] border border-[#5b3f44] bg-[linear-gradient(180deg,rgba(43,27,30,0.76),rgba(15,18,24,0.8))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition-all hover:border-[#ffb1c0]/45 focus-within:border-[#ffb1c0]/70 focus-within:shadow-[0_0_0_1px_rgba(255,177,192,0.12)]';
+const fieldInputClass = 'app-shell-input min-h-[1.5rem]';
 export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) => {
   const toast = useToast();
   const [pages, setPages] = useState<MonitoredPage[]>([]);
@@ -211,7 +211,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
           <form onSubmit={handleCreatePage} className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
             <div className="md:col-span-2 xl:col-span-5">
               <FieldLabel>URL страницы</FieldLabel>
-              <div className={fieldShellClass}>
+              <label className={`${fieldShellClass} block cursor-text`}>
                 <input
                   type="url"
                   value={newUrl}
@@ -219,11 +219,11 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
                   placeholder="https://api.example.com"
                   className={fieldInputClass}
                 />
-              </div>
+              </label>
             </div>
             <div className="xl:col-span-3">
               <FieldLabel>Подпись</FieldLabel>
-              <div className={fieldShellClass}>
+              <label className={`${fieldShellClass} block cursor-text`}>
                 <input
                   type="text"
                   value={newLabel}
@@ -231,7 +231,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
                   placeholder="Название вектора"
                   className={fieldInputClass}
                 />
-              </div>
+              </label>
             </div>
             <div className="xl:col-span-2">
               <FieldLabel>Частота</FieldLabel>

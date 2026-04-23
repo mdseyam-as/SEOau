@@ -60,12 +60,12 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
   }, [isOpen]);
 
   return (
-    <div ref={rootRef} className={`relative ${className}`}>
+    <div ref={rootRef} className="relative">
       <button
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen((prev) => !prev)}
-        className={`flex w-full items-center justify-between gap-3 text-left text-white transition-all ${disabled ? 'cursor-not-allowed opacity-60' : ''} ${buttonClassName}`}
+        className={`flex w-full items-center justify-between gap-3 text-left text-white transition-all ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'} ${className} ${buttonClassName}`}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
