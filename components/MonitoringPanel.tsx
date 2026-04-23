@@ -171,7 +171,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
 
   return (
     <div className="space-y-5">
-      <section className="app-dark-card relative overflow-hidden p-4 sm:p-6">
+      <section className="app-dark-card relative p-4 sm:p-6">
         <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-[#ff2d78]/12 blur-3xl" />
         <div className="pointer-events-none absolute left-10 top-14 h-28 w-28 rounded-full bg-[#46fa9c]/10 blur-3xl" />
 

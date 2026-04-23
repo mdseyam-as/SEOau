@@ -77,7 +77,7 @@ export const StyledSelect: React.FC<StyledSelectProps> = ({
 
       {isOpen && !disabled && (
         <div
-          className={`absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-[10px] border border-[#5b3f44] bg-[linear-gradient(180deg,rgba(15,18,24,0.98),rgba(31,15,18,0.95))] shadow-[0_18px_44px_rgba(0,0,0,0.42)] backdrop-blur-xl ${menuClassName}`}
+          className={`absolute left-0 right-0 top-[calc(100%+0.5rem)] z-[120] overflow-hidden rounded-[10px] border border-[#5b3f44] bg-[linear-gradient(180deg,rgba(15,18,24,0.98),rgba(31,15,18,0.95))] shadow-[0_18px_44px_rgba(0,0,0,0.42)] backdrop-blur-xl ${menuClassName}`}
           role="listbox"
         >
           <div className="max-h-64 overflow-y-auto py-1">
