@@ -611,6 +611,41 @@ html {
     opacity: 1;
   }
 
+  .app-shell-input {
+    @apply w-full border-0 bg-transparent p-0 text-white shadow-none outline-none ring-0 placeholder:text-[#ab888e];
+    background-color: transparent !important;
+    -webkit-text-fill-color: #ffffff;
+    -webkit-appearance: none;
+    appearance: none;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  .app-shell-input::placeholder {
+    color: #ab888e;
+    opacity: 1;
+  }
+
+  .app-shell-input:-webkit-autofill,
+  .app-shell-input:-webkit-autofill:hover,
+  .app-shell-input:-webkit-autofill:focus,
+  .app-shell-input:-webkit-autofill:active {
+    -webkit-text-fill-color: #ffffff !important;
+    -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+    box-shadow: 0 0 0 1000px transparent inset !important;
+    background-color: transparent !important;
+    caret-color: #ffffff;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
+  .app-input-dark::selection,
+  .app-shell-input::selection,
+  input::selection,
+  textarea::selection {
+    background: rgba(255, 76, 131, 0.32);
+    color: #ffffff;
+  }
+
   .app-input-dark:-webkit-autofill,
   .app-input-dark:-webkit-autofill:hover,
   .app-input-dark:-webkit-autofill:focus,
