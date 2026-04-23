@@ -44,7 +44,8 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
   const isOverLimit = userPlan ? config.maxChars > userPlan.maxChars : false;
   const sectionClass = 'rounded-[10px] border border-white/10 bg-white/[0.03] p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]';
   const sectionLabelClass = 'mb-2 flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-[0.14em] text-[#d7c1c7] sm:text-sm';
-  const inputClass = 'app-input-dark';
+  const fieldShellClass = 'rounded-[8px] border border-[#5b3f44] bg-[linear-gradient(180deg,rgba(43,27,30,0.76),rgba(15,18,24,0.8))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition-colors focus-within:border-[#ffb1c0]/70 focus-within:shadow-[0_0_0_1px_rgba(255,177,192,0.12)]';
+  const inputClass = 'app-shell-input';
   const modeButtonBase = 'relative rounded-[8px] border p-3 text-left transition-all';
 
 
@@ -250,25 +251,29 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
           <div className="grid grid-cols-1 gap-3 sm:gap-4">
             <div>
               <label className="block text-xs font-bold text-[#f7d6dc] mb-1.5">Название сайта/бренда</label>
-              <input
-                type="text"
-                value={config.websiteName}
-                onChange={(e) => handleChange('websiteName', e.target.value)}
-                placeholder="Например: MyShop, CryptoBlog"
-                className={inputClass}
-                disabled={isDisabled}
-              />
+              <div className={fieldShellClass}>
+                <input
+                  type="text"
+                  value={config.websiteName}
+                  onChange={(e) => handleChange('websiteName', e.target.value)}
+                  placeholder="Например: MyShop, CryptoBlog"
+                  className={inputClass}
+                  disabled={isDisabled}
+                />
+              </div>
             </div>
             <div>
               <label className="block text-xs font-bold text-[#f7d6dc] mb-1.5">Целевая страна/регион</label>
-              <input
-                type="text"
-                value={config.targetCountry}
-                onChange={(e) => handleChange('targetCountry', e.target.value)}
-                placeholder="Казахстан, РФ, США..."
-                className={inputClass}
-                disabled={isDisabled}
-              />
+              <div className={fieldShellClass}>
+                <input
+                  type="text"
+                  value={config.targetCountry}
+                  onChange={(e) => handleChange('targetCountry', e.target.value)}
+                  placeholder="Казахстан, РФ, США..."
+                  className={inputClass}
+                  disabled={isDisabled}
+                />
+              </div>
             </div>
           </div>
 
@@ -280,7 +285,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               <StyledSelect
                 value={config.language}
                 onChange={(value) => handleChange('language', value)}
-                className="app-input-dark"
+                className={fieldShellClass}
                 disabled={isDisabled}
                 options={Object.values(ContentLanguage).map((lang) => ({ value: lang, label: lang }))}
               />
@@ -292,7 +297,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               <StyledSelect
                 value={config.tone}
                 onChange={(value) => handleChange('tone', value)}
-                className="app-input-dark"
+                className={fieldShellClass}
                 disabled={isDisabled}
                 options={Object.values(TextTone).map((tone) => ({ value: tone, label: tone }))}
               />
@@ -304,7 +309,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               <StyledSelect
                 value={config.style}
                 onChange={(value) => handleChange('style', value)}
-                className="app-input-dark"
+                className={fieldShellClass}
                 disabled={isDisabled}
                 options={Object.values(TextStyle).map((style) => ({ value: style, label: style }))}
               />
@@ -402,25 +407,29 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
         <div className="grid grid-cols-1 gap-3 sm:gap-4">
           <div>
             <label className="block text-xs sm:text-sm font-bold text-[#f7d6dc] mb-1.5 sm:mb-2">Тема статьи</label>
-            <input
-              type="text"
-              value={config.topic}
-              onChange={(e) => handleChange('topic', e.target.value)}
-              placeholder="Например: Обзор смартфонов 2024"
-              className={inputClass}
-              disabled={isDisabled}
-            />
+            <div className={fieldShellClass}>
+              <input
+                type="text"
+                value={config.topic}
+                onChange={(e) => handleChange('topic', e.target.value)}
+                placeholder="Например: Обзор смартфонов 2024"
+                className={inputClass}
+                disabled={isDisabled}
+              />
+            </div>
           </div>
           <div>
             <label className="block text-xs sm:text-sm font-bold text-[#f7d6dc] mb-1.5 sm:mb-2">URL страницы (Slug)</label>
-            <input
-              type="text"
-              value={config.targetUrl}
-              onChange={(e) => handleChange('targetUrl', e.target.value)}
-              placeholder="/blog/smartphones-2024"
-              className={inputClass}
-              disabled={isDisabled}
-            />
+            <div className={fieldShellClass}>
+              <input
+                type="text"
+                value={config.targetUrl}
+                onChange={(e) => handleChange('targetUrl', e.target.value)}
+                placeholder="/blog/smartphones-2024"
+                className={inputClass}
+                disabled={isDisabled}
+              />
+            </div>
           </div>
         </div>
 
@@ -433,15 +442,17 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
           <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
             {competitorLinks.map((link, idx) => (
               <div key={idx} className="flex gap-1.5 sm:gap-2">
-                <input
-                  type="text"
-                  value={link}
-                  onChange={(e) => updateCompetitorLink(idx, e.target.value)}
-                  onPaste={(e) => handleLinkPaste(e, idx)}
-                  placeholder="https://competitor.com/..."
-                  className={`${inputClass} text-xs sm:text-sm`}
-                  disabled={isDisabled}
-                />
+                <div className={`flex-1 ${fieldShellClass}`}>
+                  <input
+                    type="text"
+                    value={link}
+                    onChange={(e) => updateCompetitorLink(idx, e.target.value)}
+                    onPaste={(e) => handleLinkPaste(e, idx)}
+                    placeholder="https://competitor.com/..."
+                    className={`${inputClass} text-xs sm:text-sm`}
+                    disabled={isDisabled}
+                  />
+                </div>
                 <button
                   onClick={() => removeCompetitorLink(idx)}
                   disabled={isDisabled}
@@ -584,13 +595,15 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
           <label className="block text-sm font-bold text-[#f7d6dc] mb-2 flex items-center gap-2">
             <Settings2 className="w-4 h-4 text-[#46fa9c]" /> LSI ключи (набор слов)
           </label>
-          <textarea
-            value={config.lsiKeywords}
-            onChange={(e) => handleChange('lsiKeywords', e.target.value)}
-            placeholder="дополнительные тематические слова через запятую..."
-            className="app-input-dark h-20 md:h-24 resize-none"
-            disabled={isDisabled}
-          />
+          <div className={fieldShellClass}>
+            <textarea
+              value={config.lsiKeywords}
+              onChange={(e) => handleChange('lsiKeywords', e.target.value)}
+              placeholder="дополнительные тематические слова через запятую..."
+              className="app-shell-input h-20 md:h-24 resize-none"
+              disabled={isDisabled}
+            />
+          </div>
         </div>
 
         {/* Length Controls */}
@@ -604,23 +617,27 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                 )}
               </label>
               <div className="flex items-center gap-3">
-                <input
-                  type="number"
-                  value={config.minChars}
-                  onChange={(e) => handleChange('minChars', parseNumericInput(e.target.value, config.minChars))}
-                  className={inputClass}
-                  placeholder="Мин"
-                  disabled={isDisabled}
-                />
+                <div className={`flex-1 ${fieldShellClass}`}>
+                  <input
+                    type="number"
+                    value={config.minChars}
+                    onChange={(e) => handleChange('minChars', parseNumericInput(e.target.value, config.minChars))}
+                    className={inputClass}
+                    placeholder="Мин"
+                    disabled={isDisabled}
+                  />
+                </div>
                 <span className="text-[#ab888e] font-bold">-</span>
-                <input
-                  type="number"
-                  value={config.maxChars}
-                  onChange={(e) => handleChange('maxChars', parseNumericInput(e.target.value, config.maxChars))}
-                  className={`app-input-dark ${isOverLimit ? 'border-red-500 focus:ring-red-500/20' : ''}`}
-                  placeholder="Макс"
-                  disabled={isDisabled}
-                />
+                <div className={`flex-1 ${fieldShellClass} ${isOverLimit ? 'border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.12)]' : ''}`}>
+                  <input
+                    type="number"
+                    value={config.maxChars}
+                    onChange={(e) => handleChange('maxChars', parseNumericInput(e.target.value, config.maxChars))}
+                    className={inputClass}
+                    placeholder="Макс"
+                    disabled={isDisabled}
+                  />
+                </div>
               </div>
             </div>
 
@@ -629,23 +646,27 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                 <AlignLeft className="w-4 h-4 text-[#46fa9c]" /> Абзацы
               </label>
               <div className="flex items-center gap-3">
-                <input
-                  type="number"
-                  value={config.minParas}
-                  onChange={(e) => handleChange('minParas', parseNumericInput(e.target.value, config.minParas))}
-                  className={inputClass}
-                  placeholder="Мин"
-                  disabled={isDisabled}
-                />
+                <div className={`flex-1 ${fieldShellClass}`}>
+                  <input
+                    type="number"
+                    value={config.minParas}
+                    onChange={(e) => handleChange('minParas', parseNumericInput(e.target.value, config.minParas))}
+                    className={inputClass}
+                    placeholder="Мин"
+                    disabled={isDisabled}
+                  />
+                </div>
                 <span className="text-[#ab888e] font-bold">-</span>
-                <input
-                  type="number"
-                  value={config.maxParas}
-                  onChange={(e) => handleChange('maxParas', parseNumericInput(e.target.value, config.maxParas))}
-                  className={inputClass}
-                  placeholder="Макс"
-                  disabled={isDisabled}
-                />
+                <div className={`flex-1 ${fieldShellClass}`}>
+                  <input
+                    type="number"
+                    value={config.maxParas}
+                    onChange={(e) => handleChange('maxParas', parseNumericInput(e.target.value, config.maxParas))}
+                    className={inputClass}
+                    placeholder="Макс"
+                    disabled={isDisabled}
+                  />
+                </div>
               </div>
             </div>
           </div>
