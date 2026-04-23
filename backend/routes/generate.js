@@ -9,6 +9,27 @@ const router = express.Router();
 
 const DEFAULT_SITE_URL = 'https://example.com';
 const DEFAULT_SITE_NAME = 'SeoGenerator';
+const REWRITE_PROTECTED_SOURCE_CODE = 'REWRITE_SOURCE_PROTECTED';
+const REWRITE_PROTECTED_SOURCE_HINT = 'Откройте страницу в браузере, скопируйте основной текст и используйте режим «Текст» для рерайта.';
+
+const PROTECTED_SOURCE_MARKERS = [
+    '__qrator/',
+    'qrator',
+    'доступ заблокирован',
+    'access denied',
+    'attention required',
+    'verify you are human',
+    'security check',
+    'captcha',
+    'bot challenge',
+    'incident id'
+];
+
+function isProtectedSourceResponse(status, html = '') {
+    const normalizedHtml = String(html || '').toLowerCase();
+    const hasProtectedMarker = PROTECTED_SOURCE_MARKERS.some((marker) => normalizedHtml.includes(marker));
+    return [401, 403, 429, 503].includes(status) || hasProtectedMarker;
+}
 
 // ==================== MODEL MAPPING ====================
 // Маппинг моделей для мультимодальной генерации
@@ -2730,26 +2751,37 @@ router.post('/rewrite', validate(rewriteSchema), async (req, res) => {
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), 15000);
 
-                const pageResponse = await fetch(sourceUrl, {
-                    signal: controller.signal,
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (compatible; SEORewriteBot/1.0)',
-                        'Accept': 'text/html,application/xhtml+xml',
-                        'Accept-Language': 'ru,en;q=0.9'
+                try {
+                    const pageResponse = await fetch(sourceUrl, {
+                        signal: controller.signal,
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (compatible; SEORewriteBot/1.0)',
+                            'Accept': 'text/html,application/xhtml+xml',
+                            'Accept-Language': 'ru,en;q=0.9'
+                        }
+                    });
+
+                    const html = await pageResponse.text();
+
+                    if (!pageResponse.ok || isProtectedSourceResponse(pageResponse.status, html)) {
+                        if (isProtectedSourceResponse(pageResponse.status, html)) {
+                            return res.status(400).json({
+                                error: 'Сайт защищён anti-bot системой и не отдаёт контент для автоматического рерайта.',
+                                code: REWRITE_PROTECTED_SOURCE_CODE,
+                                hint: REWRITE_PROTECTED_SOURCE_HINT
+                            });
+                        }
+
+                        return res.status(400).json({ error: `Не удалось загрузить страницу: HTTP ${pageResponse.status}` });
                     }
-                });
 
-                clearTimeout(timeout);
+                    contentToRewrite = extractTextFromHtml(html);
 
-                if (!pageResponse.ok) {
-                    return res.status(400).json({ error: `Не удалось загрузить страницу: HTTP ${pageResponse.status}` });
-                }
-
-                const html = await pageResponse.text();
-                contentToRewrite = extractTextFromHtml(html);
-
-                if (!contentToRewrite || contentToRewrite.length < 100) {
-                    return res.status(400).json({ error: 'Не удалось извлечь достаточно текста со страницы' });
+                    if (!contentToRewrite || contentToRewrite.length < 100) {
+                        return res.status(400).json({ error: 'Не удалось извлечь достаточно текста со страницы' });
+                    }
+                } finally {
+                    clearTimeout(timeout);
                 }
             } catch (e) {
                 return res.status(400).json({ error: `Ошибка загрузки страницы: ${e.message}` });

@@ -84,7 +84,22 @@ class ApiService {
             const details = Array.isArray(error.details) && error.details.length > 0
                 ? `: ${error.details.map((item: any) => `${item.field} - ${item.message}`).join('; ')}`
                 : '';
-            throw new Error(`${error.error || `HTTP ${response.status}`}${details}`);
+            const requestError = new Error(`${error.error || `HTTP ${response.status}`}${details}`) as Error & {
+                code?: string;
+                hint?: string;
+                raw?: unknown;
+            };
+
+            if (typeof error.code === 'string') {
+                requestError.code = error.code;
+            }
+
+            if (typeof error.hint === 'string') {
+                requestError.hint = error.hint;
+            }
+
+            requestError.raw = error;
+            throw requestError;
         }
 
         return response.json();

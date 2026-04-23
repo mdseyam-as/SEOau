@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RefreshCw, Link, FileText, Copy, Check, Sparkles, Palette, Languages, Mic, Feather } from 'lucide-react';
+import { RefreshCw, Link, FileText, Copy, Check, Sparkles, Palette, Languages, Mic, Feather, ShieldAlert, ArrowRight } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { User } from '../types';
 import { StyledSelect } from './StyledSelect';
@@ -50,6 +50,7 @@ export const RewriteMode: React.FC<RewriteModeProps> = ({ onUserUpdate }) => {
     
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [urlFallbackHint, setUrlFallbackHint] = useState<string | null>(null);
     const [result, setResult] = useState<{
         original: { text: string; length: number; words: number };
         rewritten: { text: string; length: number; words: number };
@@ -68,6 +69,7 @@ export const RewriteMode: React.FC<RewriteModeProps> = ({ onUserUpdate }) => {
 
         setIsLoading(true);
         setError(null);
+        setUrlFallbackHint(null);
         setResult(null);
 
         try {
@@ -90,6 +92,9 @@ export const RewriteMode: React.FC<RewriteModeProps> = ({ onUserUpdate }) => {
             }
         } catch (err: any) {
             setError(err.message || 'Ошибка рерайта');
+            if (inputMode === 'url' && (err?.code === 'REWRITE_SOURCE_PROTECTED' || typeof err?.hint === 'string')) {
+                setUrlFallbackHint(err?.hint || 'Откройте страницу вручную, скопируйте основной текст и используйте режим «Текст».');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -120,7 +125,10 @@ export const RewriteMode: React.FC<RewriteModeProps> = ({ onUserUpdate }) => {
             <section className="app-dark-card p-4 sm:p-5">
                 <div className="flex gap-2 mb-4">
                     <button
-                        onClick={() => setInputMode('text')}
+                        onClick={() => {
+                            setInputMode('text');
+                            setUrlFallbackHint(null);
+                        }}
                         className={`${modeButtonBase} flex-1 ${
                             inputMode === 'text'
                                 ? 'border-[#ffb1c0]/40 bg-[linear-gradient(135deg,rgba(255,76,131,0.22),rgba(255,177,192,0.14))] text-white shadow-[0_18px_34px_rgba(255,76,131,0.12)]'
@@ -131,7 +139,10 @@ export const RewriteMode: React.FC<RewriteModeProps> = ({ onUserUpdate }) => {
                         Текст
                     </button>
                     <button
-                        onClick={() => setInputMode('url')}
+                        onClick={() => {
+                            setInputMode('url');
+                            setUrlFallbackHint(null);
+                        }}
                         className={`${modeButtonBase} flex-1 ${
                             inputMode === 'url'
                                 ? 'border-[#ffb1c0]/40 bg-[linear-gradient(135deg,rgba(255,76,131,0.22),rgba(255,177,192,0.14))] text-white shadow-[0_18px_34px_rgba(255,76,131,0.12)]'
@@ -265,6 +276,40 @@ export const RewriteMode: React.FC<RewriteModeProps> = ({ onUserUpdate }) => {
                 <div className="rounded-[10px] border border-[#ffb4ab]/20 bg-[#93000a]/18 p-4">
                     <p className="text-sm text-[#ffdad6]">{error}</p>
                 </div>
+            )}
+
+            {urlFallbackHint && (
+                <section className="app-dark-card border border-[#ffb1c0]/18 bg-[linear-gradient(180deg,rgba(49,20,27,0.78),rgba(15,18,24,0.78))] p-4 sm:p-5">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-[#ffb1c0]">
+                                <ShieldAlert className="h-4 w-4" />
+                                URL защищён от автоматической загрузки
+                            </div>
+                            <p className="max-w-2xl text-sm leading-relaxed text-[#f7d6dc]">
+                                {urlFallbackHint}
+                            </p>
+                            <ol className="space-y-2 text-sm text-[#ab888e]">
+                                <li>1. Откройте страницу в обычном браузере.</li>
+                                <li>2. Скопируйте основной текст страницы без лишних блоков.</li>
+                                <li>3. Переключитесь в режим <span className="text-[#f7d6dc]">«Текст»</span> и вставьте контент вручную.</li>
+                            </ol>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setInputMode('text');
+                                setError(null);
+                                setUrlFallbackHint(null);
+                            }}
+                            className="app-btn-dark shrink-0 whitespace-nowrap"
+                        >
+                            <ArrowRight className="h-4 w-4" />
+                            Перейти в режим текста
+                        </button>
+                    </div>
+                </section>
             )}
 
             {/* Result */}
