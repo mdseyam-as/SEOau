@@ -74,7 +74,7 @@ export enum TextStyle {
   INSTRUCTIONAL = 'Instructional (How-to guides)'
 }
 
-export type GenerationMode = 'seo' | 'geo';
+export type GenerationMode = 'seo' | 'aio' | 'geo';
 
 export enum ContentLanguage {
   RUSSIAN = 'Русский',
@@ -135,7 +135,7 @@ export interface SeoMetrics {
   }[];
 }
 
-// ==================== STRUCTURED GEO TYPES ====================
+// ==================== STRUCTURED AIO TYPES ====================
 
 export interface ArticleSection {
   h2: string;
@@ -218,7 +218,7 @@ export interface SeoResult {
   spamScore?: number; // 0-100%
   spamAnalysis?: string;
 
-  // AIO/GEO fields
+  // AIO fields
   knowledgeGraph?: AioKnowledgeGraph | null;
   ragChunks?: AioRagChunk[] | null;
   jsonLd?: object | null;
@@ -541,7 +541,7 @@ export interface SubscriptionPlan {
   maxKeywords?: number;
   canCheckSpam?: boolean;
   canOptimizeRelevance?: boolean;
-  canUseGeoMode?: boolean;
+  canUseAioMode?: boolean;
   canGenerateFaq?: boolean;
   canUseSocialPack?: boolean;
   canAudit?: boolean;
@@ -689,7 +689,7 @@ export interface BackgroundTaskListItem {
   hasResult: boolean;
 }
 
-// ==================== CITATIONS (GEO) ====================
+// ==================== CITATIONS (AIO) ====================
 
 export interface Citation {
   id: number;

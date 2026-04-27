@@ -13,7 +13,7 @@ export interface SubscriptionPlan {
   maxKeywords?: number; // Limit rows from Excel. null or 0 means unlimited
   canCheckSpam?: boolean; // Ability to check and fix spam using Grok
   canOptimizeRelevance?: boolean; // Ability to use "Increase Relevance" feature
-  canUseGeoMode?: boolean; // Ability to use GEO mode
+  canUseAioMode?: boolean; // Ability to use AIO mode
   canGenerateFaq?: boolean; // Ability to generate FAQ with JSON-LD schema
   canUseSocialPack?: boolean; // Ability to use Social Media Pack
   canAudit?: boolean; // Ability to use SEO Audit
@@ -42,11 +42,10 @@ export interface User {
 
 export interface GlobalSettings {
   telegramLink: string;
-  // NOTE: openRouterApiKey is NOT stored on frontend for security
-  // All API calls go through backend which has the key
+  openRouterApiKey?: string;
   systemPrompt?: string; // Legacy - kept for backward compatibility
   seoPrompt?: string;
-  geoPrompt?: string;
+  aioPrompt?: string;
   spamCheckModel?: string;
 }
 
@@ -147,7 +146,7 @@ let cachedGlobalSettings: GlobalSettings = {
   // API key is NOT stored on frontend
   systemPrompt: '', // Legacy
   seoPrompt: '',
-  geoPrompt: '',
+  aioPrompt: '',
   spamCheckModel: 'x-ai/grok-4.1-fast'
 };
 

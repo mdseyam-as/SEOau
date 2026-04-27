@@ -57,7 +57,7 @@ router.get('/', auth, async (req, res) => {
                 // Decrypt API key when reading
                 openRouterApiKey: decrypt(dbSettings.openRouterApiKey) || '',
                 seoPrompt: dbSettings.seoPrompt || '',
-                geoPrompt: dbSettings.geoPrompt || '',
+                aioPrompt: dbSettings.aioPrompt || '',
                 telegramLink: normalizeTelegramLink(dbSettings.telegramLink),
                 spamCheckModel: dbSettings.spamCheckModel || 'x-ai/grok-2-1212'
             };
@@ -99,14 +99,14 @@ router.put('/', auth, validate(updateSettingsSchema), async (req, res) => {
             return res.status(403).json({ error: 'Access denied. Admin only.' });
         }
 
-        const { openRouterApiKey, seoPrompt, geoPrompt, telegramLink, spamCheckModel } = req.body;
+        const { openRouterApiKey, seoPrompt, aioPrompt, telegramLink, spamCheckModel } = req.body;
 
         // Build update data (only provided fields)
         const updateData = {};
         // Encrypt API key before storing
         if (openRouterApiKey !== undefined) updateData.openRouterApiKey = encrypt(openRouterApiKey);
         if (seoPrompt !== undefined) updateData.seoPrompt = seoPrompt;
-        if (geoPrompt !== undefined) updateData.geoPrompt = geoPrompt;
+        if (aioPrompt !== undefined) updateData.aioPrompt = aioPrompt;
         if (telegramLink !== undefined) updateData.telegramLink = normalizeTelegramLink(telegramLink);
         if (spamCheckModel !== undefined) updateData.spamCheckModel = spamCheckModel;
 
@@ -127,7 +127,7 @@ router.put('/', auth, validate(updateSettingsSchema), async (req, res) => {
                 // Decrypt API key for response
                 openRouterApiKey: decrypt(settings.openRouterApiKey) || '',
                 seoPrompt: settings.seoPrompt || '',
-                geoPrompt: settings.geoPrompt || '',
+                aioPrompt: settings.aioPrompt || '',
                 telegramLink: normalizeTelegramLink(settings.telegramLink),
                 spamCheckModel: settings.spamCheckModel || ''
             }

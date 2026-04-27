@@ -47,6 +47,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
   const fieldShellClass = 'rounded-[8px] border border-[#5b3f44] bg-[linear-gradient(180deg,rgba(43,27,30,0.76),rgba(15,18,24,0.8))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition-colors focus-within:border-[#ffb1c0]/70 focus-within:shadow-[0_0_0_1px_rgba(255,177,192,0.12)]';
   const inputClass = 'app-shell-input';
   const modeButtonBase = 'relative rounded-[8px] border p-3 text-left transition-all';
+  const isAioMode = config.generationMode === 'aio' || config.generationMode === 'geo';
 
 
 
@@ -359,28 +360,28 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
               )}
             </button>
 
-            {/* GEO Mode Option */}
+            {/* AIO Mode Option */}
             <button
               type="button"
-              onClick={() => handleChange('generationMode', 'geo' as GenerationMode)}
+              onClick={() => handleChange('generationMode', 'aio' as GenerationMode)}
               disabled={isDisabled}
               className={`
                 ${modeButtonBase}
-                ${config.generationMode === 'geo'
+                ${isAioMode
                   ? 'border-[#ffb1c0]/40 bg-[rgba(255,76,131,0.08)] shadow-lg shadow-[#ffb1c0]/10'
                   : 'border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.05]'}
                 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
               `}
             >
               <div className="flex items-start gap-2 sm:gap-3">
-                <div className={`p-1.5 sm:p-2 rounded-[6px] shrink-0 ${config.generationMode === 'geo' ? 'bg-[#ff4c83]/12' : 'bg-white/10'}`}>
-                  <Sparkles className={`w-4 h-4 sm:w-5 sm:h-5 ${config.generationMode === 'geo' ? 'text-[#ffb1c0]' : 'text-slate-400'}`} />
+                <div className={`p-1.5 sm:p-2 rounded-[6px] shrink-0 ${isAioMode ? 'bg-[#ff4c83]/12' : 'bg-white/10'}`}>
+                  <Sparkles className={`w-4 h-4 sm:w-5 sm:h-5 ${isAioMode ? 'text-[#ffb1c0]' : 'text-slate-400'}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1 sm:gap-2">
                     <span className="text-sm sm:text-base">🤖</span>
-                    <span className={`font-bold text-xs sm:text-sm ${config.generationMode === 'geo' ? 'text-white' : 'text-slate-300'}`}>
-                      GEO
+                    <span className={`font-bold text-xs sm:text-sm ${isAioMode ? 'text-white' : 'text-slate-300'}`}>
+                      AIO
                     </span>
                   </div>
                   <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1 hidden sm:block">
@@ -388,16 +389,16 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
                   </p>
                 </div>
               </div>
-              {config.generationMode === 'geo' && (
+              {isAioMode && (
                 <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#ffb1c0] rounded-full animate-pulse" />
               )}
             </button>
           </div>
 
-          {config.generationMode === 'geo' && (
+          {isAioMode && (
             <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-[rgba(255,76,131,0.08)] rounded-[8px] border border-[#ffb1c0]/20">
               <p className="text-[10px] sm:text-xs text-[#f7d6dc]">
-                <strong>GEO</strong> — контент с таблицами, FAQ для AI-поисковиков.
+                <strong>AIO</strong> — контент с таблицами, FAQ для AI-поисковиков.
               </p>
             </div>
           )}

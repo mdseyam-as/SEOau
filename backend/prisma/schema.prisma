@@ -64,7 +64,7 @@ model Plan {
   // Функции
   canCheckSpam           Boolean  @default(false)
   canOptimizeRelevance   Boolean  @default(false)
-  canUseGeoMode          Boolean  @default(false)
+  canUseAioMode          Boolean  @default(false)
   canGenerateFaq         Boolean  @default(false)
   canUseSocialPack       Boolean  @default(false)
   canAudit               Boolean  @default(false)
@@ -422,13 +422,13 @@ model History {
   // Основные поля
   topic       String
   targetUrl   String?
-  mode        String   @default("geo") // "seo" | "geo"
+  mode        String   @default("aio") // "seo" | "aio"
   
   // JSON поля для хранения сложных структур
   config      Json     // GenerationConfig
   result      Json     // SeoResult (включает article, visuals, faq, seo)
 
-  // AIO/GEO structured output for AI Search Optimization
+  // AIO structured output for AI Search Optimization
   knowledgeGraph  Json?
   ragChunks       Json?
   jsonLd          Json?
@@ -451,7 +451,7 @@ model SystemSetting {
   
   // Промпты
   seoPrompt        String?  @db.Text
-  geoPrompt        String?  @db.Text
+  aioPrompt        String?  @db.Text
   
   // Настройки
   telegramLink     String   @default("https://t.me/bankkz_admin")

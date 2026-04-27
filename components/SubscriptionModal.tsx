@@ -43,7 +43,7 @@ const buildTelegramPurchaseLink = (baseLink: string, plan?: SubscriptionPlan | n
 const FEATURE_ICONS: Record<string, React.ReactNode> = {
     canCheckSpam: <AlertOctagon className="w-4 h-4" />,
     canOptimizeRelevance: <Zap className="w-4 h-4" />,
-    canUseGeoMode: <Globe className="w-4 h-4" />,
+    canUseAioMode: <Globe className="w-4 h-4" />,
     canGenerateFaq: <MessageCircleQuestion className="w-4 h-4" />,
     canUseSocialPack: <Share2 className="w-4 h-4" />,
 };
@@ -51,7 +51,7 @@ const FEATURE_ICONS: Record<string, React.ReactNode> = {
 const FEATURE_LABELS: Record<string, string> = {
     canCheckSpam: 'Проверка переспама',
     canOptimizeRelevance: 'Оптимизация релевантности',
-    canUseGeoMode: 'GEO режим (AI-поисковики)',
+    canUseAioMode: 'AIO режим (AI-поисковики)',
     canGenerateFaq: 'Генерация FAQ',
     canUseSocialPack: 'Social Media Pack',
 };

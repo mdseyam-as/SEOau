@@ -120,7 +120,7 @@ export function getStarsInvoiceTitle(plan) {
 export function getStarsInvoiceDescription(plan) {
     const features = [];
 
-    if (plan.canUseGeoMode) features.push('GEO');
+    if (plan.canUseAioMode) features.push('AIO');
     if (plan.canGenerateFaq) features.push('FAQ');
     if (plan.canAudit) features.push('Audit');
     if (plan.canRewrite) features.push('Rewrite');

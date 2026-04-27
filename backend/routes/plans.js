@@ -120,7 +120,7 @@ router.post('/', validateTelegramAuth, checkAdminRole, validate(createPlanSchema
             allowedModels,
             canCheckSpam,
             canOptimizeRelevance,
-            canUseGeoMode,
+            canUseAioMode,
             canGenerateFaq,
             canUseSocialPack,
             canAudit,
@@ -144,7 +144,7 @@ router.post('/', validateTelegramAuth, checkAdminRole, validate(createPlanSchema
                 allowedModels: allowedModels || [],
                 canCheckSpam: canCheckSpam || false,
                 canOptimizeRelevance: canOptimizeRelevance || false,
-                canUseGeoMode: canUseGeoMode || false,
+                canUseAioMode: canUseAioMode || false,
                 canGenerateFaq: canGenerateFaq || false,
                 canUseSocialPack: canUseSocialPack || false,
                 canAudit: canAudit || false,
@@ -191,7 +191,7 @@ router.put('/:id', validateTelegramAuth, checkAdminRole, validate(updatePlanSche
             allowedModels,
             canCheckSpam,
             canOptimizeRelevance,
-            canUseGeoMode,
+            canUseAioMode,
             canGenerateFaq,
             canUseSocialPack,
             canAudit,
@@ -214,7 +214,7 @@ router.put('/:id', validateTelegramAuth, checkAdminRole, validate(updatePlanSche
         if (allowedModels !== undefined) updateData.allowedModels = allowedModels;
         if (canCheckSpam !== undefined) updateData.canCheckSpam = canCheckSpam;
         if (canOptimizeRelevance !== undefined) updateData.canOptimizeRelevance = canOptimizeRelevance;
-        if (canUseGeoMode !== undefined) updateData.canUseGeoMode = canUseGeoMode;
+        if (canUseAioMode !== undefined) updateData.canUseAioMode = canUseAioMode;
         if (canGenerateFaq !== undefined) updateData.canGenerateFaq = canGenerateFaq;
         if (canUseSocialPack !== undefined) updateData.canUseSocialPack = canUseSocialPack;
         if (canAudit !== undefined) updateData.canAudit = canAudit;

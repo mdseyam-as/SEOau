@@ -189,10 +189,10 @@ router.post('/', async (req, res) => {
                 projectId,
                 topic: config.topic || '',
                 targetUrl: config.targetUrl || null,
-                mode: config.generationMode || 'geo',
+                mode: config.generationMode === 'geo' ? 'aio' : (config.generationMode || 'aio'),
                 config: config, // JSON field
                 result: result, // JSON field
-                ...(config.generationMode === 'geo' || result._aio ? extractAioFields(result) : {})
+                ...((config.generationMode === 'aio' || config.generationMode === 'geo' || result._aio) ? extractAioFields(result) : {})
             }
         });
 
@@ -211,7 +211,7 @@ router.post('/', async (req, res) => {
 
 /**
  * GET /api/history/:id/raw
- * Return crawler-friendly Markdown for AIO/GEO content.
+ * Return crawler-friendly Markdown for AIO content.
  */
 router.get('/:id/raw', validateParams(historyIdParamSchema), async (req, res) => {
     try {
@@ -235,7 +235,7 @@ router.get('/:id/raw', validateParams(historyIdParamSchema), async (req, res) =>
         }
 
         if (historyItem.mode !== 'geo' && historyItem.mode !== 'aio' && !historyItem.markdownContent) {
-            return res.status(404).json({ error: 'Raw AIO Markdown is available only for GEO/AIO content' });
+            return res.status(404).json({ error: 'Raw AIO Markdown is available only for AIO content' });
         }
 
         const markdown = historyItem.markdownContent || historyItem.result?.markdownContent || historyItem.result?.content || '';

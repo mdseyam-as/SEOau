@@ -199,8 +199,8 @@ You MUST return a valid JSON object with the following structure (do not wrap in
   "usedKeywords": ["list", "of", "main", "keywords", "used"]
 }`;
 
-// GEO (Generative Engine Optimization) prompt for AI search engines
-const GEO_PROMPT_TEMPLATE = `You are a **Generative Engine Optimization (GEO) Specialist** writing content for **{{websiteName}}**.
+// AIO (Artificial Intelligence Optimization) prompt for AI search engines
+const AIO_PROMPT_TEMPLATE = `You are an **Artificial Intelligence Optimization (AIO) Specialist** writing content for **{{websiteName}}**.
 
 ### ROLE & GOAL
 Your goal is to write content specifically designed to be **cited and surfaced by AI Search Engines** (ChatGPT, Perplexity, Google SGE/AI Overviews, Bing Copilot).
@@ -218,7 +218,7 @@ Your goal is to write content specifically designed to be **cited and surfaced b
 - **Tone:** {{tone}}
 - **Style:** {{style}}
 
-### GEO STRUCTURE RULES (CRITICAL)
+### AIO STRUCTURE RULES (CRITICAL)
 1. **Direct Answers First:** Start each major section with a clear, dictionary-style definition or direct answer (e.g., "{{topic}} is..."). AI models extract these as snippets.
 
 2. **Rich Structured Data:** You MUST use:
@@ -274,10 +274,10 @@ Return a valid JSON object:
 // ==================== STRICT JSON MODE - EXPECTED STRUCTURE ====================
 
 /**
- * JSON Schema для GEO генерации
+ * JSON Schema для AIO генерации
  * Эта структура передаётся модели для строгого следования
  */
-const EXPECTED_GEO_STRUCTURE = {
+const EXPECTED_AIO_LEGACY_STRUCTURE = {
     article: {
         h1: "String (Заголовок статьи)",
         intro: "String (Вступление, 50-80 слов)",
@@ -414,7 +414,7 @@ function getJsonLdSchemaType(jsonLd) {
     return typeof type === 'string' && type ? type : 'Service';
 }
 
-function upgradeStructuredGeoToAio(structured, topic, context = {}) {
+function upgradeStructuredAio(structured, topic, context = {}) {
     const article = structured.article || createEmptyStructuredResponse(topic).article;
     const faq = (structured.faq || []).filter((item) => item.question && item.answer);
     const schemaLD = structured.seo?.schemaLD || {
@@ -749,7 +749,7 @@ function parseStructuredWriterResponse(rawText, topic) {
 
         if (parsed.article && typeof parsed.article === 'object') {
             // Успешный парсинг структурированного ответа
-            console.log('>>> STRICT JSON GEO: Complete');
+            console.log('>>> STRICT JSON AIO: Complete');
             return {
                 article: {
                     h1: parsed.article.h1 || topic,
@@ -1054,9 +1054,9 @@ function parseStrictJson(rawText) {
 }
 
 /**
- * Валидирует и нормализует структуру GEO ответа
+ * Валидирует и нормализует структуру AIO ответа
  */
-function validateGeoStructure(parsed, topic) {
+function validateAioLegacyStructure(parsed, topic) {
     if (!parsed || typeof parsed !== 'object') {
         return null;
     }
@@ -1066,7 +1066,7 @@ function validateGeoStructure(parsed, topic) {
     const hasSeo = parsed.seo && typeof parsed.seo === 'object';
 
     if (!hasArticle) {
-        console.warn('validateGeoStructure: Missing article field');
+        console.warn('validateAioLegacyStructure: Missing article field');
         return null;
     }
 
@@ -1102,17 +1102,17 @@ function validateGeoStructure(parsed, topic) {
     };
 }
 
-// ==================== MULTIMODAL GEO ORCHESTRATOR (STRICT JSON MODE) ====================
+// ==================== MULTIMODAL AIO ORCHESTRATOR (STRICT JSON MODE) ====================
 
 /**
- * Мультимодальная GEO-генерация в Strict JSON Mode
+ * Мультимодальная AIO-генерация в Strict JSON Mode
  *
  * Writer (Gemini/GPT) генерирует: article, visuals, faq, seo
  * Visualizer (Claude) генерирует: mermaid, svg (fallback/enhancement)
  *
  * @returns {Promise<{article, visuals, faq, seo, _meta}>} - Структурированный результат
  */
-async function generateGeoContent({
+async function generateAioContent({
     topic,
     writerModel,
     visualizerModel = 'claude-sonnet-4.5',
@@ -1128,7 +1128,7 @@ async function generateGeoContent({
     // OpenRouter: только GPT и Claude надёжно поддерживают json_object
     const supportsJsonMode = modelId.includes('gpt') || modelId.includes('claude');
 
-    console.log('>>> STRICT JSON GEO: Starting generation', {
+    console.log('>>> STRICT JSON AIO: Starting generation', {
         writer: modelId,
         visualizer: getModelId(visualizerModel),
         supportsJsonMode,
@@ -1193,11 +1193,11 @@ async function generateGeoContent({
         const writerData = await writerResult.value.json();
         writerRaw = writerData.choices?.[0]?.message?.content || '';
 
-        console.log('>>> STRICT JSON GEO: Writer response received, length:', writerRaw.length);
+        console.log('>>> STRICT JSON AIO: Writer response received, length:', writerRaw.length);
         
         // Логируем если ответ пустой
         if (!writerRaw || writerRaw.length === 0) {
-            console.error('>>> STRICT JSON GEO: Writer returned EMPTY response!', {
+            console.error('>>> STRICT JSON AIO: Writer returned EMPTY response!', {
                 hasChoices: !!writerData.choices,
                 choicesLength: writerData.choices?.length,
                 finishReason: writerData.choices?.[0]?.finish_reason,
@@ -1216,9 +1216,9 @@ async function generateGeoContent({
                 };
             } catch (error) {
                 console.warn('>>> STRICT JSON AIO: Zod validation failed:', toAioIssueList(error));
-                const structuredFallback = validateGeoStructure(rawParsed, topic);
+                const structuredFallback = validateAioLegacyStructure(rawParsed, topic);
                 parsedWriter = structuredFallback
-                    ? upgradeStructuredGeoToAio(structuredFallback, topic, { language })
+                    ? upgradeStructuredAio(structuredFallback, topic, { language })
                     : null;
             }
         }
@@ -1240,14 +1240,14 @@ async function generateGeoContent({
         const error = writerResult.status === 'rejected'
             ? writerResult.reason?.message || writerResult.reason
             : await writerResult.value.text().catch(() => 'Unknown error');
-        console.error('>>> STRICT JSON GEO: Writer request failed:', error);
+        console.error('>>> STRICT JSON AIO: Writer request failed:', error);
         throw new Error(`Writer model failed: ${error}`);
     }
 
     // Если парсинг не удался, создаём fallback структуру
     if (!parsedWriter) {
         console.warn('>>> STRICT JSON AIO: Using fallback structure');
-        parsedWriter = upgradeStructuredGeoToAio(createFallbackGeoStructure(writerRaw, topic), topic, { language });
+        parsedWriter = upgradeStructuredAio(createFallbackAioStructure(writerRaw, topic), topic, { language });
     }
 
     // ==================== ОБРАБОТКА VISUALIZER (soft fallback) ====================
@@ -1264,16 +1264,16 @@ async function generateGeoContent({
                     mermaid: parsedVisuals.mermaid || parsedVisuals.mermaidDiagram || null,
                     svg: parsedVisuals.svg || parsedVisuals.svgGraph || null
                 };
-                console.log('>>> STRICT JSON GEO: Visualizer parsed', {
+                console.log('>>> STRICT JSON AIO: Visualizer parsed', {
                     hasMermaid: !!visualizerVisuals.mermaid,
                     hasSvg: !!visualizerVisuals.svg
                 });
             }
         } catch (e) {
-            console.warn('>>> STRICT JSON GEO: Visualizer parse error:', e.message);
+            console.warn('>>> STRICT JSON AIO: Visualizer parse error:', e.message);
         }
     } else {
-        console.warn('>>> STRICT JSON GEO: Visualizer request failed (soft fallback)');
+        console.warn('>>> STRICT JSON AIO: Visualizer request failed (soft fallback)');
     }
 
     // ==================== MERGE VISUALS ====================
@@ -1287,12 +1287,12 @@ async function generateGeoContent({
     // Если FAQ пустой, генерируем его отдельно
     let finalFaq = parsedWriter.faq;
     if (!finalFaq || finalFaq.length === 0) {
-        console.log('>>> STRICT JSON GEO: FAQ empty, generating fallback...');
+        console.log('>>> STRICT JSON AIO: FAQ empty, generating fallback...');
         try {
             finalFaq = await generateFallbackFaq(topic, language, apiKey, siteName);
-            console.log('>>> STRICT JSON GEO: Fallback FAQ generated:', finalFaq.length, 'items');
+            console.log('>>> STRICT JSON AIO: Fallback FAQ generated:', finalFaq.length, 'items');
         } catch (e) {
-            console.warn('>>> STRICT JSON GEO: Fallback FAQ failed:', e.message);
+            console.warn('>>> STRICT JSON AIO: Fallback FAQ failed:', e.message);
             finalFaq = [];
         }
     }
@@ -1381,7 +1381,7 @@ Write in ${language}.`
 /**
  * Создаёт fallback структуру из сырого текста
  */
-function createFallbackGeoStructure(rawText, topic) {
+function createFallbackAioStructure(rawText, topic) {
     // Пробуем извлечь хоть что-то из текста
     const h1Match = rawText.match(/^#\s+([^\n]+)/m);
     const mermaidMatch = rawText.match(/```mermaid\s*([\s\S]*?)```/i) ||
@@ -1526,7 +1526,7 @@ async function fallbackSingleModelGeneration({
     temperature,
     websiteName,
     topic,
-    isGeoMode
+    isAioMode
 }) {
     // Apply model mapping to redirect old models to new ones
     const mappedModel = getModelId(model);
@@ -1565,7 +1565,7 @@ async function fallbackSingleModelGeneration({
         throw new Error(`No content received from AI. Model: ${mappedModel}, Finish reason: ${data.choices?.[0]?.finish_reason || 'unknown'}`);
     }
 
-    return safeParseAIResponse(rawContent, { topic, isGeoMode });
+    return safeParseAIResponse(rawContent, { topic, isAioMode });
 }
 
 // ==================== SAFE JSON PARSER ====================
@@ -1573,7 +1573,7 @@ async function fallbackSingleModelGeneration({
 /**
  * Надёжный парсер ответа от AI с очисткой markdown и fallback
  * @param {string} rawText - Сырой текст от AI
- * @param {object} fallbackData - Данные для fallback (topic, isGeoMode и т.д.)
+ * @param {object} fallbackData - Данные для fallback (topic, isAioMode и т.д.)
  * @returns {object} - Распарсенный объект или fallback структура
  */
 function safeParseAIResponse(rawText, fallbackData = {}) {
@@ -1632,7 +1632,7 @@ function safeParseAIResponse(rawText, fallbackData = {}) {
  * Создаёт fallback объект когда парсинг не удался
  */
 function createFallbackResponse(rawText, fallbackData = {}) {
-    const { topic, isGeoMode } = fallbackData;
+    const { topic, isAioMode } = fallbackData;
     
     // Пытаемся извлечь заголовок из первой строки текста
     let extractedTitle = '';
@@ -1643,15 +1643,15 @@ function createFallbackResponse(rawText, fallbackData = {}) {
     }
 
     const timestamp = new Date().toISOString();
-    const modePrefix = isGeoMode ? 'GEO' : 'SEO';
+    const modePrefix = isAioMode ? 'AIO' : 'SEO';
 
     console.warn(`safeParseAIResponse: Using fallback for ${modePrefix} mode`);
 
     return {
         content: rawText || '',
         metaTitle: extractedTitle || `${modePrefix} Draft: ${topic || 'Content'} - ${timestamp.slice(0, 10)}`,
-        metaDescription: isGeoMode 
-            ? 'Generated via GEO mode - AI search optimized content' 
+        metaDescription: isAioMode
+            ? 'Generated via AIO mode - AI search optimized content'
             : 'Generated via SEO mode',
         usedKeywords: [],
         _fallback: true, // Маркер что это fallback
@@ -1840,17 +1840,17 @@ router.post('/', validate(generateSchema), async (req, res) => {
         });
 
         // ==================== DEBUG LOG ====================
-        const isGeoMode = sanitizedConfig.generationMode === 'geo';
+        const isAioMode = sanitizedConfig.generationMode === 'aio' || sanitizedConfig.generationMode === 'geo';
 
-        // Check GEO mode permission
-        if (isGeoMode && !limitCheck.plan?.canUseGeoMode && limitCheck.user.role !== 'admin') {
-            return res.status(403).json({ error: 'GEO режим недоступен для вашего тарифа' });
+        // Check AIO mode permission
+        if (isAioMode && !limitCheck.plan?.canUseAioMode && limitCheck.user.role !== 'admin') {
+            return res.status(403).json({ error: 'AIO режим недоступен для вашего тарифа' });
         }
 
         console.log('>>> GENERATION REQUEST:', {
             topic: sanitizedConfig.topic,
             mode: sanitizedConfig.generationMode,
-            isGeoMode,
+            isAioMode,
             model: sanitizedConfig.model
         });
 
@@ -1885,9 +1885,9 @@ ${sanitizedConfig.exampleContent}
 
         // ==================== SELECT PROMPT BY MODE ====================
         let prompt;
-        if (isGeoMode) {
-            // GEO mode: use geoPrompt from settings, or default GEO template
-            prompt = settings?.geoPrompt || GEO_PROMPT_TEMPLATE;
+        if (isAioMode) {
+            // AIO mode: use aioPrompt from settings, or default AIO template
+            prompt = settings?.aioPrompt || AIO_PROMPT_TEMPLATE;
         } else {
             // SEO mode: use seoPrompt from settings, or default SEO template
             prompt = settings?.seoPrompt || DEFAULT_PROMPT_TEMPLATE;
@@ -1923,11 +1923,11 @@ ${sanitizedConfig.exampleContent}
         let userMessageContent = prompt;
         let temperature = 0.7; // Default for SEO (creative)
 
-        if (isGeoMode) {
-            temperature = 0.2; // Lower for GEO (strict compliance)
+        if (isAioMode) {
+            temperature = 0.2; // Lower for AIO (strict compliance)
 
             // CRITICAL FIX: Чётко отделяем ТЕМУ от ИНСТРУКЦИЙ
-            // Модель должна писать о теме пользователя, а не о GEO как концепции
+            // Модель должна писать о теме пользователя, а не о AIO как концепции
             const topic = sanitizedConfig.topic || 'the requested topic';
             
             userMessageContent = `🔴 MAIN TASK: Write a detailed article about the following topic.
@@ -1938,13 +1938,13 @@ ${sanitizedConfig.exampleContent}
 ---
 
 🛠 SYSTEM INSTRUCTIONS (HOW TO WRITE):
-You act as a Content Engine. You must structure the response about the TOPIC above using GEO (Generative Engine Optimization) standards.
+You act as a Content Engine. You must structure the response about the TOPIC above using AIO (Artificial Intelligence Optimization) standards.
 
-⚠️ CRITICAL: Write about "${topic}", NOT about "what is GEO" or "how GEO works". GEO is your METHOD, not your SUBJECT.
+⚠️ CRITICAL: Write about "${topic}", NOT about "what is AIO" or "how AIO works". AIO is your METHOD, not your SUBJECT.
 ⚠️ LANGUAGE REQUIREMENT: The entire article MUST be written in ${contentLanguage}. Do not mix languages.
 
 MANDATORY FORMATTING FOR "${topic}":
-1. **DIRECT DEFINITION FIRST:** START with a specific definition of "${topic}" in the first 40 words (in ${contentLanguage}). DO NOT define what "GEO" is.
+1. **DIRECT DEFINITION FIRST:** START with a specific definition of "${topic}" in the first 40 words (in ${contentLanguage}). DO NOT define what "AIO" is.
 2. **MARKDOWN TABLE:** CREATE a comparison table with options/features related to "${topic}".
 3. **STATISTICS:** INSERT specific numbers, percentages, or metrics relevant to "${topic}".
 4. **FAQ SECTION:** Include "## FAQ" with 3-5 questions about "${topic}" (questions and answers in ${contentLanguage}).
@@ -2029,12 +2029,12 @@ Return a valid JSON object:
         }
 
         // System message also depends on mode
-        const systemMessage = isGeoMode
-            ? `You are a professional content writer. Your task is to write an article about the USER'S TOPIC using structured formatting. You are NOT writing about GEO methodology - GEO is just your writing style. Focus 100% on the user's topic. IMPORTANT: Write the entire article in ${contentLanguage}. Output strictly valid JSON.`
+        const systemMessage = isAioMode
+            ? `You are a professional content writer. Your task is to write an article about the USER'S TOPIC using structured formatting. You are NOT writing about AIO methodology - AIO is just your writing style. Focus 100% on the user's topic. IMPORTANT: Write the entire article in ${contentLanguage}. Output strictly valid JSON.`
             : `You are an advanced SEO AI. You write content for ${sanitizedConfig.targetCountry || 'Global'}. IMPORTANT: Write the entire article in ${contentLanguage}. You always output strictly valid JSON.`;
 
         console.log('>>> SENDING TO LLM:', {
-            mode: isGeoMode ? 'GEO' : 'SEO',
+            mode: isAioMode ? 'AIO' : 'SEO',
             temperature,
             systemMessageLength: systemMessage.length,
             userMessageLength: userMessageContent.length
@@ -2042,14 +2042,14 @@ Return a valid JSON object:
 
         let result;
 
-        // ==================== MULTIMODAL GEO GENERATION ====================
-        // Используем двухъядерный подход для GEO режима:
+        // ==================== MULTIMODAL AIO GENERATION ====================
+        // Используем двухъядерный подход для AIO режима:
         // - Writer (Gemini/GPT) генерирует article + seo
         // - Visualizer (Claude) генерирует visuals (mermaid + svg)
-        const useMultimodal = isGeoMode && sanitizedConfig.useMultimodalGeo !== false;
+        const useMultimodal = isAioMode && sanitizedConfig.useMultimodalAio !== false && sanitizedConfig.useMultimodalGeo !== false;
 
         if (useMultimodal) {
-            console.log('>>> STRICT JSON GEO MODE ACTIVATED');
+            console.log('>>> STRICT JSON AIO MODE ACTIVATED');
 
             // Определяем модели
             const writerModel = sanitizedConfig.writerModel || sanitizedConfig.model || 'gemini-3.0';
@@ -2069,7 +2069,7 @@ ${exampleInstruction}
             `.trim();
 
             try {
-                const geoResult = await generateGeoContent({
+                const aioResult = await generateAioContent({
                     topic: sanitizedConfig.topic,
                     writerModel,
                     visualizerModel,
@@ -2080,7 +2080,7 @@ ${exampleInstruction}
                 });
 
                 // Собираем body из sections для legacy поля content
-                const sectionsMarkdown = (geoResult.article.sections || [])
+                const sectionsMarkdown = (aioResult.article.sections || [])
                     .map(s => {
                         let sectionContent = `## ${s.h2}\n\n${s.content}`;
                         if (s.table) sectionContent += `\n\n${s.table}`;
@@ -2088,38 +2088,38 @@ ${exampleInstruction}
                     })
                     .join('\n\n');
 
-                const faqMarkdown = (geoResult.faq || [])
+                const faqMarkdown = (aioResult.faq || [])
                     .map(f => `**Q: ${f.question}**\nA: ${f.answer}`)
                     .join('\n\n');
 
                 // Структурированный результат (НОВАЯ СТРУКТУРА)
                 result = {
                     // AIO структура для AI Search Optimization
-                    knowledgeGraph: geoResult.knowledgeGraph,
-                    ragChunks: geoResult.ragChunks,
-                    jsonLd: geoResult.jsonLd,
-                    markdownContent: geoResult.markdownContent,
+                    knowledgeGraph: aioResult.knowledgeGraph,
+                    ragChunks: aioResult.ragChunks,
+                    jsonLd: aioResult.jsonLd,
+                    markdownContent: aioResult.markdownContent,
 
                     // Новая структура
-                    article: geoResult.article,       // {h1, intro, sections[], conclusion}
-                    visuals: geoResult.visuals,       // {mermaid, svg}
-                    faq: geoResult.faq,               // [{question, answer}]
-                    seo: geoResult.seo,               // {metaTitle, metaDescription, keywords, schemaType}
+                    article: aioResult.article,       // {h1, intro, sections[], conclusion}
+                    visuals: aioResult.visuals,       // {mermaid, svg}
+                    faq: aioResult.faq,               // [{question, answer}]
+                    seo: aioResult.seo,               // {metaTitle, metaDescription, keywords, schemaType}
 
                     // Legacy поля для обратной совместимости
-                    content: geoResult.markdownContent || `# ${geoResult.article.h1}\n\n${geoResult.article.intro}\n\n${sectionsMarkdown}\n\n## FAQ\n\n${faqMarkdown}\n\n${geoResult.article.conclusion}`,
-                    metaTitle: geoResult.seo.metaTitle,
-                    metaDescription: geoResult.seo.metaDescription,
-                    usedKeywords: geoResult.seo.keywords,
+                    content: aioResult.markdownContent || `# ${aioResult.article.h1}\n\n${aioResult.article.intro}\n\n${sectionsMarkdown}\n\n## FAQ\n\n${faqMarkdown}\n\n${aioResult.article.conclusion}`,
+                    metaTitle: aioResult.seo.metaTitle,
+                    metaDescription: aioResult.seo.metaDescription,
+                    usedKeywords: aioResult.seo.keywords,
 
                     // Meta
                     _structured: true,
                     _strictJsonMode: true,
                     _aio: true,
-                    _meta: geoResult._meta
+                    _meta: aioResult._meta
                 };
 
-                console.log('>>> STRICT JSON GEO: Complete', {
+                console.log('>>> STRICT JSON AIO: Complete', {
                     h1: result.article.h1?.substring(0, 50),
                     sectionsCount: result.article.sections?.length,
                     faqCount: result.faq?.length,
@@ -2128,7 +2128,7 @@ ${exampleInstruction}
                 });
 
             } catch (multimodalError) {
-                console.error('>>> STRICT JSON GEO: Failed, falling back to single-model', multimodalError.message);
+                console.error('>>> STRICT JSON AIO: Failed, falling back to single-model', multimodalError.message);
                 // Fallback к обычной генерации
                 const legacyResult = await fallbackSingleModelGeneration({
                     apiKey,
@@ -2138,11 +2138,11 @@ ${exampleInstruction}
                     temperature,
                     websiteName: sanitizedConfig.websiteName,
                     topic: sanitizedConfig.topic,
-                    isGeoMode
+                    isAioMode
                 });
                 // Конвертируем legacy в новый structured формат
                 result = {
-                    ...upgradeStructuredGeoToAio(convertLegacyToNewStructure(legacyResult, sanitizedConfig.topic), sanitizedConfig.topic, {
+                    ...upgradeStructuredAio(convertLegacyToNewStructure(legacyResult, sanitizedConfig.topic), sanitizedConfig.topic, {
                         language: contentLanguage,
                         targetCountry: sanitizedConfig.targetCountry,
                         targetUrl: sanitizedConfig.targetUrl
@@ -2168,13 +2168,13 @@ ${exampleInstruction}
                 temperature,
                 websiteName: sanitizedConfig.websiteName,
                 topic: sanitizedConfig.topic,
-                isGeoMode
+                isAioMode
             });
 
-            // Для GEO режима конвертируем в новый формат
-            if (isGeoMode) {
+            // Для AIO режима конвертируем в новый формат
+            if (isAioMode) {
                 result = {
-                    ...upgradeStructuredGeoToAio(convertLegacyToNewStructure(legacyResult, sanitizedConfig.topic), sanitizedConfig.topic, {
+                    ...upgradeStructuredAio(convertLegacyToNewStructure(legacyResult, sanitizedConfig.topic), sanitizedConfig.topic, {
                         language: contentLanguage,
                         targetCountry: sanitizedConfig.targetCountry,
                         targetUrl: sanitizedConfig.targetUrl
@@ -2208,7 +2208,7 @@ ${exampleInstruction}
 
         // Логируем если был использован fallback
         if (result._fallback || result._meta?.fallback) {
-            console.warn('>>> GENERATION: Used fallback parsing for', isGeoMode ? 'GEO' : 'SEO', 'mode');
+            console.warn('>>> GENERATION: Used fallback parsing for', isAioMode ? 'AIO' : 'SEO', 'mode');
         }
 
         // Calculate metrics (используем sections content или legacy content)
@@ -2244,7 +2244,7 @@ ${exampleInstruction}
                     }
                 }
             }
-            if (isGeoMode && result.article) {
+            if (isAioMode && result.article) {
                 result.markdownContent = buildMarkdownFromAio(result);
                 result.content = result.markdownContent;
             }

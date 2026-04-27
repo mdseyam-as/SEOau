@@ -11,7 +11,7 @@ const contentIdParamSchema = z.object({
 
 /**
  * GET /api/content/:id/raw
- * Public crawler endpoint for AIO/GEO Markdown.
+ * Public crawler endpoint for AIO Markdown.
  */
 router.get('/:id/raw', validateParams(contentIdParamSchema), async (req, res) => {
     try {

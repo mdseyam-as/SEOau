@@ -90,7 +90,7 @@ SEOau/
 │   ├── routes/         # API endpoints (разбиты по доменам)
 │   ├── services/       # Business logic (domain services)
 │   ├── utils/          # Helpers (auth, cache, encryption)
-│   ├── prompts/        # AI промпты (SEO, GEO, FAQ, etc.)
+│   ├── prompts/        # AI промпты (SEO, AIO, FAQ, etc.)
 │   ├── tests/          # Unit и integration тесты
 │   └── prisma/         # Schema (только здесь!)
 ├── frontend/
@@ -942,7 +942,7 @@ export async function getUserWithPlanAndSettings(userId) {
           allowedModels: true,
           canCheckSpam: true,
           canOptimizeRelevance: true,
-          canUseGeoMode: true
+          canUseAioMode: true
         }
       }
     },
@@ -1256,10 +1256,10 @@ Your task is to create high-quality, SEO-optimized content that:
 3. Engages and converts visitors
 4. Follows E-E-A-T principles (Experience, Expertise, Authoritativeness, Trustworthiness)`;
 
-export const GEO_PROMPT = `You are a Generative Engine Optimization (GEO) Specialist.
+export const AIO_PROMPT = `You are a Artificial Intelligence Optimization (AIO) Specialist.
 Your task is to create content optimized for AI-powered search engines like Google SGE, Bing Chat, and Perplexity.
 
-GEO optimization includes:
+AIO optimization includes:
 1. Structured data (schema.org)
 2. Clear hierarchy (H1, H2, H3)
 3. Concise answers to common questions
@@ -1319,7 +1319,7 @@ export const AI_CONFIG = {
   }
 };
 
-export const GEO_CONFIG = {
+export const AIO_CONFIG = {
   enabled: true,
   defaultVisualizerModel: 'anthropic/claude-3.5-sonnet',
   generateVisuals: true,
@@ -2158,7 +2158,7 @@ export const generateController = {
 // backend/routes/generate/services/generationService.js
 import { getApiKey } from '../../config/ai.js';
 import { fetchWithRetry } from '../../utils/http.js';
-import { GEO_PROMPT, SEO_PROMPT } from '../../prompts/seoPrompt.js';
+import { AIO_PROMPT, SEO_PROMPT } from '../../prompts/seoPrompt.js';
 
 export const generationService = {
   async generate(config, keywords, userId) {
@@ -2747,7 +2747,7 @@ app.use(errorHandler);
 - ✅ Strict JSON mode для структурированных ответов
 - ✅ Fallback механизмы для парсинга JSON
 - ✅ Model mapping для поддержки старых моделей
-- ✅ GEO режим с оптимизацией для AI search engines
+- ✅ AIO режим с оптимизацией для AI search engines
 - ✅ Knowledge Base с RAG (частично)
 
 **Проблемы:**
@@ -2765,7 +2765,7 @@ app.use(errorHandler);
 ```javascript
 // ❌ ПРОБЛЕМА: Промпты жёстко закодированы в коде
 const seoPrompt = `You are a Senior SEO Copywriter...`;
-const geoPrompt = `You are a Generative Engine Optimization Specialist...`;
+const aioPrompt = `You are a Artificial Intelligence Optimization Specialist...`;
 ```
 
 **Решение:** Вынести промпты в отдельные файлы (см. раздел 4.2.1)
@@ -3001,7 +3001,7 @@ export async function setCachedPrompt(templateName, variables, prompt) {
 - ✅ Чистая архитектура с хорошим разделением ответственности
 - ✅ TypeScript для типобезопасности
 - ✅ Comprehensive security (auth, CSRF, rate limiting, encryption)
-- ✅ Продвинутые функции (GEO, Knowledge Base, фоновые задачи)
+- ✅ Продвинутые функции (AIO, Knowledge Base, фоновые задачи)
 - ✅ Хороший код с error handling
 - ✅ Telegram WebApp интеграция
 
@@ -3065,7 +3065,7 @@ export async function setCachedPrompt(templateName, variables, prompt) {
 2. ✅ **Архитектура** - Модульная структура с сервисами и middleware
 3. ✅ **Интеграции** - Telegram WebApp, AI модели, Knowledge Base/RAG
 4. ✅ **База данных** - Prisma ORM с индексами и cascade delete
-5. ✅ **Функционал** - GEO режим, фоновые задачи, HTML export
+5. ✅ **Функционал** - AIO режим, фоновые задачи, HTML export
 
 Для достижения production-ready уровня на enterprise рекомендую сосредоточиться на:
 

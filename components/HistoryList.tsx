@@ -125,7 +125,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({ history, onDelete, onO
 
           {expandedId === item.id && (
             <div className="animate-in slide-in-from-top-2 border-t border-white/10 bg-[linear-gradient(180deg,rgba(15,18,24,0.82),rgba(15,18,24,0.68))] p-4 md:p-6">
-              <ResultView result={item.result} isGeoMode={item.config.generationMode === 'geo'} />
+              <ResultView result={item.result} isAioMode={item.config.generationMode === 'aio' || item.config.generationMode === 'geo'} />
 
               <div className="mt-8 border-t border-white/10 pt-6">
                 <h5 className="mb-4 flex items-center gap-2 text-sm font-bold text-white">

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Plus, Check, Clock, User as UserIcon, Calendar, Settings, Save, Key, FileText, RotateCcw, Users, Edit2, X, Search, Layers, Trash2, UserPlus, CreditCard, Zap, Database, AlertOctagon, Cpu, Box, TrendingUp, Globe, MessageCircleQuestion, Share2 } from 'lucide-react';
 import { authService, User, SubscriptionPlan } from '../services/authService';
-import { DEFAULT_PROMPT_TEMPLATE, GEO_PROMPT_TEMPLATE } from '../services/geminiService';
+import { DEFAULT_PROMPT_TEMPLATE, AIO_PROMPT_TEMPLATE } from '../services/geminiService';
 import { AIModel, ModelConfig } from '../types';
 import { apiService } from '../services/apiService';
 
@@ -39,7 +39,7 @@ export const AdminPanel: React.FC = () => {
   const [telegramLink, setTelegramLink] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [seoPrompt, setSeoPrompt] = useState('');
-  const [geoPrompt, setGeoPrompt] = useState('');
+  const [aioPrompt, setAioPrompt] = useState('');
   const [spamCheckModel, setSpamCheckModel] = useState('x-ai/grok-4.1-fast');
   const [settingsSaved, setSettingsSaved] = useState(false);
 
@@ -49,7 +49,7 @@ export const AdminPanel: React.FC = () => {
     setTelegramLink(settings.telegramLink);
     setApiKey(settings.openRouterApiKey || '');
     setSeoPrompt(settings.seoPrompt || DEFAULT_PROMPT_TEMPLATE);
-    setGeoPrompt(settings.geoPrompt || GEO_PROMPT_TEMPLATE);
+    setAioPrompt(settings.aioPrompt || AIO_PROMPT_TEMPLATE);
     setSpamCheckModel(settings.spamCheckModel || 'x-ai/grok-4.1-fast');
   }, []);
 
@@ -121,7 +121,7 @@ export const AdminPanel: React.FC = () => {
         telegramLink,
         openRouterApiKey: apiKey,
         seoPrompt: seoPrompt,
-        geoPrompt: geoPrompt,
+        aioPrompt: aioPrompt,
         spamCheckModel: spamCheckModel
       });
       setSettingsSaved(true);
@@ -138,9 +138,9 @@ export const AdminPanel: React.FC = () => {
     }
   };
 
-  const handleResetGeoPrompt = () => {
-    if (confirm('Сбросить GEO промпт к стандартному значению?')) {
-      setGeoPrompt(GEO_PROMPT_TEMPLATE);
+  const handleResetAioPrompt = () => {
+    if (confirm('Сбросить AIO промпт к стандартному значению?')) {
+      setAioPrompt(AIO_PROMPT_TEMPLATE);
     }
   };
 
@@ -196,7 +196,7 @@ export const AdminPanel: React.FC = () => {
       maxKeywords: 0, // 0 = Unlimited
       canCheckSpam: false,
       canOptimizeRelevance: false,
-      canUseGeoMode: false,
+      canUseAioMode: false,
       canGenerateFaq: false,
       canUseSocialPack: false,
       canAudit: false,
@@ -701,9 +701,9 @@ export const AdminPanel: React.FC = () => {
                     </span>
                   </p>
                   <p className="flex justify-between items-center">
-                    <span>GEO режим:</span>
-                    <span className={`text-xs px-2 py-0.5 rounded ${plan.canUseGeoMode ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {plan.canUseGeoMode ? 'Включено' : 'Выключено'}
+                    <span>AIO режим:</span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${plan.canUseAioMode ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {plan.canUseAioMode ? 'Включено' : 'Выключено'}
                     </span>
                   </p>
                   <p className="flex justify-between items-center">
@@ -858,14 +858,14 @@ export const AdminPanel: React.FC = () => {
               />
             </div>
 
-            {/* GEO Prompt */}
+            {/* AIO Prompt */}
             <div className="border-t border-gray-200 pt-6">
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-purple-600" /> 🤖 GEO Промпт (AI Search)
+                  <FileText className="w-4 h-4 text-purple-600" /> 🤖 AIO Промпт (AI Search)
                 </label>
                 <button
-                  onClick={handleResetGeoPrompt}
+                  onClick={handleResetAioPrompt}
                   className="text-xs flex items-center gap-1 text-slate-500 hover:text-red-600 transition-colors"
                 >
                   <RotateCcw className="w-3 h-3" /> Сбросить
@@ -875,8 +875,8 @@ export const AdminPanel: React.FC = () => {
                 Используется для генерации контента под AI-поисковики (ChatGPT, Perplexity, Google SGE).
               </p>
               <textarea
-                value={geoPrompt}
-                onChange={(e) => setGeoPrompt(e.target.value)}
+                value={aioPrompt}
+                onChange={(e) => setAioPrompt(e.target.value)}
                 className="w-full p-4 bg-purple-50 border border-purple-200 rounded-lg text-slate-900 font-mono text-xs md:text-sm focus:ring-2 focus:ring-purple-400 outline-none shadow-inner leading-relaxed h-[300px]"
                 spellCheck={false}
               />
@@ -1103,13 +1103,13 @@ export const AdminPanel: React.FC = () => {
                 <label className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
                   <input
                     type="checkbox"
-                    checked={editingPlan.canUseGeoMode || false}
-                    onChange={(e) => setEditingPlan({ ...editingPlan, canUseGeoMode: e.target.checked })}
+                    checked={editingPlan.canUseAioMode || false}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, canUseAioMode: e.target.checked })}
                     className="rounded text-brand-green focus:ring-brand-green w-5 h-5"
                   />
                   <div>
                     <span className="text-sm font-bold text-slate-700 flex items-center gap-1">
-                      <Globe className="w-4 h-4 text-purple-500" /> GEO Режим
+                      <Globe className="w-4 h-4 text-purple-500" /> AIO Режим
                     </span>
                     <p className="text-xs text-slate-500">
                       Разрешить генерацию контента для AI-поисковиков (ChatGPT, Perplexity, Google SGE)

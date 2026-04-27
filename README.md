@@ -1,6 +1,6 @@
 # SEOau
 
-AI-платформа для генерации SEO/GEO-контента в формате Telegram WebApp: frontend на React + backend API на Express + PostgreSQL/Prisma.
+AI-платформа для генерации SEO/AIO-контента в формате Telegram WebApp: frontend на React + backend API на Express + PostgreSQL/Prisma.
 
 ![Private Repository](https://img.shields.io/badge/visibility-private-red)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
@@ -46,8 +46,8 @@ SEOau автоматизирует производство контента и 
    Telegram WebApp авторизация, вход по `initData`, разделение прав пользователя и администратора.
 2. Управление проектами:
    создание проектов, хранение конфигураций и истории генераций, фильтрация/пагинация истории.
-3. Генерация SEO/GEO-контента:
-   генерация статей в классическом и GEO-режиме, streaming-генерация, фоновые задачи через очередь.
+3. Генерация SEO/AIO-контента:
+   генерация статей в классическом и AIO-режиме, streaming-генерация, фоновые задачи через очередь.
 4. Инструменты качества текста:
    проверка спамности, исправление переспама, повышение релевантности, SEO-аудит URL, рерайт, humanize.
 5. Контентные надстройки:

@@ -26,10 +26,10 @@ Guidelines:
 - Include bullet points and numbered lists where appropriate
 - Add a compelling introduction and conclusion`;
 
-export const GEO_PROMPT = `You are a Generative Engine Optimization (GEO) Specialist.
+export const AIO_PROMPT = `You are an Artificial Intelligence Optimization (AIO) Specialist.
 Your task is to create content optimized for AI-powered search engines like Google SGE, Bing Chat, and Perplexity.
 
-GEO optimization includes:
+AIO optimization includes:
 1. Structured data (schema.org markup)
 2. Clear hierarchy (H1, H2, H3)
 3. Concise answers to common questions
@@ -192,7 +192,8 @@ Guidelines:
 export function getPrompt(type) {
   const prompts = {
     seo: SEO_PROMPT,
-    geo: GEO_PROMPT,
+    aio: AIO_PROMPT,
+    geo: AIO_PROMPT,
     faq: FAQ_PROMPT,
     rewrite: REWRITE_PROMPT,
     humanize: HUMANIZE_PROMPT,

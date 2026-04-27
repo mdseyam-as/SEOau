@@ -348,11 +348,11 @@ class ApiService {
     }
 
     // Settings
-    async getSettings(): Promise<{ settings: { systemPrompt: string; seoPrompt: string; geoPrompt: string; telegramLink: string; spamCheckModel: string } }> {
+    async getSettings(): Promise<{ settings: { systemPrompt: string; seoPrompt: string; aioPrompt: string; telegramLink: string; spamCheckModel: string } }> {
         return this.request('/settings');
     }
 
-    async updateSettings(settings: { openRouterApiKey?: string; systemPrompt?: string; seoPrompt?: string; geoPrompt?: string; telegramLink?: string; spamCheckModel?: string }): Promise<{ settings: { seoPrompt: string; geoPrompt: string; telegramLink: string; spamCheckModel: string } }> {
+    async updateSettings(settings: { openRouterApiKey?: string; systemPrompt?: string; seoPrompt?: string; aioPrompt?: string; telegramLink?: string; spamCheckModel?: string }): Promise<{ settings: { seoPrompt: string; aioPrompt: string; telegramLink: string; spamCheckModel: string } }> {
         return this.request('/settings', {
             method: 'PUT',
             body: JSON.stringify(settings)

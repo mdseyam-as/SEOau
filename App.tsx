@@ -652,7 +652,7 @@ export default function App() {
                 <div className="app-shell-card overflow-hidden">
                   <GenerationProgress
                     keywordsCount={keywords.length}
-                    isGeoMode={config.generationMode === 'geo'}
+                    isAioMode={config.generationMode === 'aio' || config.generationMode === 'geo'}
                   />
                   <ResultSkeleton />
                 </div>
@@ -695,7 +695,7 @@ export default function App() {
                     onUserUpdate={setUser}
                     topic={config.topic}
                     keywords={keywords.map(k => k.keyword)}
-                    isGeoMode={config.generationMode === 'geo'}
+                    isAioMode={config.generationMode === 'aio' || config.generationMode === 'geo'}
                   />
                 </div>
               )}

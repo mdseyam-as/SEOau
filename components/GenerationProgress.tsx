@@ -5,7 +5,7 @@ export type GenerationStage = 'analyzing' | 'generating' | 'formatting' | 'check
 
 interface GenerationProgressProps {
   keywordsCount: number;
-  isGeoMode?: boolean;
+  isAioMode?: boolean;
 }
 
 const STAGES = [
@@ -17,7 +17,7 @@ const STAGES = [
 
 export const GenerationProgress: React.FC<GenerationProgressProps> = ({
   keywordsCount,
-  isGeoMode = false
+  isAioMode = false
 }) => {
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -97,7 +97,7 @@ export const GenerationProgress: React.FC<GenerationProgressProps> = ({
 
       <p className="text-sm text-slate-400 text-center max-w-xs mb-6">
         {currentStageIndex === 0 && `Обрабатываем ${keywordsCount} ключевых слов...`}
-        {currentStageIndex === 1 && (isGeoMode ? 'Создаём GEO-оптимизированный контент...' : 'Пишем SEO-текст с учётом всех требований...')}
+        {currentStageIndex === 1 && (isAioMode ? 'Создаём AIO-оптимизированный контент...' : 'Пишем SEO-текст с учётом всех требований...')}
         {currentStageIndex === 2 && 'Добавляем заголовки, списки и структуру...'}
         {currentStageIndex === 3 && 'Проверяем на переспам и релевантность...'}
       </p>

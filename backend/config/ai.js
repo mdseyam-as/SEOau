@@ -19,7 +19,7 @@ export const AI_CONFIG = {
   }
 };
 
-export const GEO_CONFIG = {
+export const AIO_CONFIG = {
   enabled: true,
   defaultVisualizerModel: 'anthropic/claude-3.5-sonnet',
   generateVisuals: true,
@@ -91,10 +91,10 @@ export function getModelForGeneration(config) {
 }
 
 /**
- * Получение модели для визуализации (GEO)
+ * Получение модели для визуализации (AIO)
  */
 export function getVisualizerModel(config) {
-  return config.visualizerModel || GEO_CONFIG.defaultVisualizerModel;
+  return config.visualizerModel || AIO_CONFIG.defaultVisualizerModel;
 }
 
 /**

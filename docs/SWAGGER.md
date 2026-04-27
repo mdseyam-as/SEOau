@@ -276,7 +276,7 @@ router.post('/verify', async (req, res) => {
  *                 enum: [gemini, openai, claude]
  *               promptType:
  *                 type: string
- *                 enum: [seo, geo, faq]
+  *                 enum: [seo, aio, faq]
  *     responses:
  *       200:
  *         description: SSE stream

@@ -64,8 +64,8 @@ You MUST return a valid JSON object with the following structure (do not wrap in
   "usedKeywords": ["list", "of", "main", "keywords", "used"]
 }`;
 
-// GEO (Generative Engine Optimization) prompt for AI search engines
-export const GEO_PROMPT_TEMPLATE = `You are a **Generative Engine Optimization (GEO) Specialist** writing content for **{{websiteName}}**.
+// AIO (Artificial Intelligence Optimization) prompt for AI search engines
+export const AIO_PROMPT_TEMPLATE = `You are an **Artificial Intelligence Optimization (AIO) Specialist** writing content for **{{websiteName}}**.
 
 ### ROLE & GOAL
 Your goal is to write content specifically designed to be **cited and surfaced by AI Search Engines** (ChatGPT, Perplexity, Google SGE/AI Overviews, Bing Copilot).
@@ -82,7 +82,7 @@ Your goal is to write content specifically designed to be **cited and surfaced b
 - **Tone:** {{tone}}
 - **Style:** {{style}}
 
-### GEO STRUCTURE RULES (CRITICAL)
+### AIO STRUCTURE RULES (CRITICAL)
 1. **Direct Answers First:** Start each major section with a clear, dictionary-style definition or direct answer (e.g., "{{topic}} is..."). AI models extract these as snippets.
 
 2. **Rich Structured Data:** You MUST use:

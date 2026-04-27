@@ -26,7 +26,7 @@
 - Rate limits config: `backend/config/app.js` + `backend/middleware/rateLimit.js`
 - API key encryption: `backend/utils/encryption.js`
 - Settings: `backend/routes/settings.js` stores OpenRouter key encrypted
-- Generation: `backend/routes/generate.js` (SEO/GEO, spam, optimize, audit, rewrite, social pack)
+- Generation: `backend/routes/generate.js` (SEO/AIO, spam, optimize, audit, rewrite, social pack)
 - Outline: `backend/routes/outline.js`
 - Knowledge base: `backend/routes/knowledge-base.js`, `backend/services/knowledgeBaseService.js`
 

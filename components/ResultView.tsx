@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { SubscriptionPlan, authService } from '../services/authService';
-import { GeoArticleRenderer } from './GeoArticleRenderer';
+import { AioArticleRenderer } from './AioArticleRenderer';
 import { ErrorBoundary } from './ErrorBoundary';
 import { exportToPdf, exportToDocx } from '../services/exportService';
 import { useToast } from './Toast';
@@ -196,7 +196,7 @@ interface ResultViewProps {
   onUserUpdate?: (user: any) => void;
   topic?: string;
   keywords?: string[];
-  isGeoMode?: boolean;
+  isAioMode?: boolean;
 }
 
 export const ResultView: React.FC<ResultViewProps> = ({
@@ -211,7 +211,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
   onUserUpdate,
   topic = '',
   keywords = [],
-  isGeoMode = false
+  isAioMode = false
 }) => {
   const toast = useToast();
   const [copied, setCopied] = useState(false);
@@ -442,7 +442,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
         </div>
       </div>
 
-      {/* ==================== STRUCTURED GEO CONTENT ==================== */}
+      {/* ==================== STRUCTURED AIO CONTENT ==================== */}
       {isStructured && result.article ? (
         <ErrorBoundary
           fallbackRender={(error, errorInfo) => (
@@ -473,7 +473,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
             </div>
           )}
         >
-          <GeoArticleRenderer data={result} />
+          <AioArticleRenderer data={result} />
         </ErrorBoundary>
       ) : (
         /* ==================== SEO CONTENT WITH H1-H3 LABELS ==================== */

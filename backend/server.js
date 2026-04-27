@@ -318,7 +318,7 @@ app.post('/health', healthCheckHandler);
 // Public routes (no auth required)
 app.use('/api/plans', planRoutes); // Plans are public for viewing
 app.use('/api/webhook', seoAuditRateLimiter, webhookRoutes); // Webhook with rate limiting
-app.use('/api/content', contentRoutes); // Public raw AIO/GEO content for crawlers
+app.use('/api/content', contentRoutes); // Public raw AIO content for crawlers
 
 // Protected routes (require Telegram auth)
 app.use('/api/auth', validateTelegramAuth, authRoutes);

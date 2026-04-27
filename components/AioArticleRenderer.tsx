@@ -188,7 +188,7 @@ const DebugView: React.FC<{ data: any; title?: string }> = ({ data, title = 'Deb
 
 // ==================== MAIN COMPONENT ====================
 
-export interface GeoArticleData {
+export interface AioArticleData {
   knowledgeGraph?: {
     entities?: Array<{ id: string; name: string; type: string; description?: string }>;
     locations?: Array<{ id: string; name: string; region?: string; country?: string; coordinates?: { latitude?: number | null; longitude?: number | null } }>;
@@ -222,11 +222,11 @@ export interface GeoArticleData {
   content?: string;
 }
 
-interface GeoArticleRendererProps {
-  data: GeoArticleData | string | null | undefined;
+interface AioArticleRendererProps {
+  data: AioArticleData | string | null | undefined;
 }
 
-export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) => {
+export const AioArticleRenderer: React.FC<AioArticleRendererProps> = ({ data }) => {
   const jsonLd = data && typeof data === 'object'
     ? data.jsonLd || data.seo?.schemaLD || null
     : null;
@@ -317,7 +317,7 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
   const hasSections = Array.isArray(sections) && sections.length > 0;
 
   return (
-      <article className="safe-geo-article w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <article className="safe-aio-article w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       {/* ==================== BLOCK 1: ARTICLE TEXT ==================== */}
       <section className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
@@ -537,4 +537,4 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
   );
 };
 
-export default GeoArticleRenderer;
+export default AioArticleRenderer;

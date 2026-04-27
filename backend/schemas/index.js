@@ -154,9 +154,10 @@ export const generateSchema = z.object({
         model: z.string().min(1).max(100).optional().default('google/gemini-3-flash-preview'),
         writerModel: z.string().min(1).max(100).optional(),
         visualizerModel: z.string().min(1).max(100).optional(),
-        useMultimodalGeo: z.boolean().optional().default(true),
-        // Generation mode: 'seo' for classic SEO, 'geo' for AI search engines
-        generationMode: z.enum(['seo', 'geo']).optional().default('seo')
+        useMultimodalAio: z.boolean().optional(),
+        useMultimodalGeo: z.boolean().optional(),
+        // Generation mode: 'seo' for classic SEO, 'aio' for AI search engines. 'geo' is accepted as a legacy alias.
+        generationMode: z.enum(['seo', 'aio', 'geo']).optional().default('seo')
     }),
     // No hard limit here - limit is checked per-plan in generate route
     keywords: z.array(keywordSchema).optional().default([])
@@ -216,7 +217,7 @@ export const updateSettingsSchema = z.object({
     openRouterApiKey: z.string().max(500).optional(),
     systemPrompt: z.string().max(50000).optional(), // Legacy
     seoPrompt: z.string().max(50000).optional(),
-    geoPrompt: z.string().max(50000).optional(),
+    aioPrompt: z.string().max(50000).optional(),
     // Allow both full URL (https://t.me/user) or just username (@user or user)
     telegramLink: z.string().max(500).optional(),
     spamCheckModel: z.string().max(100).optional()
@@ -235,7 +236,7 @@ export const createPlanSchema = z.object({
     allowedModels: z.array(z.string().max(100)).optional().default([]),
     canCheckSpam: z.boolean().optional().default(false),
     canOptimizeRelevance: z.boolean().optional().default(false),
-    canUseGeoMode: z.boolean().optional().default(false),
+    canUseAioMode: z.boolean().optional().default(false),
     canGenerateFaq: z.boolean().optional().default(false),
     canUseSocialPack: z.boolean().optional().default(false),
     canAudit: z.boolean().optional().default(false),
