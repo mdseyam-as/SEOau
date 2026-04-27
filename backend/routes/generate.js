@@ -2,6 +2,7 @@ import express from 'express';
 import { prisma } from '../lib/prisma.js';
 import { validate } from '../middleware/validate.js';
 import { generateSchema, spamCheckSchema, fixSpamSchema, optimizeRelevanceSchema, seoAuditSchema, rewriteSchema, humanizeSchema, serpAnalyzerSchema } from '../schemas/index.js';
+import { parseAioResponse, toAioIssueList } from '../schemas/aioContentSchema.js';
 import { sanitizePromptInput } from '../utils/promptSanitizer.js';
 import { decrypt } from '../utils/encryption.js';
 
@@ -305,66 +306,261 @@ const EXPECTED_GEO_STRUCTURE = {
     }
 };
 
+const EXPECTED_AIO_STRUCTURE = {
+    knowledgeGraph: {
+        entities: [
+            {
+                id: "stable-slug",
+                name: "Entity name",
+                type: "Service | Product | Organization | Concept | Regulation | Metric",
+                description: "One sentence factual description",
+                sameAs: ["Optional canonical URLs"],
+                attributes: { "key": "value" }
+            }
+        ],
+        locations: [
+            {
+                id: "location-slug",
+                name: "City/region/country",
+                region: "Region",
+                country: "Country",
+                coordinates: { latitude: 43.238949, longitude: 76.889709 },
+                attributes: { "localSignal": "value" }
+            }
+        ],
+        relations: [
+            {
+                source: "entity-id",
+                target: "entity-or-location-id",
+                relation: "serves | located_in | regulated_by | compared_with | requires",
+                evidence: "Short factual evidence from the article"
+            }
+        ]
+    },
+    ragChunks: [
+        {
+            id: "chunk-001",
+            question: "Atomic user question",
+            answer: "Direct answer that can stand alone in a RAG system",
+            facts: ["Specific fact with numbers, dates, coordinates, limits, or regional constraint"],
+            entities: ["entity-id"],
+            geoSignals: ["country/region/city/coordinate/regulation"],
+            sourceHint: "Which section supports the answer"
+        }
+    ],
+    jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness | Service | Product | FAQPage | HowTo | Article",
+        "name": "Topic or business/service name",
+        "areaServed": "Target region",
+        "description": "Dense factual description"
+    },
+    markdownContent: "# H1\n\nDense markdown article with tables, facts, FAQ, and entity-rich sections",
+    article: {
+        h1: "String",
+        intro: "Direct definition in 40-80 words",
+        sections: [
+            {
+                h2: "String",
+                content: "Dense markdown section content",
+                table: "Markdown table or null"
+            }
+        ],
+        conclusion: "Short factual summary"
+    },
+    faq: [
+        { question: "String", answer: "String" }
+    ],
+    visuals: {
+        mermaid: "flowchart TD ... or null",
+        svg: "<svg ...>...</svg> or null"
+    },
+    seo: {
+        metaTitle: "String",
+        metaDescription: "String",
+        keywords: ["String"],
+        schemaType: "String"
+    }
+};
+
+function buildMarkdownFromAio(aio) {
+    if (aio?.markdownContent && typeof aio.markdownContent === 'string') {
+        return aio.markdownContent.trim();
+    }
+
+    const article = aio?.article || {};
+    const sectionsMarkdown = (article.sections || [])
+        .map((section) => {
+            const table = section.table ? `\n\n${section.table}` : '';
+            return `## ${section.h2}\n\n${section.content}${table}`;
+        })
+        .join('\n\n');
+
+    const faqMarkdown = (aio?.faq || [])
+        .map((item) => `### ${item.question}\n\n${item.answer}`)
+        .join('\n\n');
+
+    return [
+        `# ${article.h1 || 'AIO Content'}`,
+        article.intro,
+        sectionsMarkdown,
+        faqMarkdown ? `## FAQ\n\n${faqMarkdown}` : '',
+        article.conclusion ? `## Key Facts\n\n${article.conclusion}` : ''
+    ].filter(Boolean).join('\n\n').trim();
+}
+
+function getJsonLdSchemaType(jsonLd) {
+    const type = Array.isArray(jsonLd?.['@type']) ? jsonLd['@type'][0] : jsonLd?.['@type'];
+    return typeof type === 'string' && type ? type : 'Service';
+}
+
+function upgradeStructuredGeoToAio(structured, topic, context = {}) {
+    const article = structured.article || createEmptyStructuredResponse(topic).article;
+    const faq = (structured.faq || []).filter((item) => item.question && item.answer);
+    const schemaLD = structured.seo?.schemaLD || {
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: topic,
+        areaServed: context.targetCountry || 'Global',
+        description: structured.seo?.metaDescription || article.intro || topic
+    };
+
+    const primaryEntityId = topic.toLowerCase().replace(/[^a-z0-9а-яё]+/gi, '-').replace(/^-|-$/g, '') || 'primary-entity';
+    const locationId = String(context.targetCountry || 'global').toLowerCase().replace(/[^a-z0-9а-яё]+/gi, '-').replace(/^-|-$/g, '') || 'global';
+    const markdownContent = buildMarkdownFromAio({ article, faq });
+
+    const sectionChunks = (article.sections || []).slice(0, 4).map((section, index) => ({
+        id: `chunk-section-${String(index + 1).padStart(2, '0')}`,
+        question: section.h2,
+        answer: section.content,
+        facts: [section.content],
+        entities: [primaryEntityId],
+        geoSignals: [context.targetCountry || 'Global'],
+        sourceHint: section.h2
+    }));
+
+    const ragChunks = [
+        {
+            id: 'chunk-definition',
+            question: `What is ${topic}?`,
+            answer: article.intro || structured.seo?.metaDescription || topic,
+            facts: [article.intro || structured.seo?.metaDescription || topic],
+            entities: [primaryEntityId],
+            geoSignals: [context.targetCountry || 'Global'],
+            sourceHint: 'intro'
+        },
+        ...sectionChunks,
+        ...faq.map((item, index) => ({
+            id: `chunk-faq-${String(index + 1).padStart(2, '0')}`,
+            question: item.question,
+            answer: item.answer,
+            facts: [item.answer],
+            entities: [primaryEntityId],
+            geoSignals: [context.targetCountry || 'Global'],
+            sourceHint: 'faq'
+        }))
+    ];
+
+    return {
+        knowledgeGraph: {
+            entities: [{
+                id: primaryEntityId,
+                name: topic,
+                type: 'Service',
+                description: article.intro || structured.seo?.metaDescription || topic,
+                sameAs: [],
+                attributes: {
+                    language: context.language || 'Русский',
+                    targetUrl: context.targetUrl || ''
+                }
+            }],
+            locations: [{
+                id: locationId,
+                name: context.targetCountry || 'Global',
+                region: context.targetCountry || 'Global',
+                country: context.targetCountry || 'Global',
+                coordinates: {},
+                attributes: {}
+            }],
+            relations: [{
+                source: primaryEntityId,
+                target: locationId,
+                relation: 'serves',
+                evidence: `Content is localized for ${context.targetCountry || 'Global'}`
+            }]
+        },
+        ragChunks,
+        jsonLd: schemaLD,
+        markdownContent,
+        article,
+        faq,
+        visuals: structured.visuals || { mermaid: null, svg: null },
+        seo: {
+            metaTitle: structured.seo?.metaTitle || topic,
+            metaDescription: structured.seo?.metaDescription || article.intro || '',
+            keywords: structured.seo?.keywords || [],
+            schemaType: structured.seo?.schemaType || getJsonLdSchemaType(schemaLD)
+        },
+        _converted: true
+    };
+}
+
 /**
  * Генерирует System Prompt для Strict JSON Mode
  */
 function getStrictJsonSystemPrompt(topic, language) {
-    const schemaString = JSON.stringify(EXPECTED_GEO_STRUCTURE, null, 2);
+    const schemaString = JSON.stringify(EXPECTED_AIO_STRUCTURE, null, 2);
 
-    return `ROLE: You are a headless CMS generator specialized in GEO (Generative Engine Optimization).
-TASK: Generate a structured article about "${topic}".
+    return `ROLE: You are an AIO (Artificial Intelligence Optimization) content architect for AI search, RAG systems, LLM parsers, ChatGPT-User, Google-Extended, Perplexity, and AI Overviews.
+TASK: Generate machine-readable AIO content about "${topic}".
 
 CRITICAL OUTPUT RULES:
-1. OUTPUT FORMAT: JSON ONLY. Do not output markdown code blocks (\`\`\`json). Just the raw JSON object.
-2. LANGUAGE: ${language}. Write ALL content (h1, intro, sections, faq, etc.) in ${language}.
-3. STRUCTURE: You MUST follow this EXACT JSON structure:
+1. OUTPUT FORMAT: JSON ONLY. No markdown fences, no comments, no prose outside the JSON object.
+2. LANGUAGE: ${language}. Write all human-readable values in ${language}.
+3. STRUCTURE: You MUST follow this exact JSON contract:
 
 ${schemaString}
 
-4. CONTENT REQUIREMENTS:
-   - "article.intro": Start with a direct definition of "${topic}" (50-80 words)
-   - "article.sections": Create 3-5 sections with h2 headings, each section should have substantial content
-   - "article.sections[].table": Include comparison tables where relevant (Markdown format), set to null if not needed
-   - "visuals.mermaid": Create a valid Mermaid.js flowchart (flowchart TD, NOT graph TD). Use Latin node IDs (A, B, C), labels in ${language}
-   - "visuals.svg": Create a simple, valid SVG infographic (viewBox, no fixed dimensions, standard colors)
-   - "faq": MANDATORY! Generate exactly 4-5 relevant Q&A pairs about "${topic}". Each item MUST have "question" and "answer" fields.
-   - "seo.schemaType": Choose the most appropriate Schema.org type (FAQPage, HowTo, Article, FinancialProduct, etc.)
-   - "seo.schemaLD": Generate valid JSON-LD structured data object for Schema.org (NOT as string, as actual JSON object)
+4. INFORMATION DENSITY:
+   - No filler, no generic marketing, no "best/amazing/revolutionary" claims unless backed by a fact.
+   - Every paragraph must add an entity, number, constraint, comparison, local signal, step, risk, or answer.
+   - Prefer tables, lists, short definitions, exact ranges, coordinates, region names, regulation names, prices, rates, and measurable criteria.
 
-5. MERMAID SYNTAX (CRITICAL):
-   - Start with: flowchart TD
-   - Node format: A[Label] --> B[Label]
-   - Decision: C{Question} -->|Yes| D[Result]
-   - NO backticks, NO code blocks - just raw mermaid code
+5. AIO/RAG REQUIREMENTS:
+   - knowledgeGraph.entities: 6-12 canonical entities with stable ids.
+   - knowledgeGraph.locations: include the target region/country and coordinates when a real city or region is implied. If unknown, use null coordinates.
+   - knowledgeGraph.relations: 8-16 subject-predicate-object relations backed by article evidence.
+   - ragChunks: 6-10 isolated Q&A chunks. Each answer must stand alone without referring to "above/below/this article".
+   - ragChunks[].facts: include hard facts suitable for retrieval and citation.
+   - jsonLd: output a real JSON object, not a string. Prefer LocalBusiness or Service when a local/commercial intent exists; otherwise choose the most precise Schema.org type.
+   - markdownContent: full dense Markdown article. It must match article/faq facts and contain at least one Markdown table.
 
-6. FAQ IS REQUIRED! The "faq" array MUST contain 4-5 items. Example:
-   "faq": [
-     {"question": "What is ${topic}?", "answer": "Detailed answer..."},
-     {"question": "How does ${topic} work?", "answer": "Explanation..."},
-     {"question": "Why is ${topic} important?", "answer": "Reasons..."},
-     {"question": "What are the benefits of ${topic}?", "answer": "Benefits..."}
-   ]
+6. ARTICLE REQUIREMENTS:
+   - article.intro starts with a direct definition of "${topic}" in the first sentence.
+   - article.sections: 4-6 sections. Each section starts with a direct answer and includes compact facts.
+   - faq: 4-6 Q&A pairs aligned with ragChunks.
+   - visuals.mermaid: raw "flowchart TD" code or null.
+   - visuals.svg: raw SVG or null.
 
-7. DO NOT include any explanations, comments, or text outside the JSON object.`;
+7. DO NOT hallucinate precise legal/financial/medical claims. If exact data is not present in context, phrase as a range, checklist, or verification requirement.`;
 }
 
 /**
  * Генерирует User Prompt с контекстом
  */
 function getStrictJsonUserPrompt(topic, language, context) {
-    return `Generate a comprehensive GEO-optimized article about: "${topic}"
+    return `Generate AIO-optimized structured content about: "${topic}"
 
 CONTEXT & KEYWORDS:
 ${context}
 
 Remember:
-- Output ONLY valid JSON matching the schema
+- Output ONLY valid JSON matching the AIO schema
 - Write in ${language}
-- Include mermaid flowchart (raw code, no backticks)
-- Include SVG infographic (raw code)
-- Generate 4-5 FAQ items
-- Choose appropriate schemaType for SEO
-- Generate seo.schemaLD as JSON-LD object (Schema.org structured data)`;
+- Optimize for RAG retrieval, LLM parsers, AI snippets, and crawler-readable structured data
+- Include knowledgeGraph, ragChunks, jsonLd, and markdownContent
+- Keep 100% information density: tables, lists, facts, regional constraints, coordinates when known
+- Do not return legacy {"content": "..."} as the primary shape`;
 }
 
 // ==================== VISUALIZER PROMPT (Claude Sonnet 4.5) - STRICT JSON ====================
@@ -1012,18 +1208,33 @@ async function generateGeoContent({
 
         // Парсим JSON
         const rawParsed = parseStrictJson(writerRaw);
-        parsedWriter = validateGeoStructure(rawParsed, topic);
+        if (rawParsed) {
+            try {
+                parsedWriter = {
+                    ...parseAioResponse(rawParsed),
+                    _parsed: true
+                };
+            } catch (error) {
+                console.warn('>>> STRICT JSON AIO: Zod validation failed:', toAioIssueList(error));
+                const structuredFallback = validateGeoStructure(rawParsed, topic);
+                parsedWriter = structuredFallback
+                    ? upgradeStructuredGeoToAio(structuredFallback, topic, { language })
+                    : null;
+            }
+        }
 
         if (parsedWriter) {
-            console.log('>>> STRICT JSON GEO: Writer parsed successfully', {
+            console.log('>>> STRICT JSON AIO: Writer parsed successfully', {
                 h1: parsedWriter.article.h1?.substring(0, 40),
                 sectionsCount: parsedWriter.article.sections?.length,
                 faqCount: parsedWriter.faq?.length,
+                ragChunksCount: parsedWriter.ragChunks?.length,
+                entitiesCount: parsedWriter.knowledgeGraph?.entities?.length,
                 hasMermaid: !!parsedWriter.visuals.mermaid,
                 hasSvg: !!parsedWriter.visuals.svg
             });
         } else {
-            console.error('>>> STRICT JSON GEO: Writer parse/validation failed');
+            console.error('>>> STRICT JSON AIO: Writer parse/validation failed');
         }
     } else {
         const error = writerResult.status === 'rejected'
@@ -1035,8 +1246,8 @@ async function generateGeoContent({
 
     // Если парсинг не удался, создаём fallback структуру
     if (!parsedWriter) {
-        console.warn('>>> STRICT JSON GEO: Using fallback structure');
-        parsedWriter = createFallbackGeoStructure(writerRaw, topic);
+        console.warn('>>> STRICT JSON AIO: Using fallback structure');
+        parsedWriter = upgradeStructuredGeoToAio(createFallbackGeoStructure(writerRaw, topic), topic, { language });
     }
 
     // ==================== ОБРАБОТКА VISUALIZER (soft fallback) ====================
@@ -1088,10 +1299,18 @@ async function generateGeoContent({
 
     // ==================== РЕЗУЛЬТАТ ====================
     return {
+        knowledgeGraph: parsedWriter.knowledgeGraph,
+        ragChunks: parsedWriter.ragChunks,
+        jsonLd: parsedWriter.jsonLd,
+        markdownContent: buildMarkdownFromAio(parsedWriter),
         article: parsedWriter.article,
         visuals: finalVisuals,
         faq: finalFaq,
-        seo: parsedWriter.seo,
+        seo: {
+            ...parsedWriter.seo,
+            schemaLD: parsedWriter.jsonLd || parsedWriter.seo?.schemaLD || null,
+            schemaType: parsedWriter.seo?.schemaType || getJsonLdSchemaType(parsedWriter.jsonLd)
+        },
         _meta: {
             writerModel: modelId,
             visualizerModel: getModelId(visualizerModel),
@@ -1875,6 +2094,12 @@ ${exampleInstruction}
 
                 // Структурированный результат (НОВАЯ СТРУКТУРА)
                 result = {
+                    // AIO структура для AI Search Optimization
+                    knowledgeGraph: geoResult.knowledgeGraph,
+                    ragChunks: geoResult.ragChunks,
+                    jsonLd: geoResult.jsonLd,
+                    markdownContent: geoResult.markdownContent,
+
                     // Новая структура
                     article: geoResult.article,       // {h1, intro, sections[], conclusion}
                     visuals: geoResult.visuals,       // {mermaid, svg}
@@ -1882,7 +2107,7 @@ ${exampleInstruction}
                     seo: geoResult.seo,               // {metaTitle, metaDescription, keywords, schemaType}
 
                     // Legacy поля для обратной совместимости
-                    content: `# ${geoResult.article.h1}\n\n${geoResult.article.intro}\n\n${sectionsMarkdown}\n\n## FAQ\n\n${faqMarkdown}\n\n${geoResult.article.conclusion}`,
+                    content: geoResult.markdownContent || `# ${geoResult.article.h1}\n\n${geoResult.article.intro}\n\n${sectionsMarkdown}\n\n## FAQ\n\n${faqMarkdown}\n\n${geoResult.article.conclusion}`,
                     metaTitle: geoResult.seo.metaTitle,
                     metaDescription: geoResult.seo.metaDescription,
                     usedKeywords: geoResult.seo.keywords,
@@ -1890,6 +2115,7 @@ ${exampleInstruction}
                     // Meta
                     _structured: true,
                     _strictJsonMode: true,
+                    _aio: true,
                     _meta: geoResult._meta
                 };
 
@@ -1915,7 +2141,21 @@ ${exampleInstruction}
                     isGeoMode
                 });
                 // Конвертируем legacy в новый structured формат
-                result = convertLegacyToNewStructure(legacyResult, sanitizedConfig.topic);
+                result = {
+                    ...upgradeStructuredGeoToAio(convertLegacyToNewStructure(legacyResult, sanitizedConfig.topic), sanitizedConfig.topic, {
+                        language: contentLanguage,
+                        targetCountry: sanitizedConfig.targetCountry,
+                        targetUrl: sanitizedConfig.targetUrl
+                    }),
+                    content: legacyResult.content || '',
+                    metaTitle: legacyResult.metaTitle,
+                    metaDescription: legacyResult.metaDescription,
+                    usedKeywords: legacyResult.usedKeywords || [],
+                    _structured: true,
+                    _strictJsonMode: false,
+                    _aio: true,
+                    _fallback: true
+                };
             }
 
         } else {
@@ -1933,7 +2173,21 @@ ${exampleInstruction}
 
             // Для GEO режима конвертируем в новый формат
             if (isGeoMode) {
-                result = convertLegacyToNewStructure(legacyResult, sanitizedConfig.topic);
+                result = {
+                    ...upgradeStructuredGeoToAio(convertLegacyToNewStructure(legacyResult, sanitizedConfig.topic), sanitizedConfig.topic, {
+                        language: contentLanguage,
+                        targetCountry: sanitizedConfig.targetCountry,
+                        targetUrl: sanitizedConfig.targetUrl
+                    }),
+                    content: legacyResult.content || '',
+                    metaTitle: legacyResult.metaTitle,
+                    metaDescription: legacyResult.metaDescription,
+                    usedKeywords: legacyResult.usedKeywords || [],
+                    _structured: true,
+                    _strictJsonMode: false,
+                    _aio: true,
+                    _fallback: true
+                };
             } else {
                 // SEO режим - возвращаем legacy формат + добавляем пустые структурные поля
                 result = {
@@ -1959,7 +2213,7 @@ ${exampleInstruction}
 
         // Calculate metrics (используем sections content или legacy content)
         const sectionsContent = result.article?.sections?.map(s => s.content).join('\n') || '';
-        const contentForMetrics = sectionsContent || result.content || '';
+        const contentForMetrics = result.markdownContent || sectionsContent || result.content || '';
         try {
             result.metrics = calculateSeoMetrics(contentForMetrics, keywords);
         } catch (e) {
@@ -1989,6 +2243,10 @@ ${exampleInstruction}
                         section.content = await insertInternalLinks(section.content, limitCheck.user.telegramId);
                     }
                 }
+            }
+            if (isGeoMode && result.article) {
+                result.markdownContent = buildMarkdownFromAio(result);
+                result.content = result.markdownContent;
             }
         } catch (e) {
             console.error("Internal links insertion failed", e);

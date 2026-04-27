@@ -22,6 +22,7 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import projectRoutes from './routes/projects.js';
 import historyRoutes from './routes/history.js';
+import contentRoutes from './routes/content.js';
 import planRoutes from './routes/plans.js';
 import paymentRoutes from './routes/payments.js';
 import webhookRoutes from './routes/webhook.js';
@@ -317,6 +318,7 @@ app.post('/health', healthCheckHandler);
 // Public routes (no auth required)
 app.use('/api/plans', planRoutes); // Plans are public for viewing
 app.use('/api/webhook', seoAuditRateLimiter, webhookRoutes); // Webhook with rate limiting
+app.use('/api/content', contentRoutes); // Public raw AIO/GEO content for crawlers
 
 // Protected routes (require Telegram auth)
 app.use('/api/auth', validateTelegramAuth, authRoutes);

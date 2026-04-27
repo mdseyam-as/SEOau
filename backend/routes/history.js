@@ -26,6 +26,15 @@ const historyPaginationSchema = z.object({
     limit: z.coerce.number().int().min(1).max(100).default(20)
 });
 
+function extractAioFields(result = {}) {
+    return {
+        knowledgeGraph: result.knowledgeGraph || null,
+        ragChunks: result.ragChunks || null,
+        jsonLd: result.jsonLd || result.seo?.schemaLD || null,
+        markdownContent: result.markdownContent || result.content || null
+    };
+}
+
 /**
  * Helper: Get user ID from telegram ID
  */
@@ -182,7 +191,8 @@ router.post('/', async (req, res) => {
                 targetUrl: config.targetUrl || null,
                 mode: config.generationMode || 'geo',
                 config: config, // JSON field
-                result: result  // JSON field
+                result: result, // JSON field
+                ...(config.generationMode === 'geo' || result._aio ? extractAioFields(result) : {})
             }
         });
 
@@ -196,6 +206,51 @@ router.post('/', async (req, res) => {
     } catch (error) {
         console.error('Add history error:', error);
         res.status(500).json({ error: 'Failed to add history' });
+    }
+});
+
+/**
+ * GET /api/history/:id/raw
+ * Return crawler-friendly Markdown for AIO/GEO content.
+ */
+router.get('/:id/raw', validateParams(historyIdParamSchema), async (req, res) => {
+    try {
+        const userId = await getUserId(req.telegramUser.id);
+
+        if (!userId) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const historyItem = await prisma.history.findUnique({
+            where: { id: req.params.id },
+            include: { project: true }
+        });
+
+        if (!historyItem) {
+            return res.status(404).json({ error: 'History item not found' });
+        }
+
+        if (!historyItem.project || historyItem.project.userId !== userId) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        if (historyItem.mode !== 'geo' && historyItem.mode !== 'aio' && !historyItem.markdownContent) {
+            return res.status(404).json({ error: 'Raw AIO Markdown is available only for GEO/AIO content' });
+        }
+
+        const markdown = historyItem.markdownContent || historyItem.result?.markdownContent || historyItem.result?.content || '';
+
+        res
+            .type('text/markdown; charset=utf-8')
+            .set({
+                'Cache-Control': 'public, max-age=300',
+                'X-Robots-Tag': 'index, follow',
+                'Content-Disposition': `inline; filename="${historyItem.id}.md"`
+            })
+            .send(markdown);
+    } catch (error) {
+        console.error('Get raw AIO content error:', error);
+        res.status(500).json({ error: 'Failed to get raw AIO content' });
     }
 });
 

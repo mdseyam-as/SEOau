@@ -427,6 +427,12 @@ model History {
   // JSON поля для хранения сложных структур
   config      Json     // GenerationConfig
   result      Json     // SeoResult (включает article, visuals, faq, seo)
+
+  // AIO/GEO structured output for AI Search Optimization
+  knowledgeGraph  Json?
+  ragChunks       Json?
+  jsonLd          Json?
+  markdownContent String? @db.Text
   
   // Timestamps
   createdAt   DateTime @default(now())

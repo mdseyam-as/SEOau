@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
   Copy, Check, ChevronDown, ChevronUp, AlertCircle,
-  Image, MessageCircleQuestion, Layers, Code
+  Image, MessageCircleQuestion, Layers, Code, Network, Database
 } from 'lucide-react';
 
 // ==================== SAFE SVG RENDERER ====================
@@ -189,6 +189,20 @@ const DebugView: React.FC<{ data: any; title?: string }> = ({ data, title = 'Deb
 // ==================== MAIN COMPONENT ====================
 
 export interface GeoArticleData {
+  knowledgeGraph?: {
+    entities?: Array<{ id: string; name: string; type: string; description?: string }>;
+    locations?: Array<{ id: string; name: string; region?: string; country?: string; coordinates?: { latitude?: number | null; longitude?: number | null } }>;
+    relations?: Array<{ source: string; target: string; relation: string; evidence?: string }>;
+  } | null;
+  ragChunks?: Array<{
+    id: string;
+    question: string;
+    answer: string;
+    facts?: string[];
+    geoSignals?: string[];
+  }> | null;
+  jsonLd?: object | null;
+  markdownContent?: string | null;
   article?: {
     h1?: string;
     intro?: string;
@@ -202,6 +216,9 @@ export interface GeoArticleData {
     svg?: string | null;
   } | null;
   faq?: FaqItem[];
+  seo?: {
+    schemaLD?: object | null;
+  } | null;
   content?: string;
 }
 
@@ -210,18 +227,29 @@ interface GeoArticleRendererProps {
 }
 
 export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) => {
-  // DIAGNOSTIC LOGGING
+  const jsonLd = data && typeof data === 'object'
+    ? data.jsonLd || data.seo?.schemaLD || null
+    : null;
+
   useEffect(() => {
-    console.log('🔵 SafeGeoRenderer mounted');
-    console.log('🔵 Data type:', typeof data);
-    console.log('🔵 Data:', data);
-    if (data && typeof data === 'object') {
-      console.log('🔵 Keys:', Object.keys(data));
-      console.log('🔵 article:', data.article);
-      console.log('🔵 visuals:', data.visuals);
-      console.log('🔵 faq:', data.faq);
+    const scriptId = 'aio-json-ld';
+    const existing = document.getElementById(scriptId);
+    if (existing) {
+      existing.remove();
     }
-  }, [data]);
+
+    if (!jsonLd) return;
+
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify(jsonLd);
+    document.head.appendChild(script);
+
+    return () => {
+      document.getElementById(scriptId)?.remove();
+    };
+  }, [jsonLd]);
 
   // 1. No data
   if (!data) {
@@ -234,13 +262,12 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
 
   // 2. String format (legacy)
   if (typeof data === 'string') {
-    console.log('🔵 Rendering as string (legacy)');
     return (
-      <div className="glass-panel rounded-xl p-6">
+      <article className="glass-panel rounded-xl p-6">
         <div className="prose prose-invert prose-sm sm:prose-base max-w-none">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{data}</ReactMarkdown>
         </div>
-      </div>
+      </article>
     );
   }
 
@@ -248,23 +275,21 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
   const article = data?.article;
   const visuals = data?.visuals;
   const faq = data?.faq;
+  const knowledgeGraph = data?.knowledgeGraph;
+  const ragChunks = data?.ragChunks || [];
   const legacyContent = data?.content;
+  const markdownContent = data?.markdownContent;
 
   // 4. No article - show fallback or debug
   if (!article) {
-    console.warn('🔵 No article field');
-    
-    if (legacyContent && typeof legacyContent === 'string') {
+    if ((markdownContent || legacyContent) && typeof (markdownContent || legacyContent) === 'string') {
       return (
         <div className="space-y-4">
-          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
-            <p className="text-yellow-400 text-sm">⚠️ Показан резервный контент</p>
-          </div>
-          <div className="glass-panel rounded-xl p-6">
+          <article className="glass-panel rounded-xl p-6">
             <div className="prose prose-invert prose-sm sm:prose-base max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{legacyContent}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdownContent || legacyContent || ''}</ReactMarkdown>
             </div>
-          </div>
+          </article>
         </div>
       );
     }
@@ -292,10 +317,10 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
   const hasSections = Array.isArray(sections) && sections.length > 0;
 
   return (
-    <div className="safe-geo-article w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <article className="safe-geo-article w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       {/* ==================== BLOCK 1: ARTICLE TEXT ==================== */}
-      <div className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
+      <section className="glass-panel rounded-xl sm:rounded-2xl overflow-hidden">
         {/* Header with H1 */}
         <div className="bg-gradient-to-r from-brand-green/20 to-brand-purple/20 px-4 sm:px-6 py-4 sm:py-5 border-b border-white/10">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white leading-tight flex items-start gap-3">
@@ -316,7 +341,7 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
         )}
 
         {/* SECTIONS */}
-        <div className="p-4 sm:p-6 lg:p-8">
+        <section className="p-4 sm:p-6 lg:p-8">
           {hasSections ? (
             <div className="space-y-8">
               {sections.map((sec: any, idx: number) => {
@@ -325,7 +350,7 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
                 const sectionTable = sec?.table;
 
                 return (
-                  <div key={idx} className="space-y-4">
+                  <section key={idx} className="space-y-4">
                     <h2 className="text-lg sm:text-xl font-bold text-white flex items-start gap-2">
                       <span className="inline-flex items-center justify-center px-2 py-0.5 bg-purple-500/30 text-purple-300 text-xs font-bold rounded shrink-0 mt-0.5">
                         H2
@@ -348,7 +373,7 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
                         </div>
                       </div>
                     )}
-                  </div>
+                  </section>
                 );
               })}
             </div>
@@ -365,7 +390,7 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
           ) : (
             <p className="text-slate-400 italic text-center">Контент недоступен</p>
           )}
-        </div>
+        </section>
 
         {/* Conclusion */}
         {conclusion && (
@@ -382,33 +407,119 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
             </div>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* ==================== BLOCK 2: SVG INFOGRAPHIC ==================== */}
+      {/* ==================== BLOCK 2: AIO STRUCTURED DATA ==================== */}
+      {knowledgeGraph && (
+        <section className="glass-panel p-4 sm:p-6 rounded-xl sm:rounded-2xl">
+          <div className="flex items-center gap-2 mb-4">
+            <Network className="w-5 h-5 text-brand-green" />
+            <h2 className="font-bold text-white text-lg">AIO Knowledge Graph</h2>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Entities</h3>
+              <div className="space-y-2">
+                {(knowledgeGraph.entities || []).slice(0, 8).map((entity) => (
+                  <div key={entity.id} className="text-sm">
+                    <div className="font-semibold text-white">{entity.name}</div>
+                    <div className="text-xs text-brand-green">{entity.type}</div>
+                    {entity.description && <p className="text-xs text-slate-400 mt-1">{entity.description}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Locations</h3>
+              <div className="space-y-2">
+                {(knowledgeGraph.locations || []).slice(0, 6).map((location) => (
+                  <div key={location.id} className="text-sm">
+                    <div className="font-semibold text-white">{location.name}</div>
+                    <div className="text-xs text-slate-400">{[location.region, location.country].filter(Boolean).join(', ')}</div>
+                    {(location.coordinates?.latitude || location.coordinates?.longitude) && (
+                      <div className="text-xs text-cyan-300 mt-1">
+                        {location.coordinates.latitude}, {location.coordinates.longitude}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Relations</h3>
+              <div className="space-y-2">
+                {(knowledgeGraph.relations || []).slice(0, 8).map((relation, index) => (
+                  <div key={`${relation.source}-${relation.target}-${index}`} className="text-xs text-slate-300">
+                    <span className="text-white">{relation.source}</span>
+                    <span className="text-brand-green"> {relation.relation} </span>
+                    <span className="text-white">{relation.target}</span>
+                    {relation.evidence && <p className="text-slate-500 mt-1">{relation.evidence}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {ragChunks.length > 0 && (
+        <section className="glass-panel p-4 sm:p-6 rounded-xl sm:rounded-2xl">
+          <div className="flex items-center gap-2 mb-4">
+            <Database className="w-5 h-5 text-cyan-400" />
+            <h2 className="font-bold text-white text-lg">RAG Chunks</h2>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {ragChunks.map((chunk) => (
+              <section key={chunk.id} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                <h3 className="font-semibold text-white text-sm mb-2">{chunk.question}</h3>
+                <p className="text-sm text-slate-300 leading-relaxed">{chunk.answer}</p>
+                {chunk.facts && chunk.facts.length > 0 && (
+                  <ul className="mt-3 space-y-1 text-xs text-slate-400 list-disc list-inside">
+                    {chunk.facts.slice(0, 3).map((fact, index) => (
+                      <li key={index}>{fact}</li>
+                    ))}
+                  </ul>
+                )}
+                {chunk.geoSignals && chunk.geoSignals.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {chunk.geoSignals.slice(0, 4).map((signal) => (
+                      <span key={signal} className="text-[11px] text-cyan-200 bg-cyan-500/10 border border-cyan-500/20 rounded px-2 py-0.5">
+                        {signal}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ==================== BLOCK 3: SVG INFOGRAPHIC ==================== */}
       {visuals?.svg && (
-        <div className="glass-panel p-4 sm:p-6 rounded-xl sm:rounded-2xl">
+        <section className="glass-panel p-4 sm:p-6 rounded-xl sm:rounded-2xl">
           <div className="flex items-center gap-2 mb-4">
             <Image className="w-5 h-5 text-brand-green" />
             <span className="font-bold text-white text-lg">📊 Инфографика</span>
           </div>
           <SafeSvgRenderer svg={visuals.svg} />
-        </div>
+        </section>
       )}
 
-      {/* ==================== BLOCK 3: MERMAID DIAGRAM ==================== */}
+      {/* ==================== BLOCK 4: MERMAID DIAGRAM ==================== */}
       {visuals?.mermaid && (
-        <div className="glass-panel p-4 sm:p-6 rounded-xl sm:rounded-2xl">
+        <section className="glass-panel p-4 sm:p-6 rounded-xl sm:rounded-2xl">
           <div className="flex items-center gap-2 mb-4">
             <Code className="w-5 h-5 text-cyan-400" />
             <span className="font-bold text-white text-lg">🔀 Диаграмма процесса</span>
           </div>
           <SafeMermaidDisplay code={visuals.mermaid} />
-        </div>
+        </section>
       )}
 
-      {/* ==================== BLOCK 4: FAQ ==================== */}
+      {/* ==================== BLOCK 5: FAQ ==================== */}
       {faq && Array.isArray(faq) && faq.length > 0 && (
-        <div className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl">
+        <section className="glass-panel p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl">
           <h3 className="font-bold text-sm sm:text-base lg:text-lg mb-4 text-white flex items-center gap-2">
             <span className="inline-flex items-center justify-center px-2 py-0.5 bg-amber-500/30 text-amber-300 text-xs font-bold rounded shrink-0">
               H3
@@ -420,9 +531,9 @@ export const GeoArticleRenderer: React.FC<GeoArticleRendererProps> = ({ data }) 
             </span>
           </h3>
           <FaqAccordion items={faq} />
-        </div>
+        </section>
       )}
-    </div>
+    </article>
   );
 };
 

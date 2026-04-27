@@ -168,6 +168,44 @@ export interface StructuredSeo {
   schemaLD?: object | null;
 }
 
+export interface AioKnowledgeGraph {
+  entities: Array<{
+    id: string;
+    name: string;
+    type: string;
+    description?: string;
+    sameAs?: string[];
+    attributes?: Record<string, unknown>;
+  }>;
+  locations?: Array<{
+    id: string;
+    name: string;
+    region?: string;
+    country?: string;
+    coordinates?: {
+      latitude?: number | null;
+      longitude?: number | null;
+    };
+    attributes?: Record<string, unknown>;
+  }>;
+  relations?: Array<{
+    source: string;
+    target: string;
+    relation: string;
+    evidence?: string;
+  }>;
+}
+
+export interface AioRagChunk {
+  id: string;
+  question: string;
+  answer: string;
+  facts: string[];
+  entities?: string[];
+  geoSignals?: string[];
+  sourceHint?: string;
+}
+
 // ==================== SEO RESULT ====================
 
 export interface SeoResult {
@@ -180,7 +218,11 @@ export interface SeoResult {
   spamScore?: number; // 0-100%
   spamAnalysis?: string;
 
-  // NEW: Structured GEO fields
+  // AIO/GEO fields
+  knowledgeGraph?: AioKnowledgeGraph | null;
+  ragChunks?: AioRagChunk[] | null;
+  jsonLd?: object | null;
+  markdownContent?: string | null;
   article?: StructuredArticle | null;
   visuals?: StructuredVisuals | null;
   faq?: FaqItem[];
@@ -189,6 +231,7 @@ export interface SeoResult {
   // Meta flags
   _structured?: boolean;
   _strictJsonMode?: boolean;
+  _aio?: boolean;
   _meta?: {
     writerModel?: string;
     visualizerModel?: string;

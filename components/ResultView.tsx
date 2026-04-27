@@ -253,7 +253,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
   const mermaidCode = isStructured ? result.visuals?.mermaid : legacyMermaid;
   const svgCode = isStructured ? result.visuals?.svg : null;
   const jsonLd = isStructured
-    ? (result.seo?.schemaLD ? JSON.stringify(result.seo.schemaLD, null, 2) : null)
+    ? ((result.jsonLd || result.seo?.schemaLD) ? JSON.stringify(result.jsonLd || result.seo?.schemaLD, null, 2) : null)
     : legacyJsonLd;
 
   useEffect(() => {
