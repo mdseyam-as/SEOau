@@ -22,13 +22,23 @@ const severityStyles: Record<MonitoringSeverity, string> = {
   info: 'border border-[#46fa9c]/20 bg-[#46fa9c]/10 text-[#7efd8b]'
 };
 
-const fieldShellClass = 'rounded-[8px] border border-[#5b3f44] bg-[linear-gradient(180deg,rgba(43,27,30,0.76),rgba(15,18,24,0.8))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition-all hover:border-[#ffb1c0]/45 focus-within:border-[#ffb1c0]/70 focus-within:shadow-[0_0_0_1px_rgba(255,177,192,0.12)]';
+const severityLabels: Record<MonitoringSeverity, string> = {
+  critical: 'Критично',
+  warning: 'Внимание',
+  info: 'Инфо'
+};
+
+const fieldShellClass = 'flex w-full min-w-0 min-h-[3.5rem] items-center rounded-[8px] border border-[#5b3f44] bg-[linear-gradient(180deg,rgba(43,27,30,0.76),rgba(15,18,24,0.82))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition-all cursor-text hover:border-[#ffb1c0]/45 focus-within:border-[#ffb1c0] focus-within:bg-[rgba(31,15,18,0.92)] focus-within:shadow-[0_0_0_1px_rgba(255,177,192,0.18),inset_0_1px_0_rgba(255,255,255,0.04)]';
 const fieldInputClass = 'app-shell-input min-h-[1.5rem]';
+
+const getSeverityLabel = (severity?: MonitoringSeverity | null) => severity ? severityLabels[severity] : 'Инфо';
+
 export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) => {
   const toast = useToast();
   const [pages, setPages] = useState<MonitoredPage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkingPageIds, setCheckingPageIds] = useState<Set<string>>(new Set());
   const [expandedPageId, setExpandedPageId] = useState<string | null>(null);
   const [eventCache, setEventCache] = useState<Record<string, MonitoringEvent[]>>({});
   const [newUrl, setNewUrl] = useState('');
@@ -107,6 +117,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
   };
 
   const handleRunCheck = async (pageId: string) => {
+    setCheckingPageIds((prev) => new Set(prev).add(pageId));
     try {
       const { page, event } = await monitoringService.runCheck(pageId);
       setPages((prev) => prev.map((item) => item.id === pageId ? page : item));
@@ -119,6 +130,12 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
       toast.success('Проверка завершена', event ? event.title : 'Изменений не найдено.');
     } catch (error: any) {
       toast.error('Ошибка проверки', error.message || 'Не удалось проверить страницу');
+    } finally {
+      setCheckingPageIds((prev) => {
+        const next = new Set(prev);
+        next.delete(pageId);
+        return next;
+      });
     }
   };
 
@@ -182,10 +199,10 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
             </div>
             <h3 className="text-xl font-bold text-white flex items-center gap-2 tracking-tight">
               <BellRing className="w-5 h-5 text-[#ffb1c0]" />
-              Real-Time Telemetry
+              Мониторинг страниц
             </h3>
             <p className="text-[#ab888e] text-sm mt-2 max-w-2xl leading-relaxed">
-              Monitoring глобального health, response latency и критических сигналов по ключевым страницам и SEO-векторам.
+              Следит за доступностью, title, H1, canonical, robots, FAQ, schema и заметными изменениями контента на важных URL проекта.
             </p>
           </div>
 
@@ -200,11 +217,11 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
         <div className="relative mt-6 rounded-[8px] border border-white/10 bg-black/15 p-4 sm:p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="text-sm font-semibold text-white">Deploy Monitor</div>
-              <div className="text-xs text-[#ab888e]">Добавьте target URL для continuous monitoring, health-сигналов и anomaly tracking.</div>
+              <div className="text-sm font-semibold text-white">Добавить страницу</div>
+              <div className="text-xs text-[#ab888e]">Первый снимок снимается сразу, следующие проверки идут по расписанию.</div>
             </div>
             <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#ab888e]">
-              Live alerts
+              Читаемые алерты
             </div>
           </div>
 
@@ -216,7 +233,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
                   type="url"
                   value={newUrl}
                   onChange={(event) => setNewUrl(event.target.value)}
-                  placeholder="https://api.example.com"
+                  placeholder="https://example.com/pricing"
                   className={fieldInputClass}
                 />
               </label>
@@ -228,7 +245,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
                   type="text"
                   value={newLabel}
                   onChange={(event) => setNewLabel(event.target.value)}
-                  placeholder="Название вектора"
+                  placeholder="Главная, Тарифы, Блог"
                   className={fieldInputClass}
                 />
               </label>
@@ -249,7 +266,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
                 className="app-btn-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Plus className="w-4 h-4" />
-                Deploy
+                Добавить
               </button>
             </div>
           </form>
@@ -272,6 +289,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
         <div className="space-y-4">
           {pages.map((page) => {
             const pageEvents = eventCache[page.id] || page.recentEvents || [];
+            const isChecking = checkingPageIds.has(page.id);
             return (
               <article key={page.id} className="app-dark-card overflow-hidden">
                 <div className="p-4 sm:p-5">
@@ -279,7 +297,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
                     <div className="space-y-3 flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${severityStyles[(page.lastSeverity || 'info') as MonitoringSeverity]}`}>
-                          {page.lastSeverity || 'info'}
+                          {getSeverityLabel((page.lastSeverity || 'info') as MonitoringSeverity)}
                         </span>
                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${page.isActive ? 'bg-[#46fa9c]/10 text-[#7efd8b] border-[#46fa9c]/20' : 'bg-white/5 text-slate-300 border-white/10'}`}>
                           {page.isActive ? 'Активен' : 'Пауза'}
@@ -317,10 +335,11 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
 
                       <button
                         onClick={() => handleRunCheck(page.id)}
-                        className="rounded-[6px] border border-[#ffb1c0]/20 bg-[#ffb1c0]/10 px-3 py-2 text-sm font-semibold text-[#ffb1c0] flex items-center gap-2 transition-colors hover:bg-[#ff2d78]/15 hover:text-white"
+                        disabled={isChecking}
+                        className="rounded-[6px] border border-[#ffb1c0]/20 bg-[#ffb1c0]/10 px-3 py-2 text-sm font-semibold text-[#ffb1c0] flex items-center gap-2 transition-colors hover:bg-[#ff2d78]/15 hover:text-white disabled:cursor-wait disabled:opacity-60"
                       >
-                        <RefreshCw className="w-4 h-4" />
-                        Scan now
+                        <RefreshCw className={`w-4 h-4 ${isChecking ? 'animate-spin' : ''}`} />
+                        {isChecking ? 'Проверяю' : 'Проверить'}
                       </button>
 
                       <button
@@ -328,7 +347,7 @@ export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ projectId }) =
                         className="rounded-[6px] border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-slate-100 flex items-center gap-2 transition-colors hover:bg-white/10"
                       >
                         {page.isActive ? <PauseCircle className="w-4 h-4" /> : <PlayCircle className="w-4 h-4" />}
-                        {page.isActive ? 'Пауза' : 'Включить'}
+                        {page.isActive ? 'Приостановить' : 'Включить'}
                       </button>
 
                       <button
@@ -400,18 +419,19 @@ const MetaCell: React.FC<{ label: string; value: string }> = ({ label, value }) 
 const MonitoringEventCard: React.FC<{ event: MonitoringEvent }> = ({ event }) => {
   const contentChange = event.diff?.changes?.find((change) => change.type === 'content');
   const topChange = event.diff?.changes?.[0];
+  const readable = event.diff?.readable;
   const shortValue = (value?: string | null) => {
     if (!value) return '—';
     return value.length > 220 ? `${value.slice(0, 219)}…` : value;
   };
 
   return (
-    <div className="overflow-hidden rounded-[24px] border border-white/10 bg-white/5 shadow-[0_16px_36px_rgba(2,6,23,0.20)]">
+    <div className="overflow-hidden rounded-[10px] border border-white/10 bg-white/[0.04] shadow-[0_16px_36px_rgba(2,6,23,0.20)]">
       <div className="p-4 sm:p-5 border-b border-white/10">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
           <div>
             <div className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${severityStyles[event.severity]}`}>
-              {event.severity}
+              {readable?.severityLabel || getSeverityLabel(event.severity)}
             </div>
             <h5 className="text-white font-bold text-lg mt-3">{event.title}</h5>
             <p className="text-slate-300 text-sm mt-2 leading-relaxed">{event.summary}</p>
@@ -423,33 +443,35 @@ const MonitoringEventCard: React.FC<{ event: MonitoringEvent }> = ({ event }) =>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4">
-          <MetaCell label="Changed" value={topChange?.changed || 'Изменения зафиксированы'} />
-          <MetaCell label="Risk" value={topChange?.risk || 'Проверьте страницу вручную'} />
-          <MetaCell label="Before" value={shortValue(topChange?.before)} />
-          <MetaCell label="After" value={shortValue(topChange?.after)} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-4">
+          <MetaCell label="Что произошло" value={readable?.primaryChange || topChange?.changed || 'Изменения зафиксированы'} />
+          <MetaCell label="Почему важно" value={readable?.impact || topChange?.risk || 'Проверьте страницу вручную'} />
+          <MetaCell label="Что сделать" value={readable?.action || topChange?.action || 'Откройте страницу и проверьте изменение вручную'} />
         </div>
       </div>
 
       {event.diff?.changes?.map((change, index) => (
         <div key={`${event.id}-${change.type}-${index}`} className="p-4 sm:p-5 border-b border-white/10 last:border-b-0">
           <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="text-white font-semibold uppercase text-sm tracking-wide">{change.type}</div>
+            <div className="text-white font-semibold uppercase text-sm tracking-wide">{change.label || change.type}</div>
             <div className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${severityStyles[change.severity]}`}>
-              {change.severity}
+              {getSeverityLabel(change.severity)}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm mb-4">
-            <MetaCell label="Before" value={shortValue(change.before)} />
-            <MetaCell label="After" value={shortValue(change.after)} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm mb-3">
+            <MetaCell label="Было" value={shortValue(change.before)} />
+            <MetaCell label="Стало" value={shortValue(change.after)} />
           </div>
 
-          <div className="rounded-[20px] bg-black/15 border border-white/10 p-4 text-sm text-slate-200">
-            <div><span className="text-slate-400">Changed:</span> {change.changed}</div>
-            <div className="mt-2"><span className="text-slate-400">Risk:</span> {change.risk}</div>
+          <div className="rounded-[8px] bg-black/15 border border-white/10 p-4 text-sm text-slate-200">
+            <div><span className="text-slate-400">Изменение:</span> {change.changed}</div>
+            <div className="mt-2"><span className="text-slate-400">Риск:</span> {change.risk}</div>
+            {change.action && (
+              <div className="mt-2"><span className="text-slate-400">Действие:</span> {change.action}</div>
+            )}
             {typeof change.deltaPercent === 'number' && (
-              <div className="mt-2"><span className="text-slate-400">Diff:</span> {change.deltaPercent > 0 ? '+' : ''}{change.deltaPercent}% текста</div>
+              <div className="mt-2"><span className="text-slate-400">Разница:</span> {change.deltaPercent > 0 ? '+' : ''}{change.deltaPercent}% текста</div>
             )}
           </div>
         </div>

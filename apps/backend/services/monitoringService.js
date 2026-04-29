@@ -23,6 +23,29 @@ const TITLE_GARBAGE_PATTERNS = [
   /^index$/i
 ];
 
+const SEVERITY_LABELS = {
+  critical: 'Критично',
+  warning: 'Внимание',
+  info: 'Информация'
+};
+
+const CHANGE_TYPE_LABELS = {
+  status: 'Доступность',
+  finalUrl: 'Редирект',
+  canonical: 'Canonical',
+  robotsMeta: 'Robots meta',
+  h1: 'H1',
+  title: 'Title',
+  metaDescription: 'Meta description',
+  content: 'Контент',
+  faq: 'FAQ',
+  schema: 'Schema.org'
+};
+
+const HEALTHY_STATUS_MIN = 200;
+const HEALTHY_STATUS_MAX = 399;
+const MAX_RESPONSE_TEXT_BYTES = Number(process.env.MONITORING_MAX_RESPONSE_BYTES || 1_500_000);
+
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -88,7 +111,12 @@ function looksLikeGarbageTitle(title = '') {
 }
 
 export function normalizeUrl(input) {
-  const url = new URL(input);
+  const url = new URL(String(input || '').trim());
+
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    throw new Error('Monitoring supports only HTTP and HTTPS URLs');
+  }
+
   url.hash = '';
   url.protocol = url.protocol.toLowerCase();
   url.hostname = url.hostname.toLowerCase();
@@ -102,6 +130,19 @@ export function normalizeUrl(input) {
   }
 
   return url.toString();
+}
+
+function isHealthyStatus(statusCode) {
+  return statusCode >= HEALTHY_STATUS_MIN && statusCode <= HEALTHY_STATUS_MAX;
+}
+
+function getStatusCategory(statusCode) {
+  if (statusCode === 0) return 'fetch-error';
+  if (statusCode >= 500) return 'server-error';
+  if (statusCode >= 400) return 'client-error';
+  if (statusCode >= 300) return 'redirect';
+  if (statusCode >= 200) return 'ok';
+  return 'unknown';
 }
 
 function getUrlPath(url) {
@@ -221,7 +262,11 @@ function calculateWordDelta(previous = 0, current = 0) {
 
 function getRiskMessage(type, severity, change) {
   const risks = {
-    status: severity === 'critical' ? 'Страница недоступна для пользователей и поисковых систем.' : 'Проверьте корректность ответа сервера.',
+    status: severity === 'critical'
+      ? 'Страница может быть недоступна пользователям и поисковым системам.'
+      : severity === 'info'
+        ? 'Страница снова отвечает штатно.'
+        : 'Ответ сервера изменился, проверьте корректность состояния.',
     canonical: 'Поисковики могут начать считать каноничной другую страницу.',
     robotsMeta: 'Страница может быть исключена из индекса.',
     h1: severity === 'critical' ? 'Страница потеряла главный заголовок.' : 'Проверьте смысл и релевантность заголовка.',
@@ -236,12 +281,57 @@ function getRiskMessage(type, severity, change) {
   return risks[type] || 'Проверьте страницу вручную.';
 }
 
+function getActionMessage(type, severity, change) {
+  if (type === 'status') {
+    if (severity === 'critical') {
+      return 'Проверьте доступность URL, код ответа, редиректы, CDN, хостинг и последние деплои.';
+    }
+    if (severity === 'info') {
+      return 'Убедитесь, что восстановление стабильно, и закройте инцидент после следующей проверки.';
+    }
+    return 'Проверьте, ожидаем ли новый HTTP-статус для этой страницы.';
+  }
+
+  const actions = {
+    finalUrl: 'Проверьте цепочку редиректов и целевой URL в браузере и в Search Console.',
+    canonical: 'Сверьте canonical с эталонной страницей и исправьте шаблон, если значение изменилось случайно.',
+    robotsMeta: 'Проверьте meta robots и правила индексации, особенно noindex/nofollow.',
+    h1: 'Верните корректный H1 или подтвердите изменение с контент-командой.',
+    title: 'Проверьте новый title на релевантность, бренд и длину сниппета.',
+    metaDescription: 'Проверьте описание сниппета и убедитесь, что оно соответствует странице.',
+    content: 'Сравните diff, проверьте CMS-блоки, шаблон страницы и случайные удаления текста.',
+    faq: 'Проверьте FAQ-блок и JSON-LD, если расширенные сниппеты важны для страницы.',
+    schema: 'Проверьте JSON-LD/schema.org валидатором и восстановите разметку при необходимости.'
+  };
+
+  return actions[type] || 'Откройте страницу и проверьте изменение вручную.';
+}
+
+function getChangeLabel(type) {
+  return CHANGE_TYPE_LABELS[type] || type;
+}
+
+function buildChangeSummary(change) {
+  const label = getChangeLabel(change.type);
+  if (change.type === 'status') {
+    return `${label}: ${change.before || 'нет ответа'} -> ${change.after || 'нет ответа'}`;
+  }
+
+  if (typeof change.deltaPercent === 'number') {
+    return `${label}: ${change.deltaPercent > 0 ? '+' : ''}${change.deltaPercent}%`;
+  }
+
+  return `${label}: ${change.changed}`;
+}
+
 function addChange(changes, change) {
   changes.push({
     ...change,
+    label: change.label || getChangeLabel(change.type),
     before: change.before ?? null,
     after: change.after ?? null,
-    risk: change.risk || getRiskMessage(change.type, change.severity, change)
+    risk: change.risk || getRiskMessage(change.type, change.severity, change),
+    action: change.action || getActionMessage(change.type, change.severity, change)
   });
 }
 
@@ -251,14 +341,32 @@ export function compareSnapshots(previous, current) {
   }
 
   const changes = [];
+  const previousHealthy = isHealthyStatus(previous.statusCode);
+  const currentHealthy = isHealthyStatus(current.statusCode);
 
   if (previous.statusCode !== current.statusCode) {
+    const currentCategory = getStatusCategory(current.statusCode);
+    const severity = current.statusCode === 0 || current.statusCode >= 500 || current.statusCode === 404
+      ? 'critical'
+      : previousHealthy && current.statusCode >= 400
+        ? 'critical'
+        : !previousHealthy && currentHealthy
+          ? 'info'
+          : 'warning';
+
     addChange(changes, {
       type: 'status',
-      severity: current.statusCode >= 400 || current.statusCode === 0 ? 'critical' : 'warning',
+      severity,
       before: String(previous.statusCode),
       after: String(current.statusCode),
-      changed: `HTTP ${previous.statusCode} -> HTTP ${current.statusCode}`
+      changed: !previousHealthy && currentHealthy
+        ? `Страница восстановилась: HTTP ${previous.statusCode} -> HTTP ${current.statusCode}`
+        : current.statusCode === 0
+          ? `Страница не ответила: ${current.fetchError || 'fetch error'}`
+          : `HTTP статус изменился: ${previous.statusCode} -> ${current.statusCode}`,
+      risk: currentCategory === 'server-error'
+        ? 'Серверная ошибка может полностью остановить трафик и индексацию страницы.'
+        : undefined
     });
   }
 
@@ -270,6 +378,16 @@ export function compareSnapshots(previous, current) {
       after: current.finalUrl,
       changed: 'Изменился конечный URL после редиректа'
     });
+  }
+
+  // If the page is currently unavailable, a 404/500/error page usually changes title,
+  // meta and content too. Keep the alert focused on availability instead of noisy secondary diffs.
+  if (!currentHealthy) {
+    return buildComparisonResult(previous, current, changes);
+  }
+
+  if (!previousHealthy && currentHealthy) {
+    return buildComparisonResult(previous, current, changes);
   }
 
   if (sanitizeText(previous.canonical || '', 1000) !== sanitizeText(current.canonical || '', 1000)) {
@@ -366,6 +484,14 @@ export function compareSnapshots(previous, current) {
     return null;
   }
 
+  return buildComparisonResult(previous, current, changes);
+}
+
+function buildComparisonResult(previous, current, changes) {
+  if (!changes.length) {
+    return null;
+  }
+
   const severityRank = { critical: 3, warning: 2, info: 1 };
   const severity = changes.reduce((max, change) => (
     severityRank[change.severity] > severityRank[max] ? change.severity : max
@@ -374,7 +500,9 @@ export function compareSnapshots(previous, current) {
   const primaryChange = changes.find((change) => change.severity === severity) || changes[0];
   const pagePath = getUrlPath(current.url);
   const title = buildEventTitle(severity, primaryChange, pagePath);
-  const summary = changes.map((change) => `${change.changed}. Риск: ${change.risk}`).join(' ');
+  const secondaryCount = Math.max(changes.length - 1, 0);
+  const summary = buildEventSummary(severity, primaryChange, changes, pagePath);
+  const action = primaryChange.action || getActionMessage(primaryChange.type, severity, primaryChange);
 
   return {
     severity,
@@ -383,10 +511,18 @@ export function compareSnapshots(previous, current) {
     diff: {
       summary: title,
       changes,
+      readable: {
+        severityLabel: SEVERITY_LABELS[severity] || severity,
+        pagePath,
+        primaryChange: buildChangeSummary(primaryChange),
+        secondaryCount,
+        impact: primaryChange.risk,
+        action
+      },
       metrics: {
         previousWordCount: previous.wordCount,
         currentWordCount: current.wordCount,
-        deltaPercent
+        deltaPercent: calculateWordDelta(previous.wordCount, current.wordCount)
       }
     },
     changeTypes: [...new Set(changes.map((change) => change.type))]
@@ -394,47 +530,69 @@ export function compareSnapshots(previous, current) {
 }
 
 function buildEventTitle(severity, primaryChange, pagePath) {
+  const severityLabel = SEVERITY_LABELS[severity] || severity;
+
   if (primaryChange.type === 'status') {
-    return `${severity.toUpperCase()}: ${pagePath} стал ${primaryChange.after}`;
+    if (severity === 'info') {
+      return `${severityLabel}: ${pagePath} снова отвечает HTTP ${primaryChange.after}`;
+    }
+    return `${severityLabel}: ${pagePath} отвечает HTTP ${primaryChange.after}`;
   }
 
   if (primaryChange.type === 'canonical') {
-    return `${severity.toUpperCase()}: canonical changed on ${pagePath}`;
+    return `${severityLabel}: изменился canonical на ${pagePath}`;
   }
 
   if (primaryChange.type === 'title') {
-    return `${severity.toUpperCase()}: title changed on ${pagePath}`;
+    return `${severityLabel}: изменился title на ${pagePath}`;
   }
 
   if (primaryChange.type === 'h1' && !primaryChange.after) {
-    return `${severity.toUpperCase()}: H1 disappeared on ${pagePath}`;
+    return `${severityLabel}: пропал H1 на ${pagePath}`;
   }
 
-  return `${severity.toUpperCase()}: changes detected on ${pagePath}`;
+  return `${severityLabel}: изменения на ${pagePath}`;
+}
+
+function buildEventSummary(severity, primaryChange, changes, pagePath) {
+  const severityLabel = SEVERITY_LABELS[severity] || severity;
+  const changeList = changes.slice(0, 3).map(buildChangeSummary).join('; ');
+  const rest = changes.length > 3 ? `; еще ${changes.length - 3}` : '';
+  return `${severityLabel} на ${pagePath}: ${changeList}${rest}. ${primaryChange.risk} Что сделать: ${primaryChange.action}`;
 }
 
 function formatTelegramMessage(page, event, snapshot) {
+  const readable = event.diff?.readable || {};
   const lines = [
-    `<b>${escapeHtml(event.severity.toUpperCase())}</b>: ${escapeHtml(getUrlPath(page.url))}`,
-    escapeHtml(event.title)
+    `<b>${escapeHtml(readable.severityLabel || SEVERITY_LABELS[event.severity] || event.severity)}</b>: ${escapeHtml(page.label || getUrlPath(page.url))}`,
+    escapeHtml(event.title),
+    '',
+    `<b>Что произошло:</b> ${escapeHtml(readable.primaryChange || event.summary)}`,
+    `<b>Почему важно:</b> ${escapeHtml(readable.impact || 'Проверьте страницу вручную.')}`,
+    `<b>Что сделать:</b> ${escapeHtml(readable.action || 'Откройте страницу и проверьте изменение вручную.')}`
   ];
 
   const importantChanges = Array.isArray(event.diff?.changes) ? event.diff.changes.slice(0, 4) : [];
+  if (importantChanges.length) {
+    lines.push('', '<b>Детали:</b>');
+  }
+
   for (const change of importantChanges) {
-    lines.push(`<b>${escapeHtml(change.type)}</b>`);
+    lines.push(`<b>${escapeHtml(change.label || change.type)}</b>`);
     if (change.before) {
-      lines.push(`Before: ${escapeHtml(sanitizeText(change.before, 120))}`);
+      lines.push(`Было: ${escapeHtml(sanitizeText(change.before, 120))}`);
     }
     if (change.after) {
-      lines.push(`After: ${escapeHtml(sanitizeText(change.after, 120))}`);
+      lines.push(`Стало: ${escapeHtml(sanitizeText(change.after, 120))}`);
     }
     if (typeof change.deltaPercent === 'number') {
-      lines.push(`Diff: ${change.deltaPercent > 0 ? '+' : ''}${change.deltaPercent}% текста`);
+      lines.push(`Разница: ${change.deltaPercent > 0 ? '+' : ''}${change.deltaPercent}% текста`);
     }
   }
 
-  lines.push(`Time: ${new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`);
-  lines.push(`Page: ${escapeHtml(snapshot.finalUrl || page.url)}`);
+  lines.push('');
+  lines.push(`Время: ${new Date().toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`);
+  lines.push(`URL: ${escapeHtml(snapshot.finalUrl || page.url)}`);
 
   return lines.join('\n');
 }
@@ -461,19 +619,54 @@ async function fetchSnapshot(url) {
       signal: controller.signal,
       headers: {
         'user-agent': MONITORING_USER_AGENT,
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,text/plain;q=0.8,*/*;q=0.6',
         'accept-language': 'ru,en;q=0.9'
       }
     });
 
     const contentType = response.headers.get('content-type') || '';
     const shouldReadBody = /html|xml|text/i.test(contentType);
-    const html = shouldReadBody ? await response.text() : '';
+    const html = shouldReadBody ? await readResponseText(response, MAX_RESPONSE_TEXT_BYTES) : '';
     return extractSnapshotData(url, response, html);
   } catch (error) {
     return extractSnapshotData(url, null, '', error.message || 'Failed to fetch page');
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+async function readResponseText(response, maxBytes) {
+  const reader = response.body?.getReader?.();
+  if (!reader) {
+    const text = await response.text();
+    return text.slice(0, maxBytes);
+  }
+
+  const decoder = new TextDecoder();
+  let bytesRead = 0;
+  let result = '';
+
+  while (bytesRead < maxBytes) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const remaining = maxBytes - bytesRead;
+    const chunk = value.byteLength > remaining ? value.slice(0, remaining) : value;
+    bytesRead += chunk.byteLength;
+    result += decoder.decode(chunk, { stream: bytesRead < maxBytes });
+
+    if (value.byteLength > remaining) {
+      try {
+        await reader.cancel();
+      } catch {
+        // Ignore cancellation errors; the snapshot already has enough content.
+      }
+      break;
+    }
+  }
+
+  result += decoder.decode();
+  return result;
 }
 
 async function createMonitoringEvent(monitoredPage, previousSnapshot, snapshot) {
@@ -492,7 +685,7 @@ async function createMonitoringEvent(monitoredPage, previousSnapshot, snapshot) 
       title: comparison.title,
       summary: comparison.summary,
       diff: comparison.diff,
-      notifiedAt: new Date()
+      notifiedAt: null
     }
   });
 
@@ -536,7 +729,7 @@ export async function runMonitoringCheck(monitoredPageId, options = {}) {
     }
   });
 
-  const event = await createMonitoringEvent(page, previousSnapshot, snapshot);
+  let event = await createMonitoringEvent(page, previousSnapshot, snapshot);
 
   await prisma.monitoredPage.update({
     where: { id: page.id },
@@ -554,7 +747,13 @@ export async function runMonitoringCheck(monitoredPageId, options = {}) {
   if (event && page.project.user.notificationsEnabled && options.notify !== false) {
     try {
       const telegramMessage = formatTelegramMessage(page, event, snapshot);
-      await notifyUser(page.project.user.telegramId, telegramMessage);
+      const notificationSent = await notifyUser(page.project.user.telegramId, telegramMessage);
+      if (notificationSent) {
+        event = await prisma.monitoringEvent.update({
+          where: { id: event.id },
+          data: { notifiedAt: new Date() }
+        });
+      }
     } catch (error) {
       logger.error({ error, pageId: page.id }, 'Failed to send monitoring Telegram notification');
     }

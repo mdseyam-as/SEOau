@@ -183,7 +183,7 @@ router.post('/pages/:id/check', validateParams(pageParamSchema), async (req, res
       return res.status(ownership.error.status).json(ownership.error.body);
     }
 
-    const result = await runMonitoringCheck(id);
+    const result = await runMonitoringCheck(id, { notify: false });
     const page = await prisma.monitoredPage.findUnique({
       where: { id },
       include: {

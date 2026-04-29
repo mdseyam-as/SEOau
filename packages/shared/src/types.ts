@@ -344,11 +344,13 @@ export interface MonitoringSnapshot {
 
 export interface MonitoringChange {
   type: string;
+  label?: string;
   severity: MonitoringSeverity;
   before?: string | null;
   after?: string | null;
   changed: string;
   risk: string;
+  action?: string;
   deltaPercent?: number;
 }
 
@@ -362,6 +364,14 @@ export interface MonitoringEvent {
   diff: {
     summary: string;
     changes: MonitoringChange[];
+    readable?: {
+      severityLabel?: string;
+      pagePath?: string;
+      primaryChange?: string;
+      secondaryCount?: number;
+      impact?: string;
+      action?: string;
+    };
     metrics?: {
       previousWordCount?: number;
       currentWordCount?: number;

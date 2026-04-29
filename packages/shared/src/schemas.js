@@ -67,8 +67,17 @@ export const updateProjectSchema = z.object({
 
 export const monitoringFrequencySchema = z.enum(['15m', '1h', '1d']);
 
+const httpUrlSchema = z.string().trim().url('Invalid URL').max(2000).refine((value) => {
+    try {
+        const url = new URL(value);
+        return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+        return false;
+    }
+}, 'Поддерживаются только HTTP и HTTPS URL');
+
 export const createMonitoredPageSchema = z.object({
-    url: z.string().url('Invalid URL').max(2000),
+    url: httpUrlSchema,
     label: z.string().max(120).optional().default(''),
     frequency: monitoringFrequencySchema.optional().default('1h')
 });
