@@ -334,7 +334,7 @@ const debouncedSearch = useDebouncedCallback(
 ### 1. CSP Headers
 
 ```typescript
-// Добавить в backend/server.js
+// Добавить в apps/backend/server.js
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {

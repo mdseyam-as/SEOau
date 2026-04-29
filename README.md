@@ -84,14 +84,14 @@ flowchart LR
 ## Структура репозитория
 ```text
 SEOau/
-├─ backend/               # Express API, middleware, routes, services
-├─ components/            # UI components
-├─ hooks/                 # React hooks
-├─ services/              # Frontend services
+├─ apps/
+│  ├─ frontend/           # Vite + React app
+│  └─ backend/            # Express API, middleware, routes, services
+├─ packages/
+│  ├─ shared/             # Общие типы/Zod-схемы
+│  └─ db/                 # Prisma schema, migrations, Prisma client wrapper
 ├─ docs/                  # Техническая документация
-├─ prisma/                # Seed scripts
-├─ App.tsx                # Root UI
-├─ index.tsx              # Frontend entrypoint
+├─ package.json           # Workspace root
 └─ README.md
 ```
 
@@ -105,22 +105,16 @@ SEOau/
 
 ### 2) Установка
 ```bash
-# Root (frontend + shared scripts)
 npm install
-
-# Backend
-cd backend
-npm install
-cd ..
 ```
 
 ### 3) Конфигурация
 ```bash
-# Frontend + часть backend переменных
+# Общий шаблон переменных
 cp .env.example .env
 
 # Backend-specific переменные
-cp backend/.env.example backend/.env
+cp apps/backend/.env.example apps/backend/.env
 ```
 
 ### 4) Инициализация БД
@@ -136,8 +130,7 @@ npm run db:seed
 npm run dev
 
 # Терминал 2: backend
-cd backend
-npm run dev
+npm run dev:backend
 ```
 
 По умолчанию:
@@ -148,26 +141,23 @@ npm run dev
 
 ### Root (`package.json`)
 - `npm run dev` - запуск frontend dev-сервера
+- `npm run dev:backend` - запуск backend dev-сервера
 - `npm run build` - production-сборка frontend
+- `npm run build:platform` - сборка платформы для деплоя
+- `npm run start:platform` - запуск backend из workspace root
 - `npm run preview` - предпросмотр production-сборки
 - `npm run test` - frontend тесты (Vitest)
+- `npm run test:backend` - backend тесты (Vitest)
 - `npm run test:coverage` - frontend тесты с покрытием
 - `npm run db:generate` - генерация Prisma client
 - `npm run db:push` - применение схемы в БД
-- `npm run db:seed` - сидирование БД
-
-### Backend (`backend/package.json`)
-- `npm run dev` - backend с watch
-- `npm run start` - backend без watch
-- `npm run test` - backend тесты (`node --test`)
-- `npm run test:coverage` - backend покрытие
-- `npm run db:generate` - Prisma generate
-- `npm run db:push` - Prisma db push
+- `npm run db:migrate` - dev-миграции Prisma
+- `npm run db:deploy` - production-миграции Prisma
 - `npm run db:seed` - сидирование БД
 
 ## Переменные окружения
 - Основной шаблон: [`.env.example`](./.env.example)
-- Backend шаблон: [`backend/.env.example`](./backend/.env.example)
+- Backend шаблон: [`apps/backend/.env.example`](./apps/backend/.env.example)
 
 Ключевые переменные:
 - `DATABASE_URL`
@@ -189,8 +179,7 @@ npm run dev
 npm run test
 
 # Backend
-cd backend
-npm run test
+npm run test:backend
 ```
 
 ## Дополнительная документация
@@ -200,6 +189,7 @@ npm run test
 - [docs/SWAGGER.md](./docs/SWAGGER.md)
 - [docs/SSE_USAGE.md](./docs/SSE_USAGE.md)
 - [docs/BULLMQ_USAGE.md](./docs/BULLMQ_USAGE.md)
+- [docs/RAG.md](./docs/RAG.md)
 
 ## Безопасность
 В проекте реализованы базовые и прикладные механизмы защиты.

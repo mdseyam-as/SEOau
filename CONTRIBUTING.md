@@ -29,8 +29,7 @@
 npm run test
 
 # backend tests
-cd backend
-npm run test
+npm run test:backend
 ```
 
 Если изменение затрагивает БД:
@@ -50,5 +49,5 @@ npm run db:push
 
 ## Security and Secrets
 - Не коммитьте реальные токены, ключи, пароли и `.env`.
-- Для новых переменных окружения обновляйте `.env.example` и `backend/.env.example`.
+- Для новых переменных окружения обновляйте `.env.example` и `apps/backend/.env.example`.
 - Критические уязвимости не публикуйте в обычных issue, используйте процесс из `SECURITY.md`.

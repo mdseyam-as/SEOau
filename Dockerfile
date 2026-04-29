@@ -1,48 +1,25 @@
-# Dockerfile для Timeweb Cloud
-# Собирает frontend + backend с Prisma
+# Dockerfile для Timeweb Cloud / Amvera
+# Собирает npm workspace monorepo: frontend + backend + Prisma package
 
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Устанавливаем OpenSSL для Prisma
 RUN apk add --no-cache openssl
 
-# ==================== FRONTEND BUILD ====================
-# Копируем package.json и lock файл
-COPY package*.json ./
+COPY package.json package-lock.json ./
+COPY apps/frontend/package.json ./apps/frontend/package.json
+COPY apps/backend/package.json ./apps/backend/package.json
+COPY packages/shared/package.json ./packages/shared/package.json
+COPY packages/db/package.json ./packages/db/package.json
 
-# Устанавливаем зависимости для frontend
 RUN npm ci
 
-# Копируем исходники frontend
-COPY index.html vite.config.ts tsconfig.json ./
-COPY index.tsx index.css types.ts App.tsx vite-env.d.ts ./
-COPY components ./components/
-COPY hooks ./hooks/
-COPY services ./services/
-COPY types ./types/
+COPY . .
 
-# Копируем Prisma схему
-COPY prisma ./prisma/
-
-# Собираем frontend
+RUN npm run db:generate
 RUN npm run build
 
-# ==================== BACKEND SETUP ====================
-# Копируем backend
-COPY backend ./backend/
-
-# Устанавливаем зависимости backend
-WORKDIR /app/backend
-RUN npm ci
-
-# Генерируем Prisma Client
-RUN npx prisma generate --schema=../prisma/schema.prisma
-
-# ==================== RUNTIME ====================
-# Открываем порт
 EXPOSE 3000
 
-# Применяем актуальную Prisma-схему перед стартом сервера
-CMD ["sh", "-c", "npx prisma db push --schema=../prisma/schema.prisma && node server.js"]
+CMD ["sh", "-c", "npm run db:deploy && node apps/backend/server.js"]

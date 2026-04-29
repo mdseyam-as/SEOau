@@ -62,8 +62,7 @@ async function main() {
 
   await run(npmCommand, ['install'], { env: installEnv });
   await run(npmCommand, ['run', 'build']);
-  await run(npmCommand, ['--prefix', './backend', 'install'], { env: installEnv });
-  await runWithRetry(npmCommand, ['--prefix', './backend', 'run', 'db:generate'], 5, 5000);
+  await runWithRetry(npmCommand, ['run', 'db:generate'], 5, 5000);
 }
 
 main().catch((error) => {

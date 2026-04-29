@@ -12,7 +12,7 @@ npm install swagger-jsdoc swagger-ui-express
 
 ## Конфигурация
 
-Конфигурация находится в [`backend/swagger.js`](../backend/swagger.js):
+Конфигурация находится в [`apps/backend/swagger.js`](../apps/backend/swagger.js):
 
 ```javascript
 const options = {

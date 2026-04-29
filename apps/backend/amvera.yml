@@ -1,0 +1,16 @@
+meta:
+  environment: docker
+  toolchain:
+    name: docker
+    version: latest
+
+build:
+  dockerfile: apps/backend/Dockerfile
+  context: ../..
+
+run:
+  containerPort: 3000
+
+env:
+  PORT: 3000
+  NODE_ENV: production

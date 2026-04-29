@@ -87,7 +87,7 @@ model User {
 
 ##### Сервисы
 
-**backend/services/knowledgeBaseService.js**
+**apps/backend/services/knowledgeBaseService.js**
 ```javascript
 import { prisma } from '../lib/prisma.js';
 import pdf from 'pdf-parse';
@@ -204,7 +204,7 @@ export class KnowledgeBaseService {
 
 ##### Интеграция в генерацию
 
-Модификация промпта в [`backend/routes/generate.js`](backend/routes/generate.js:43):
+Модификация промпта в [`apps/backend/routes/generate.js`](apps/backend/routes/generate.js:43):
 
 ```javascript
 // Перед генерацией контента
@@ -819,7 +819,7 @@ router.delete('/:id', async (req, res) => {
 
 ##### Сервис для вставки ссылок
 
-**backend/services/internalLinkingService.js**
+**apps/backend/services/internalLinkingService.js**
 ```javascript
 export class InternalLinkingService {
   constructor(userId) {
@@ -1246,7 +1246,7 @@ model BackgroundTask {
 
 ##### Сервис очереди задач
 
-**backend/services/taskQueueService.js**
+**apps/backend/services/taskQueueService.js**
 ```javascript
 import { prisma } from '../lib/prisma.js';
 import { sendTelegramNotification } from './subscriptionManager.js';
@@ -1502,7 +1502,7 @@ export async function sendInlineNotification(telegramId, message, buttons) {
 
 ##### Обработка callback от inline-кнопки
 
-В [`backend/routes/webhook.js`](backend/routes/webhook.js):
+В [`apps/backend/routes/webhook.js`](apps/backend/routes/webhook.js):
 
 ```javascript
 // Обработка callback от inline-кнопок
@@ -1606,7 +1606,7 @@ PERPLEXITY_API_KEY=your_perplexity_api_key
 
 #### Сервис Perplexity
 
-**backend/services/perplexityService.js**
+**apps/backend/services/perplexityService.js**
 ```javascript
 export class PerplexityService {
   constructor(apiKey) {
@@ -1683,7 +1683,7 @@ export class PerplexityService {
 
 #### Обновление AIO промпта
 
-В [`backend/routes/generate.js`](backend/routes/generate.js:97):
+В [`apps/backend/routes/generate.js`](apps/backend/routes/generate.js:97):
 
 ```javascript
 // Если включён режим цитирования
@@ -1875,7 +1875,7 @@ export interface Citation {
 
 #### Unit-тесты для новых API endpoints
 
-**backend/tests/routes/knowledgeBase.test.js**
+**apps/backend/tests/routes/knowledgeBase.test.js**
 ```javascript
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
@@ -2010,7 +2010,7 @@ graph TD
 ## Контакты и поддержка
 
 Для вопросов по реализации обращайтесь к документации:
-- [Prisma Schema](backend/prisma/schema.prisma)
-- [API Routes](backend/routes/)
+- [Prisma Schema](../packages/db/prisma/schema.prisma)
+- [API Routes](apps/backend/routes/)
 - [Frontend Components](components/)
 - [TypeScript Types](types.ts)

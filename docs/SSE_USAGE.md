@@ -188,7 +188,7 @@ function generateContent() {
 ### Настройка таймаута keep-alive
 
 ```javascript
-// backend/utils/sse.js
+// apps/backend/utils/sse.js
 this.keepAliveInterval = setInterval(() => {
   if (this.isOpen) {
     sendSSEKeepAlive(res);
@@ -199,7 +199,7 @@ this.keepAliveInterval = setInterval(() => {
 ### Настройка заголовков
 
 ```javascript
-// backend/utils/sse.js
+// apps/backend/utils/sse.js
 res.setHeader('Content-Type', 'text/event-stream');
 res.setHeader('Cache-Control', 'no-cache');
 res.setHeader('Connection', 'keep-alive');

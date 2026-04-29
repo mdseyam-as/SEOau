@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.tmp
 *.local
 
 # Editor directories and files
@@ -28,6 +29,6 @@ dist-ssr
 .env.*
 !.env.example
 !.env.production
-backend/.env
+apps/backend/.env
 
 /generated/prisma

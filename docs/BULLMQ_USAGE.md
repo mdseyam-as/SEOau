@@ -24,7 +24,7 @@ REDIS_DB=0
 
 ### Конфигурация очередей
 
-Конфигурация находится в [`backend/config/queue.js`](../backend/config/queue.js):
+Конфигурация находится в [`apps/backend/config/queue.js`](../apps/backend/config/queue.js):
 
 ```javascript
 export const QUEUE_CONFIG = {
@@ -152,7 +152,7 @@ export const QUEUE_NAMES = {
 
 ### Generation Worker
 
-Воркер для обработки задач генерации находится в [`backend/workers/generationWorker.js`](../backend/workers/generationWorker.js).
+Воркер для обработки задач генерации находится в [`apps/backend/workers/generationWorker.js`](../apps/backend/workers/generationWorker.js).
 
 ```javascript
 export const generationWorker = createWorker(

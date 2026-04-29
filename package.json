@@ -1,60 +1,32 @@
 {
-  "name": "universal-seo-generator",
+  "name": "seoau",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "npm run dev -w @seoau/frontend",
+    "dev:backend": "npm run dev -w @seoau/backend",
+    "build": "npm run build -w @seoau/frontend",
     "build:platform": "node scripts/build-platform.mjs",
-    "start:platform": "npm --prefix ./backend start",
-    "preview": "vite preview",
-    "test": "vitest",
-    "test:watch": "vitest --watch",
-    "test:coverage": "vitest --coverage",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:push:backend": "npx prisma db push --schema=backend/prisma/schema.prisma",
-    "db:migrate": "prisma migrate dev",
-    "db:seed": "node prisma/seed.js",
-    "db:studio": "prisma studio"
-  },
-  "prisma": {
-    "seed": "node prisma/seed.js"
-  },
-  "dependencies": {
-    "@fontsource/roboto": "^5.2.9",
-    "@google/genai": "^1.30.0",
-    "@prisma/client": "^5.22.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "axios": "^1.7.9",
-    "body-parser": "^2.2.0",
-    "cors": "^2.8.5",
-    "docx": "^9.5.1",
-    "express": "^5.1.0",
-    "file-saver": "^2.0.5",
-    "html2canvas": "^1.4.1",
-    "html2pdf.js": "^0.12.1",
-    "jspdf": "^3.0.4",
-    "lucide-react": "^0.554.0",
-    "mammoth": "1.8.0",
-    "nodemailer": "^7.0.10",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1",
-    "vite": "^6.2.0",
-    "xlsx": "^0.18.5"
+    "start:platform": "npm run start -w @seoau/backend",
+    "preview": "npm run preview -w @seoau/frontend",
+    "test": "npm run test -w @seoau/frontend",
+    "test:backend": "npm run test -w @seoau/backend",
+    "test:coverage": "npm run test:coverage -w @seoau/frontend",
+    "db:generate": "npm run db:generate -w @seoau/db",
+    "db:push": "npm run db:push -w @seoau/db",
+    "db:migrate": "npm run db:migrate -w @seoau/db",
+    "db:deploy": "npm run db:deploy -w @seoau/db",
+    "db:seed": "npm run db:seed -w @seoau/db",
+    "db:studio": "npm run db:studio -w @seoau/db"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.1",
-    "@testing-library/user-event": "^14.5.2",
     "@types/node": "^22.14.0",
-    "@vitest/ui": "^2.0.0",
-    "jsdom": "^25.0.1",
     "prisma": "^5.22.0",
-    "typescript": "~5.8.2",
-    "vitest": "^2.1.9"
+    "typescript": "~5.8.2"
   }
 }
