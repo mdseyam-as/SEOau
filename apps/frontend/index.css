@@ -594,16 +594,39 @@ html {
 
   .app-input-light {
     @apply w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-950 shadow-[0_6px_18px_rgba(148,163,184,0.10),inset_0_1px_0_rgba(255,255,255,0.92)] outline-none transition-all placeholder:text-slate-500 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100;
+    display: block;
+    width: 100%;
+    min-height: 3rem;
+    border: 1px solid rgb(203, 213, 225);
+    border-radius: 1rem;
+    background: #ffffff;
+    padding: 0.75rem 1rem;
+    color: #020617;
+    outline: none;
+    box-shadow: 0 6px 18px rgba(148, 163, 184, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    transition: border-color var(--transition-base), box-shadow var(--transition-base), background-color var(--transition-base);
   }
 
   .app-input-dark {
     @apply w-full rounded-[6px] border border-[#5b3f44] bg-[rgba(2,3,5,0.78)] px-4 py-3 text-white outline-none transition-all placeholder:text-[#ab888e] focus:border-[#46fa9c] focus:ring-2 focus:ring-[#46fa9c]/20;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 3.25rem;
+    border: 1px solid #5b3f44;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    font: inherit;
+    line-height: 1.5;
     background-color: rgba(2, 3, 5, 0.78) !important;
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff;
     -webkit-appearance: none;
     appearance: none;
     background-image: none !important;
+    outline: none !important;
+    box-shadow: none;
+    transition: border-color var(--transition-base), box-shadow var(--transition-base), background-color var(--transition-base);
   }
 
   .app-input-dark::placeholder {
@@ -613,17 +636,61 @@ html {
 
   .app-shell-input {
     @apply w-full border-0 bg-transparent p-0 text-white shadow-none outline-none ring-0 placeholder:text-[#ab888e];
+    display: block;
+    width: 100% !important;
+    min-width: 0;
+    min-height: 1.75rem;
+    border: 0 !important;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #ffffff !important;
     background-color: transparent !important;
     -webkit-text-fill-color: #ffffff;
     -webkit-appearance: none;
     appearance: none;
     box-shadow: none !important;
     border-radius: 0 !important;
+    outline: none !important;
+    caret-color: #ffb1c0;
   }
 
   .app-shell-input::placeholder {
     color: #ab888e;
     opacity: 1;
+  }
+
+  .app-input-light:focus,
+  .app-input-light:focus-visible {
+    border-color: #34d399;
+    box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.16), 0 6px 18px rgba(148, 163, 184, 0.10);
+  }
+
+  .app-input-dark:focus,
+  .app-input-dark:focus-visible {
+    border-color: #ffb1c0;
+    background-color: rgba(15, 18, 24, 0.88) !important;
+    box-shadow: 0 0 0 2px rgba(255, 177, 192, 0.14);
+  }
+
+  .app-shell-input:focus,
+  .app-shell-input:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  textarea.app-shell-input {
+    min-height: 5rem;
+    resize: vertical;
+  }
+
+  .app-shell-input:disabled,
+  .app-input-dark:disabled,
+  .app-input-light:disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
   }
 
   .app-shell-input:-webkit-autofill,

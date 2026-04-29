@@ -44,7 +44,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ config, onChange, di
   const isOverLimit = userPlan ? config.maxChars > userPlan.maxChars : false;
   const sectionClass = 'rounded-[10px] border border-white/10 bg-white/[0.03] p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]';
   const sectionLabelClass = 'mb-2 flex items-center gap-2 border-b border-white/10 pb-3 text-xs font-bold uppercase tracking-[0.14em] text-[#d7c1c7] sm:text-sm';
-  const fieldShellClass = 'rounded-[8px] border border-[#5b3f44] bg-[linear-gradient(180deg,rgba(43,27,30,0.76),rgba(15,18,24,0.8))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition-colors focus-within:border-[#ffb1c0]/70 focus-within:shadow-[0_0_0_1px_rgba(255,177,192,0.12)]';
+  const fieldShellClass = 'flex w-full min-w-0 min-h-[3.875rem] items-center rounded-[8px] border border-[#5b3f44] bg-[linear-gradient(180deg,rgba(43,27,30,0.76),rgba(15,18,24,0.82))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition-all cursor-text hover:border-[#ffb1c0]/45 focus-within:border-[#ffb1c0] focus-within:bg-[rgba(31,15,18,0.92)] focus-within:shadow-[0_0_0_1px_rgba(255,177,192,0.18),inset_0_1px_0_rgba(255,255,255,0.04)]';
   const inputClass = 'app-shell-input';
   const modeButtonBase = 'relative rounded-[8px] border p-3 text-left transition-all';
   const isAioMode = config.generationMode === 'aio' || config.generationMode === 'geo';
