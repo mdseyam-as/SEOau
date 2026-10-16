@@ -2,11 +2,10 @@
 
 AI-платформа для генерации SEO/AIO-контента в формате Telegram WebApp: frontend на React + backend API на Express + PostgreSQL/Prisma.
 
-![Private Repository](https://img.shields.io/badge/visibility-private-red)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![Node.js](https://img.shields.io/badge/Node.js-Express_5-339933?logo=node.js&logoColor=white)
 ![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma&logoColor=white)
-![License](https://img.shields.io/badge/license-Proprietary-black)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](./LICENSE)
 
 ## Содержание
 - [О проекте](#о-проекте)
@@ -227,3 +226,6 @@ npm run test:backend
 
 ## Contributing
 Правила вкладов и формат PR: [CONTRIBUTING.md](./CONTRIBUTING.md)
+
+## Лицензия
+Проект распространяется по лицензии [MIT](./LICENSE).
