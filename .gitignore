@@ -32,3 +32,6 @@ dist-ssr
 apps/backend/.env
 
 /generated/prisma
+
+# Claude Code local settings
+.claude/settings.local.json
